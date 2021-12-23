@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">QRCodeScanner</string>
+    <string name="camerax_entry_title">CameraX</string>
+    <string name="dce_entry_title">Dynamsoft Camera Enhancer</string>
+</resources>

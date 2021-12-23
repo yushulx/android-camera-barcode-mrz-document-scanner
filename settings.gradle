@@ -1,0 +1,12 @@
+dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+    repositories {
+        google()
+        mavenCentral()
+        jcenter() // Warning: this repository is going to shut down soon
+        maven{url "https://download.dynamsoft.com/maven/dce/aar"}
+        maven{url "https://download.dynamsoft.com/maven/dbr/aar"}
+    }
+}
+rootProject.name = "QRCodeScanner"
+include ':app'
