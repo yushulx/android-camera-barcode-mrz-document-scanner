@@ -13,12 +13,13 @@ import com.dynamsoft.dce.*;
 
 import com.dynamsoft.dbr.*;
 
-public class DceActivity extends AppCompatActivity implements DCEFrameListener {
+public class DceActivity extends AppCompatActivity implements DCEFrameListener, AutoTorchController.TorchStatus {
     public final static String TAG = "DCE";
     private DCECameraView previewView;
     private TextView resultView;
     private CameraEnhancer cameraEnhancer;
     private BarcodeReader reader;
+    private AutoTorchController autoTorchController;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -26,6 +27,9 @@ public class DceActivity extends AppCompatActivity implements DCEFrameListener {
         setContentView(R.layout.dce_main);
         previewView = findViewById(R.id.dce_viewFinder);
         resultView = findViewById(R.id.dce_result);
+
+        autoTorchController = new AutoTorchController(this);
+        autoTorchController.addListener(this);
 
         try {
             reader = new BarcodeReader();
@@ -62,7 +66,7 @@ public class DceActivity extends AppCompatActivity implements DCEFrameListener {
     @Override
     public void frameOutputCallback(DCEFrame dceFrame, long l) {
         // image processing
-        Log.i(TAG, "image processing.................");
+        // Log.i(TAG, "image processing.................");
         TextResult[] results = null;
         try {
             results = reader.decodeBufferedImage(dceFrame.toBitmap(), "");
@@ -82,5 +86,36 @@ public class DceActivity extends AppCompatActivity implements DCEFrameListener {
         final String result = output;
         runOnUiThread(()->{resultView.setText(result);});
         // image processing
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+
+        autoTorchController.onStart();
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        autoTorchController.onStop();
+    }
+
+    @Override
+    public void onTorchChange(boolean status) {
+        if (status) {
+            try {
+                cameraEnhancer.turnOnTorch();
+            } catch (CameraEnhancerException e) {
+                e.printStackTrace();
+            }
+        }
+        else {
+            try {
+                cameraEnhancer.turnOffTorch();
+            } catch (CameraEnhancerException e) {
+                e.printStackTrace();
+            }
+        }
     }
 }

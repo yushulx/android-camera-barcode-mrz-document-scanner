@@ -24,7 +24,7 @@ import java.util.concurrent.Executors;
 
 import com.dynamsoft.dbr.*;
 
-public class CameraXActivity extends AppCompatActivity implements ActivityCompat.OnRequestPermissionsResultCallback {
+public class CameraXActivity extends AppCompatActivity implements ActivityCompat.OnRequestPermissionsResultCallback, AutoTorchController.TorchStatus {
 
     public final static String TAG = "CameraX";
 
@@ -33,6 +33,7 @@ public class CameraXActivity extends AppCompatActivity implements ActivityCompat
     private TextView resultView;
     private BarcodeReader reader;
     private ExecutorService cameraExecutor;
+    private AutoTorchController autoTorchController;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -41,6 +42,8 @@ public class CameraXActivity extends AppCompatActivity implements ActivityCompat
         previewView = findViewById(R.id.camerax_viewFinder);
         resultView = findViewById(R.id.camerax_result);
 
+        autoTorchController = new AutoTorchController(this);
+        autoTorchController.addListener(this);
         try {
             reader = new BarcodeReader();
             reader.initLicense("LICENSE-KEY"); // Get a license key from https://www.dynamsoft.com/customer/license/trialLicense?product=dbr
@@ -55,6 +58,20 @@ public class CameraXActivity extends AppCompatActivity implements ActivityCompat
         } else {
             startCamera();
         }
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+
+        autoTorchController.onStart();
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+
+        autoTorchController.onStop();
     }
 
     private void startCamera() {
@@ -76,7 +93,7 @@ public class CameraXActivity extends AppCompatActivity implements ActivityCompat
                         analysisUseCase.setAnalyzer(cameraExecutor,
                                 imageProxy -> {
                                     // image processing
-                                    Log.i(TAG, "image processing.................");
+//                                    Log.i(TAG, "image processing.................");
                                     TextResult[] results = null;
                                     ByteBuffer buffer = imageProxy.getPlanes()[0].getBuffer();
                                     int nRowStride = imageProxy.getPlanes()[0].getRowStride();
@@ -139,5 +156,10 @@ public class CameraXActivity extends AppCompatActivity implements ActivityCompat
     protected void onDestroy() {
         super.onDestroy();
         cameraExecutor.shutdown();
+    }
+
+    @Override
+    public void onTorchChange(boolean status) {
+        if (camera != null) camera.getCameraControl().enableTorch(status);
     }
 }
