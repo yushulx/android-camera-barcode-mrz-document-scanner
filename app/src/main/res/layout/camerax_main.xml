@@ -8,6 +8,17 @@
 
     <TextView
         android:background="#80000000"
+        android:id="@+id/camerax_zoom_ratio"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:scaleType="fitCenter"
+        android:textColor="@color/white"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        android:elevation="2dp" />
+
+    <TextView
+        android:background="#80000000"
         android:id="@+id/camerax_result"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"

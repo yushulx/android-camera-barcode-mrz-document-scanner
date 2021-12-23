@@ -41,7 +41,7 @@ public class AutoTorchController implements SensorEventListener {
     @Override
     public void onSensorChanged(SensorEvent event) {
         if(event.sensor.getType() == Sensor.TYPE_LIGHT){
-            Log.i(TAG, "LIGHT: " + event.values[0] + "...........................");
+//            Log.i(TAG, "LIGHT: " + event.values[0] + "...........................");
             if (event.values[0] < 100) {
                 if (!isTorchOn) {
                     isTorchOn = true;

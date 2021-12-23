@@ -6,13 +6,16 @@ import androidx.camera.core.Camera;
 import androidx.camera.core.CameraSelector;
 import androidx.camera.core.ImageAnalysis;
 import androidx.camera.core.Preview;
+import androidx.camera.core.ZoomState;
 import androidx.camera.lifecycle.ProcessCameraProvider;
 import androidx.camera.view.PreviewView;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.lifecycle.LiveData;
 
 import android.os.Bundle;
 import android.util.Log;
+import android.view.MotionEvent;
 import android.widget.TextView;
 
 import com.google.common.util.concurrent.ListenableFuture;
@@ -24,16 +27,17 @@ import java.util.concurrent.Executors;
 
 import com.dynamsoft.dbr.*;
 
-public class CameraXActivity extends AppCompatActivity implements ActivityCompat.OnRequestPermissionsResultCallback, AutoTorchController.TorchStatus {
+public class CameraXActivity extends AppCompatActivity implements ActivityCompat.OnRequestPermissionsResultCallback, AutoTorchController.TorchStatus, ZoomController.ZoomStatus {
 
     public final static String TAG = "CameraX";
 
     private Camera camera;
     private PreviewView previewView;
-    private TextView resultView;
+    private TextView resultView, zoomView;
     private BarcodeReader reader;
     private ExecutorService cameraExecutor;
     private AutoTorchController autoTorchController;
+    private ZoomController zoomController;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -41,9 +45,14 @@ public class CameraXActivity extends AppCompatActivity implements ActivityCompat
         setContentView(R.layout.camerax_main);
         previewView = findViewById(R.id.camerax_viewFinder);
         resultView = findViewById(R.id.camerax_result);
+        zoomView = findViewById(R.id.camerax_zoom_ratio);
 
         autoTorchController = new AutoTorchController(this);
         autoTorchController.addListener(this);
+
+        zoomController = new ZoomController(this);
+        zoomController.addListener(this);
+
         try {
             reader = new BarcodeReader();
             reader.initLicense("LICENSE-KEY"); // Get a license key from https://www.dynamsoft.com/customer/license/trialLicense?product=dbr
@@ -132,6 +141,11 @@ public class CameraXActivity extends AppCompatActivity implements ActivityCompat
 
                         // Bind use cases to camera
                         camera = cameraProvider.bindToLifecycle(/* lifecycleOwner= */ this, cameraSelector, previewUseCase, analysisUseCase);
+
+                        // Get zoom ratio
+                        LiveData<ZoomState> zoomstate =  camera.getCameraInfo().getZoomState();
+                        zoomController.initZoomRatio(zoomstate.getValue().getMinZoomRatio(), zoomstate.getValue().getMaxZoomRatio());
+                        updateZoomRatio(zoomstate.getValue().getMinZoomRatio());
                     } catch (ExecutionException | InterruptedException e) {
                         // Handle any errors (including cancellation) here.
                         Log.e(TAG, "Unhandled exception", e);
@@ -140,7 +154,9 @@ public class CameraXActivity extends AppCompatActivity implements ActivityCompat
                 ContextCompat.getMainExecutor(getApplication()));
     }
 
-
+    private void updateZoomRatio(float ratio) {
+        zoomView.setText("Zoom ratio: " + ratio);
+    }
 
     @Override
     public void onRequestPermissionsResult(
@@ -161,5 +177,19 @@ public class CameraXActivity extends AppCompatActivity implements ActivityCompat
     @Override
     public void onTorchChange(boolean status) {
         if (camera != null) camera.getCameraControl().enableTorch(status);
+    }
+
+    @Override
+    public boolean onTouchEvent(MotionEvent event) {
+        zoomController.onTouchEvent(event);
+        return super.onTouchEvent(event);
+    }
+
+    @Override
+    public void onZoomChange(float ratio) {
+        if (camera != null) {
+            camera.getCameraControl().setZoomRatio(ratio);
+        }
+        updateZoomRatio(ratio);
     }
 }

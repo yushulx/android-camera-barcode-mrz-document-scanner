@@ -3,6 +3,7 @@ package com.example.qrcodescanner;
 import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.MotionEvent;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -13,13 +14,14 @@ import com.dynamsoft.dce.*;
 
 import com.dynamsoft.dbr.*;
 
-public class DceActivity extends AppCompatActivity implements DCEFrameListener, AutoTorchController.TorchStatus {
+public class DceActivity extends AppCompatActivity implements DCEFrameListener, AutoTorchController.TorchStatus, ZoomController.ZoomStatus {
     public final static String TAG = "DCE";
     private DCECameraView previewView;
-    private TextView resultView;
+    private TextView resultView, zoomView;
     private CameraEnhancer cameraEnhancer;
     private BarcodeReader reader;
     private AutoTorchController autoTorchController;
+    private ZoomController zoomController;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -27,9 +29,13 @@ public class DceActivity extends AppCompatActivity implements DCEFrameListener, 
         setContentView(R.layout.dce_main);
         previewView = findViewById(R.id.dce_viewFinder);
         resultView = findViewById(R.id.dce_result);
+        zoomView = findViewById(R.id.dce_zoom_ratio);
 
         autoTorchController = new AutoTorchController(this);
         autoTorchController.addListener(this);
+
+        zoomController = new ZoomController(this);
+        zoomController.addListener(this);
 
         try {
             reader = new BarcodeReader();
@@ -41,6 +47,8 @@ public class DceActivity extends AppCompatActivity implements DCEFrameListener, 
         cameraEnhancer = new CameraEnhancer(this);
         cameraEnhancer.setCameraView(previewView);
         cameraEnhancer.addListener(this);
+
+        zoomController.initZoomRatio(1.0f, 10.f);
     }
 
     @Override
@@ -117,5 +125,25 @@ public class DceActivity extends AppCompatActivity implements DCEFrameListener, 
                 e.printStackTrace();
             }
         }
+    }
+
+    private void updateZoomRatio(float ratio) {
+        zoomView.setText("Zoom ratio: " + ratio);
+    }
+
+    @Override
+    public boolean onTouchEvent(MotionEvent event) {
+        zoomController.onTouchEvent(event);
+        return super.onTouchEvent(event);
+    }
+
+    @Override
+    public void onZoomChange(float ratio) {
+        try {
+            cameraEnhancer.setZoom(ratio);
+        } catch (CameraEnhancerException e) {
+            e.printStackTrace();
+        }
+        updateZoomRatio(ratio);
     }
 }
