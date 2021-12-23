@@ -82,6 +82,5 @@ public class DceActivity extends AppCompatActivity implements DCEFrameListener {
         final String result = output;
         runOnUiThread(()->{resultView.setText(result);});
         // image processing
-        Bitmap bitmap = dceFrame.toBitmap();
     }
 }
