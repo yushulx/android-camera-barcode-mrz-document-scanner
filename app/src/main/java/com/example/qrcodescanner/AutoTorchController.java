@@ -12,7 +12,6 @@ import android.util.Log;
 public class AutoTorchController implements SensorEventListener {
     public final static String TAG = "AutoTorchController";
     private SensorManager sensorManager;
-    private boolean isTorchOn = false;
     private TorchStatus torchStatus;
 
     public interface TorchStatus {
@@ -42,17 +41,11 @@ public class AutoTorchController implements SensorEventListener {
     public void onSensorChanged(SensorEvent event) {
         if(event.sensor.getType() == Sensor.TYPE_LIGHT){
 //            Log.i(TAG, "LIGHT: " + event.values[0] + "...........................");
-            if (event.values[0] < 100) {
-                if (!isTorchOn) {
-                    isTorchOn = true;
-                    if (torchStatus != null) torchStatus.onTorchChange(true);
-                }
+            if (event.values[0] < 20) {
+                if (torchStatus != null) torchStatus.onTorchChange(true);
             }
             else {
-                if (isTorchOn) {
-                    isTorchOn = false;
-                    if (torchStatus != null) torchStatus.onTorchChange(false);
-                }
+                if (torchStatus != null) torchStatus.onTorchChange(false);
             }
         }
     }

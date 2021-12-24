@@ -83,9 +83,9 @@ public class DceActivity extends AppCompatActivity implements DCEFrameListener, 
         }
         String output = "No barcode found!";
         if (results != null && results.length > 0) {
-            output = "Found " + results.length + " barcodes.";
+            output = "Found " + results.length + " barcodes.\n\n";
             for (int i = 0; i < results.length; i++) {
-                output += "Index: " + i;
+                output += "Index: " + i + "\n";
                 output += "Format: " + results[i].barcodeFormatString + "\n";
                 output += "Text: " + results[i].barcodeText + "\n\n";
             }
