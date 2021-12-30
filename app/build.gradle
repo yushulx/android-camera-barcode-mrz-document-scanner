@@ -46,4 +46,6 @@ dependencies {
 
     implementation 'com.dynamsoft:dynamsoftcameraenhancer:2.1.0@aar'
     implementation 'com.dynamsoft:dynamsoftbarcodereader:8.9.0@aar'
+
+    implementation project(path: ':opencv')
 }

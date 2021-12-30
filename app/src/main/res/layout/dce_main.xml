@@ -8,13 +8,36 @@
 
     <TextView
         android:background="#80000000"
-        android:id="@+id/dce_zoom_ratio"
+        android:id="@+id/dce_camera_resolution"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:scaleType="fitCenter"
         android:textColor="@color/white"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintTop_toTopOf="parent"
+        android:elevation="2dp" />
+
+    <TextView
+        android:background="#80000000"
+        android:id="@+id/dce_zoom_ratio"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:scaleType="fitCenter"
+        android:textColor="@color/white"
+        android:text="@string/zoom_default"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/dce_camera_resolution"
+        android:elevation="2dp" />
+
+    <TextView
+        android:background="#80000000"
+        android:id="@+id/dce_qrdecoding_time"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:scaleType="fitCenter"
+        android:textColor="@color/white"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/dce_zoom_ratio"
         android:elevation="2dp" />
 
     <TextView
@@ -34,5 +57,14 @@
         android:id="@+id/dce_viewFinder"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
+
+    <com.example.qrcodescanner.GraphicOverlay
+        android:id="@+id/dce_overlay"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintLeft_toLeftOf="@id/dce_viewFinder"
+        app:layout_constraintRight_toRightOf="@id/dce_viewFinder"
+        app:layout_constraintTop_toTopOf="@id/dce_viewFinder"
+        app:layout_constraintBottom_toBottomOf="@id/dce_viewFinder"/>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
