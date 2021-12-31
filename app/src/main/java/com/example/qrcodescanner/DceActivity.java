@@ -1,11 +1,13 @@
 package com.example.qrcodescanner;
 
+import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.Matrix;
 import android.os.Bundle;
 import android.view.MotionEvent;
 import android.widget.TextView;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.dynamsoft.dbr.BarcodeReaderException;
@@ -24,6 +26,7 @@ public class DceActivity extends AppCompatActivity implements DCEFrameListener, 
     private ZoomController zoomController;
     private GraphicOverlay overlay;
     private boolean needUpdateGraphicOverlayImageSourceInfo;
+    private boolean isPortrait = true;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -65,6 +68,15 @@ public class DceActivity extends AppCompatActivity implements DCEFrameListener, 
     @Override
     protected void onResume() {
         super.onResume();
+
+        int orientation = getResources().getConfiguration().orientation;
+        if (orientation == Configuration.ORIENTATION_PORTRAIT) {
+            isPortrait = true;
+        } else {
+            isPortrait = false;
+        }
+        needUpdateGraphicOverlayImageSourceInfo = true;
+
         try {
             cameraEnhancer.open();
         } catch (CameraEnhancerException e) {
@@ -85,8 +97,15 @@ public class DceActivity extends AppCompatActivity implements DCEFrameListener, 
     @Override
     public void frameOutputCallback(DCEFrame dceFrame, long l) {
         if (needUpdateGraphicOverlayImageSourceInfo) {
-            overlay.setImageSourceInfo(
-                    dceFrame.toBitmap().getHeight(), dceFrame.toBitmap().getWidth(), false);
+            if (isPortrait) {
+                overlay.setImageSourceInfo(
+                        dceFrame.toBitmap().getHeight(), dceFrame.toBitmap().getWidth(), false);
+            }
+            else {
+                overlay.setImageSourceInfo(
+                        dceFrame.toBitmap().getWidth(), dceFrame.toBitmap().getHeight(), false);
+            }
+
             needUpdateGraphicOverlayImageSourceInfo = false;
             runOnUiThread(()->{
                 resolutionView.setText("Camera resolution: " + dceFrame.toBitmap().getWidth() + "x" + dceFrame.toBitmap().getHeight());
@@ -96,9 +115,9 @@ public class DceActivity extends AppCompatActivity implements DCEFrameListener, 
         // Log.i(TAG, "image processing.................");
         TextResult[] results = null;
         // Rotate 90 degree to get correct bounding box
-        Matrix matrix = new Matrix();
-        matrix.postRotate(90);
-        Bitmap rotatedBitmap = Bitmap.createBitmap(dceFrame.toBitmap(), 0, 0, dceFrame.toBitmap().getWidth(), dceFrame.toBitmap().getHeight(), matrix, true);
+//        Matrix matrix = new Matrix();
+//        matrix.postRotate(90);
+//        Bitmap rotatedBitmap = Bitmap.createBitmap(dceFrame.toBitmap(), 0, 0, dceFrame.toBitmap().getWidth(), dceFrame.toBitmap().getHeight(), matrix, true);
 
         try {
             PublicRuntimeSettings settings = reader.getRuntimeSettings();
@@ -110,7 +129,7 @@ public class DceActivity extends AppCompatActivity implements DCEFrameListener, 
 
         long start = System.currentTimeMillis();
         try {
-            results = reader.decodeBufferedImage(rotatedBitmap, "");
+            results = reader.decodeBufferedImage(dceFrame.toBitmap(), "");
         } catch (BarcodeReaderException e) {
             e.printStackTrace();
         }
@@ -127,7 +146,7 @@ public class DceActivity extends AppCompatActivity implements DCEFrameListener, 
                 output += "Index: " + i + "\n";
                 output += "Format: " + result.barcodeFormatString + "\n";
                 output += "Text: " + result.barcodeText + "\n\n";
-                overlay.add(new BarcodeGraphic(overlay, null, result));
+                overlay.add(new BarcodeGraphic(overlay, null, result, isPortrait));
             }
         }
         overlay.postInvalidate();

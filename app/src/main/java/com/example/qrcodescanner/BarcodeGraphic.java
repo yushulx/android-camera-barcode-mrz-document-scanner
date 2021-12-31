@@ -23,12 +23,16 @@ public class BarcodeGraphic extends GraphicOverlay.Graphic {
     private final TextResult barcode;
     private final Paint labelPaint;
     private RectF rect;
+    private GraphicOverlay overlay;
+    private boolean isPortrait = true;
 
-    BarcodeGraphic(GraphicOverlay overlay, RectF boundingBox, TextResult barcode) {
+    BarcodeGraphic(GraphicOverlay overlay, RectF boundingBox, TextResult barcode, boolean isPortrait) {
         super(overlay);
 
         this.barcode = barcode;
         this.rect = boundingBox;
+        this.overlay = overlay;
+        this.isPortrait = isPortrait;
         rectPaint = new Paint();
         rectPaint.setColor(MARKER_COLOR);
         rectPaint.setStyle(Paint.Style.STROKE);
@@ -74,6 +78,12 @@ public class BarcodeGraphic extends GraphicOverlay.Graphic {
         else {
             if (barcode != null) {
                 Point[] points = barcode.localizationResult.resultPoints;
+                if (isPortrait) {
+                    for (int i = 0; i < points.length; i++) {
+                        points[i] = ImageUtils.rotateCW90(points[i], overlay.getImageWidth());
+                    }
+                }
+
                 int xmin = points[0].x, ymin = points[0].y, xmax = points[0].x, ymax = points[0].y;
                 for (int i = 0; i < 4; i++) {
                     int from = i, to = i + 1;

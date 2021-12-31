@@ -13,6 +13,7 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.lifecycle.LiveData;
 
+import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.ImageFormat;
 import android.graphics.RectF;
@@ -76,6 +77,7 @@ public class CameraXActivity extends AppCompatActivity implements ActivityCompat
     private ArrayList<String> classes = new ArrayList<>();
     private GraphicOverlay overlay;
     private boolean needUpdateGraphicOverlayImageSourceInfo;
+    private boolean isPortrait = true;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -171,7 +173,12 @@ public class CameraXActivity extends AppCompatActivity implements ActivityCompat
                                         Mat rgbOut = new Mat(imageProxy.getHeight(), imageProxy.getWidth(), CvType.CV_8UC3);
                                         Imgproc.cvtColor(yuv, rgbOut, Imgproc.COLOR_YUV2RGB_I420);
                                         Mat rgb = new Mat();
-                                        Core.rotate(rgbOut, rgb, Core.ROTATE_90_CLOCKWISE);
+                                        if (isPortrait) {
+                                            Core.rotate(rgbOut, rgb, Core.ROTATE_90_CLOCKWISE);
+                                        }
+                                        else {
+                                            rgb = rgbOut;
+                                        }
 
                                         // https://lindevs.com/yolov4-object-detection-using-opencv/
                                         MatOfInt classIds = new MatOfInt();
@@ -238,7 +245,7 @@ public class CameraXActivity extends AppCompatActivity implements ActivityCompat
 //                                                final String result = output;
 //                                                runOnUiThread(()->{resultView.setText(result);});
 
-                                                overlay.add(new BarcodeGraphic(overlay, rect, result));
+                                                overlay.add(new BarcodeGraphic(overlay, rect, result, isPortrait));
                                             }
 
                                         }
@@ -310,6 +317,19 @@ public class CameraXActivity extends AppCompatActivity implements ActivityCompat
             startCamera();
         }
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+
+        int orientation = getResources().getConfiguration().orientation;
+        if (orientation == Configuration.ORIENTATION_PORTRAIT) {
+            isPortrait = true;
+        } else {
+            isPortrait = false;
+        }
+        needUpdateGraphicOverlayImageSourceInfo = true;
     }
 
     @Override

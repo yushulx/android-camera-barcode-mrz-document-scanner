@@ -6,6 +6,8 @@ import android.os.Environment;
 
 import androidx.camera.core.ImageProxy;
 
+import com.dynamsoft.dbr.Point;
+
 import org.opencv.android.Utils;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
@@ -89,5 +91,19 @@ public class ImageUtils {
     mat.put(0, 0, data);
 
     return mat;
+  }
+
+  public static Point rotateCW90(Point point, int width) {
+    Point rotatedPoint = new Point();
+    rotatedPoint.x = width - point.y;
+    rotatedPoint.y = point.x;
+    return rotatedPoint;
+  }
+
+  public static Point rotateCCW90(Point point, int width) {
+    Point rotatedPoint = new Point();
+    rotatedPoint.x = point.y;
+    rotatedPoint.y = width - point.x;
+    return rotatedPoint;
   }
 }
