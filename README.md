@@ -48,5 +48,6 @@ public void frameOutputCallback(DCEFrame dceFrame, long l) {
 
 
 ## Blog
-[The Quickest Way to Create an Android QR Code Scanner](https://www.dynamsoft.com/codepool/android-qr-code-scanner.html)
+- [The Quickest Way to Create an Android QR Code Scanner](https://www.dynamsoft.com/codepool/android-qr-code-scanner.html)
+- [Real-time Android QR Code Recognition with YOLO and Dynamsoft Barcode Reader](https://www.dynamsoft.com/codepool/android-qr-code-recognition-yolo-dynamsoft-barcode.html)
 
