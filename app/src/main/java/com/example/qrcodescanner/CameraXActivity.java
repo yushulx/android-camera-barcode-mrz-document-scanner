@@ -20,10 +20,14 @@ import android.graphics.RectF;
 import android.media.Image;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.SystemClock;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.widget.TextView;
+import android.widget.Toast;
 
+import com.example.qrcodescanner.tflite.Detector;
+import com.example.qrcodescanner.tflite.TFLiteObjectDetectionAPIModel;
 import com.google.common.util.concurrent.ListenableFuture;
 
 import java.io.BufferedInputStream;
@@ -37,6 +41,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -78,6 +83,20 @@ public class CameraXActivity extends AppCompatActivity implements ActivityCompat
     private GraphicOverlay overlay;
     private boolean needUpdateGraphicOverlayImageSourceInfo;
     private boolean isPortrait = true;
+    // Configuration values for the prepackaged QR Code model.
+    private static final int TF_OD_API_INPUT_SIZE = 416;
+    private static final boolean TF_OD_API_IS_QUANTIZED = true;
+    private static final String TF_OD_API_MODEL_FILE = "model.tflite";
+    private static final String TF_OD_API_LABELS_FILE = "labelmap.txt";
+    // Minimum detection confidence to track a detection.
+    private static final float MINIMUM_CONFIDENCE_TF_OD_API = 0.5f;
+    private static final boolean MAINTAIN_ASPECT = false;
+    private static final android.util.Size DESIRED_PREVIEW_SIZE = new android.util.Size(640, 480);
+    private static final boolean SAVE_PREVIEW_BITMAP = false;
+
+    private Detector detector;
+    int cropSize = TF_OD_API_INPUT_SIZE;
+    private boolean useYOLO = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -104,10 +123,8 @@ public class CameraXActivity extends AppCompatActivity implements ActivityCompat
             e.printStackTrace();
         }
 
-        loadOpenCV();
-        net = loadYOLOModel();
-        model = new DetectionModel(net);
-        model.setInputParams(1 / 255.0, new Size(416, 416), new Scalar(0), false);
+        initYOLODetector();
+        initTFDetector();
 
         cameraExecutor = Executors.newSingleThreadExecutor();
 
@@ -115,6 +132,33 @@ public class CameraXActivity extends AppCompatActivity implements ActivityCompat
             CameraUtils.getRuntimePermissions(this);
         } else {
             startCamera();
+        }
+    }
+
+    private void initYOLODetector() {
+        loadOpenCV();
+        net = loadYOLOModel();
+        model = new DetectionModel(net);
+        model.setInputParams(1 / 255.0, new Size(416, 416), new Scalar(0), false);
+    }
+
+    private void initTFDetector() {
+        try {
+            detector =
+                    TFLiteObjectDetectionAPIModel.create(
+                            this,
+                            TF_OD_API_MODEL_FILE,
+                            TF_OD_API_LABELS_FILE,
+                            TF_OD_API_INPUT_SIZE,
+                            TF_OD_API_IS_QUANTIZED);
+            cropSize = TF_OD_API_INPUT_SIZE;
+        } catch (final IOException e) {
+            e.printStackTrace();
+            Toast toast =
+                    Toast.makeText(
+                            getApplicationContext(), "Detector could not be initialized", Toast.LENGTH_SHORT);
+            toast.show();
+            finish();
         }
     }
 
@@ -168,43 +212,46 @@ public class CameraXActivity extends AppCompatActivity implements ActivityCompat
                                     }
                                     // image processing
                                     if (ImageFormat.YUV_420_888 == imageProxy.getFormat()) {
-                                        byte[] yBytes = new byte[imageProxy.getPlanes()[0].getBuffer().remaining()];
-                                        Mat yuv = ImageUtils.imageToMat(imageProxy, yBytes);
-                                        Mat rgbOut = new Mat(imageProxy.getHeight(), imageProxy.getWidth(), CvType.CV_8UC3);
-                                        Imgproc.cvtColor(yuv, rgbOut, Imgproc.COLOR_YUV2RGB_I420);
-                                        Mat rgb = new Mat();
-                                        if (isPortrait) {
-                                            Core.rotate(rgbOut, rgb, Core.ROTATE_90_CLOCKWISE);
-                                        }
-                                        else {
-                                            rgb = rgbOut;
-                                        }
 
-                                        // https://lindevs.com/yolov4-object-detection-using-opencv/
-                                        MatOfInt classIds = new MatOfInt();
-                                        MatOfFloat scores = new MatOfFloat();
-                                        MatOfRect boxes = new MatOfRect();
-                                        long start = System.currentTimeMillis();
-                                        model.detect(rgb, classIds, scores, boxes, 0.6f, 0.4f);
-                                        final long timeCost = System.currentTimeMillis() - start;
+                                        if (useYOLO) {
+                                            byte[] yBytes = new byte[imageProxy.getPlanes()[0].getBuffer().remaining()];
+                                            Mat yuv = ImageUtils.imageToMat(imageProxy, yBytes);
+                                            Mat rgbOut = new Mat(imageProxy.getHeight(), imageProxy.getWidth(), CvType.CV_8UC3);
+                                            Imgproc.cvtColor(yuv, rgbOut, Imgproc.COLOR_YUV2RGB_I420);
+                                            Mat rgb = new Mat();
+                                            if (isPortrait) {
+                                                Core.rotate(rgbOut, rgb, Core.ROTATE_90_CLOCKWISE);
+                                            }
+                                            else {
+                                                rgb = rgbOut;
+                                            }
 
-                                        overlay.clear();
-                                        if (classIds.rows() > 0) {
+                                            // https://lindevs.com/yolov4-object-detection-using-opencv/
+                                            MatOfInt classIds = new MatOfInt();
+                                            MatOfFloat scores = new MatOfFloat();
+                                            MatOfRect boxes = new MatOfRect();
+                                            long start = System.currentTimeMillis();
+                                            model.detect(rgb, classIds, scores, boxes, 0.6f, 0.4f);
+                                            final long timeCost = System.currentTimeMillis() - start;
 
-                                            for (int i = 0; i < classIds.rows(); i++) {
-                                                Rect box = new Rect(boxes.get(i, 0));
-                                                Imgproc.rectangle(rgb, box, new Scalar(0, 255, 0), 2);
+                                            if (classIds.rows() > 0) {
+                                                overlay.clear();
+                                                for (int i = 0; i < classIds.rows(); i++) {
+                                                    Rect box = new Rect(boxes.get(i, 0));
+                                                    Imgproc.rectangle(rgb, box, new Scalar(0, 255, 0), 2);
 
-                                                int classId = (int) classIds.get(i, 0)[0];
-                                                double score = scores.get(i, 0)[0];
-                                                String text = String.format("%s: %.2f", classes.get(classId), score);
-                                                Imgproc.putText(rgb, text, new org.opencv.core.Point(box.x, box.y - 5),
-                                                        Imgproc.FONT_HERSHEY_SIMPLEX, 1, new Scalar(0, 255, 0), 2);
-                                                RectF rect = new RectF();
-                                                rect.left = box.x;
-                                                rect.right = box.x + box.width;
-                                                rect.top = box.y;
-                                                rect.bottom = box.y + box.height;
+                                                    int classId = (int) classIds.get(i, 0)[0];
+                                                    double score = scores.get(i, 0)[0];
+                                                    String text = String.format("%s: %.2f", classes.get(classId), score);
+                                                    Imgproc.putText(rgb, text, new org.opencv.core.Point(box.x, box.y - 5),
+                                                            Imgproc.FONT_HERSHEY_SIMPLEX, 1, new Scalar(0, 255, 0), 2);
+                                                    RectF rect = new RectF();
+                                                    rect.left = box.x;
+                                                    rect.right = box.x + box.width;
+                                                    rect.top = box.y;
+                                                    rect.bottom = box.y + box.height;
+                                                    overlay.add(new BarcodeGraphic(overlay, rect, null, isPortrait));
+                                                }
 
                                                 // Decode QR code
                                                 TextResult[] results = null;
@@ -213,71 +260,104 @@ public class CameraXActivity extends AppCompatActivity implements ActivityCompat
                                                 try {
                                                     PublicRuntimeSettings settings = reader.getRuntimeSettings();
                                                     settings.barcodeFormatIds = EnumBarcodeFormat.BF_QR_CODE;
-                                                    settings.expectedBarcodesCount = 1;
+                                                    settings.expectedBarcodesCount = classIds.rows();
                                                     reader.updateRuntimeSettings(settings);
                                                 } catch (BarcodeReaderException e) {
                                                     e.printStackTrace();
                                                 }
 
-                                                start = System.currentTimeMillis();
+                                                start = SystemClock.uptimeMillis();
                                                 try {
                                                     results = reader.decodeBuffer(yBytes, imageProxy.getWidth(), imageProxy.getHeight(), nRowStride * nPixelStride, EnumImagePixelFormat.IPF_NV21, "");
                                                 } catch (BarcodeReaderException e) {
                                                     e.printStackTrace();
                                                 }
-                                                final long decodingTime = System.currentTimeMillis() - start;
-                                                runOnUiThread(()->{
-                                                    inferenceView.setText("YOLO inference time: " + timeCost + " ms");
-                                                    qrDecodingView.setText("QR decoding time: " + decodingTime + " ms");
-                                                });
+                                                final long decodingTime = SystemClock.uptimeMillis() - start;
+
                                                 String output = "No barcode found!";
                                                 TextResult result =  null;
                                                 if (results != null && results.length > 0) {
                                                     output = "Found " + results.length + " barcodes.\n\n";
-                                                    for (int index = 0; i < results.length; i++) {
-                                                        result = results[i];
+                                                    for (int index = 0; index < results.length; index++) {
+                                                        result = results[index];
                                                         output += "Index: " + index + "\n";
                                                         output += "Format: " + result.barcodeFormatString + "\n";
                                                         output += "Text: " + result.barcodeText + "\n\n";
+                                                        overlay.add(new BarcodeGraphic(overlay, null, result, isPortrait));
                                                     }
                                                 }
-
 //                                                final String result = output;
 //                                                runOnUiThread(()->{resultView.setText(result);});
 
-                                                overlay.add(new BarcodeGraphic(overlay, rect, result, isPortrait));
+                                                overlay.postInvalidate();
+                                                runOnUiThread(()->{
+                                                    inferenceView.setText("YOLO inference time: " + timeCost + " ms");
+                                                    qrDecodingView.setText("QR decoding time: " + decodingTime + " ms");
+                                                });
+                                            }
+
+
+                                            //  Check image display
+                                            if (DEBUG) {
+                                                ImageUtils.saveRGBMat(rgb);
+                                            }
+                                        }
+                                        else {
+                                            Bitmap bitmap = ImageUtils.getBitmap(imageProxy);
+                                            final long startTime = SystemClock.uptimeMillis();
+                                            final List<Detector.Recognition> tfResults = detector.recognizeImage(bitmap);
+                                            final long lastProcessingTimeMs = SystemClock.uptimeMillis() - startTime;
+
+                                            if (tfResults.size() > 0) {
+                                                overlay.clear();
+                                                for (final Detector.Recognition tfResult : tfResults) {
+                                                    final RectF location = tfResult.getLocation();
+                                                    if (location != null && tfResult.getConfidence() >= MINIMUM_CONFIDENCE_TF_OD_API) {
+                                                        overlay.add(new BarcodeGraphic(overlay, location, null, isPortrait));
+                                                    }
+                                                }
+
+                                                // Decode QR code
+                                                TextResult[] results = null;
+                                                try {
+                                                    PublicRuntimeSettings settings = reader.getRuntimeSettings();
+                                                    settings.barcodeFormatIds = EnumBarcodeFormat.BF_QR_CODE;
+                                                    settings.expectedBarcodesCount = tfResults.size();
+                                                    reader.updateRuntimeSettings(settings);
+                                                } catch (BarcodeReaderException e) {
+                                                    e.printStackTrace();
+                                                }
+
+                                                long start = SystemClock.uptimeMillis();
+                                                try {
+                                                    results = reader.decodeBufferedImage(bitmap, "");
+                                                } catch (BarcodeReaderException e) {
+                                                    e.printStackTrace();
+                                                }
+                                                final long decodingTime = SystemClock.uptimeMillis() - start;
+
+                                                String output = "No barcode found!";
+                                                TextResult result =  null;
+                                                if (results != null && results.length > 0) {
+                                                    output = "Found " + results.length + " barcodes.\n\n";
+                                                    for (int index = 0; index < results.length; index++) {
+                                                        result = results[index];
+                                                        output += "Index: " + index + "\n";
+                                                        output += "Format: " + result.barcodeFormatString + "\n";
+                                                        output += "Text: " + result.barcodeText + "\n\n";
+                                                        overlay.add(new BarcodeGraphic(overlay, null, result, false));
+                                                    }
+                                                }
+                                                overlay.postInvalidate();
+                                                runOnUiThread(()->{
+                                                    inferenceView.setText("TFLite inference time: " + lastProcessingTimeMs + " ms");
+                                                    qrDecodingView.setText("QR decoding time: " + decodingTime + " ms");
+                                                });
                                             }
 
                                         }
-                                        overlay.postInvalidate();
 
-                                        //  Check image display
-                                        if (DEBUG) {
-                                            ImageUtils.saveRGBMat(rgb);
-                                        }
 
-//                                        {
-//                                            TextResult[] results = null;
-//                                            int nRowStride = imageProxy.getPlanes()[0].getRowStride();
-//                                            int nPixelStride = imageProxy.getPlanes()[0].getPixelStride();
-//                                            try {
-//                                                results = reader.decodeBuffer(yBytes, imageProxy.getWidth(), imageProxy.getHeight(), nRowStride * nPixelStride, EnumImagePixelFormat.IPF_NV21, "");
-//                                            } catch (BarcodeReaderException e) {
-//                                                e.printStackTrace();
-//                                            }
-//                                            String output = "No barcode found!";
-//                                            if (results != null && results.length > 0) {
-//                                                output = "Found " + results.length + " barcodes.\n\n";
-//                                                for (int i = 0; i < results.length; i++) {
-//                                                    output += "Index: " + i + "\n";
-//                                                    output += "Format: " + results[i].barcodeFormatString + "\n";
-//                                                    output += "Text: " + results[i].barcodeText + "\n\n";
-//                                                }
-//                                            }
-//
-//                                            final String result = output;
-//                                            runOnUiThread(()->{resultView.setText(result);});
-//                                        }
                                     }
 
                                     // Must call close to keep receiving frames.

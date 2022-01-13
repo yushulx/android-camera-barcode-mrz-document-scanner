@@ -148,8 +148,9 @@ public class DceActivity extends AppCompatActivity implements DCEFrameListener, 
                 output += "Text: " + result.barcodeText + "\n\n";
                 overlay.add(new BarcodeGraphic(overlay, null, result, isPortrait));
             }
+            overlay.postInvalidate();
         }
-        overlay.postInvalidate();
+
 //        final String result = output;
 //        runOnUiThread(()->{resultView.setText(result);});
         // image processing
