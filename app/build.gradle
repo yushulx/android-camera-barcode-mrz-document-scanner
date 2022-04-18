@@ -45,7 +45,7 @@ dependencies {
     implementation "androidx.camera:camera-view:1.0.0-alpha27"
 
     implementation 'com.dynamsoft:dynamsoftcameraenhancer:2.1.0@aar'
-    implementation 'com.dynamsoft:dynamsoftbarcodereader:8.9.0@aar'
+    implementation 'com.dynamsoft:dynamsoftbarcodereader:9.0.0@aar'
 
     implementation 'org.tensorflow:tensorflow-lite-task-vision:0.3.0'
     implementation 'org.tensorflow:tensorflow-lite-gpu-delegate-plugin:0.3.0'
