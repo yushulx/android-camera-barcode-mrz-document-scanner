@@ -6,6 +6,7 @@ This project demonstrates how to utilize the Dynamsoft Capture Vision SDK for de
 
 ## List of Samples
 
-- [CameraX vs Dynamsoft Camera Enhancer](examples/9.x/camerax_ml_qr/README.md)
+- [CameraX vs. Dynamsoft Camera Enhancer](examples/9.x/camerax_ml_qr/README.md)
     
-    https://www.dynamsoft.com/codepool/img/2021/12/android-qr-code-scanner.mp4
+  https://github.com/user-attachments/assets/00ca0807-6691-4345-9cd8-f2385a532690
+
