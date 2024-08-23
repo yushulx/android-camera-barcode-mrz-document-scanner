@@ -1,10 +1,10 @@
-# Android Capture Vision Samples
+# Android Capture Vision Examples
 This project demonstrates how to utilize the Dynamsoft Capture Vision SDK for detecting **1D/2D barcodes**, **documents**, **MRZ (Machine Readable Zone)**, and more in Android applications.
 
 ## Prerequisites
 - Obtain a [Dynamsoft Capture Vision Suite license](https://www.dynamsoft.com/customer/license/trialLicense/?product=dcv&package=cross-platform).
 
-## List of Samples
+## List of Examples
 
 - [CameraX vs. Dynamsoft Camera Enhancer](examples/9.x/camerax_ml_qr/README.md)
     
