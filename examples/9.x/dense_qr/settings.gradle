@@ -1,0 +1,12 @@
+dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+    repositories {
+        google()
+        mavenCentral()
+        jcenter() // Warning: this repository is going to shut down soon
+        maven{url "https://download2.dynamsoft.com/maven/aar"}
+    }
+}
+
+rootProject.name='ML Kit Vision Quickstart'
+include ':app'
