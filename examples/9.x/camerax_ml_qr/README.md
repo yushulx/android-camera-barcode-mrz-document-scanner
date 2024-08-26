@@ -1,7 +1,7 @@
 # Android Camera Preview and QR Code Scanner
 This project provides a basic implementation of an Android camera preview using both [CameraX](https://developer.android.com/training/camerax) and [Dynamsoft Camera Enhancer v2.x](https://www.dynamsoft.com/camera-enhancer/docs/mobile/programming/android/guide/guide.html). It also demonstrates QR code scanning functionality, which can be replaced with other image processing SDKs as needed.
 
-![Android QR Code Scanner](https://www.dynamsoft.com/codepool/img/2021/12/android-qr-code-scanner-yolo.webp)
+https://github.com/user-attachments/assets/00ca0807-6691-4345-9cd8-f2385a532690
 
 ## Features
 - **Camera Preview**: Seamless camera preview implementation.
