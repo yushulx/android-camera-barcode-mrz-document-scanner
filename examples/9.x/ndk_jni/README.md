@@ -9,19 +9,7 @@ This sample project demonstrates how to enhance barcode detection and decoding p
 2. Set your license key in `Camera2BasicFragment.java`:
 
     ```java
-    try {
-            BarcodeReader.initLicense(
-                    "LICENSE-KEY",
-                    new DBRLicenseVerificationListener() {
-                        @Override
-                        public void DBRLicenseVerificationCallback(boolean isSuccessful, Exception e) {
-                        }
-                    });
-            mBarcodeReader = new BarcodeReader();
-        }
-        catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+    hBarcode = createBarcodeReader("LICENSE-KEY");
     ```
 
 

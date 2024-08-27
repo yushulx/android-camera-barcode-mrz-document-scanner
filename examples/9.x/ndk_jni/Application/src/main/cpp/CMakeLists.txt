@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.4.1)
 
 set(CMAKE_VERBOSE_MAKEFILE on)
-set(CMAKE_ANDROID_ARCH_ABI armeabi-v7a)
+set(CMAKE_ANDROID_ARCH_ABI arm64-v8a)
 
 link_directories("${CMAKE_CURRENT_SOURCE_DIR}")
 

@@ -378,19 +378,20 @@ public class Camera2BasicFragment extends Fragment
         mTextureView = view.findViewById(R.id.texture);
         mTextView = view.findViewById(R.id.tv_result);
         mToneGenerator = new ToneGenerator(AudioManager.STREAM_NOTIFICATION, 100);
-        try {
-            BarcodeReader.initLicense(
-                    "DLS2eyJoYW5kc2hha2VDb2RlIjoiMjAwMDAxLTE2NDk4Mjk3OTI2MzUiLCJvcmdhbml6YXRpb25JRCI6IjIwMDAwMSIsInNlc3Npb25QYXNzd29yZCI6IndTcGR6Vm05WDJrcEQ5YUoifQ==",
-                    new DBRLicenseVerificationListener() {
-                        @Override
-                        public void DBRLicenseVerificationCallback(boolean isSuccessful, Exception e) {
-                        }
-                    });
-            mBarcodeReader = new BarcodeReader();
-        }
-        catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+//        try {
+//            BarcodeReader.initLicense(
+//                    "DLS2eyJoYW5kc2hha2VDb2RlIjoiMjAwMDAxLTE2NDk4Mjk3OTI2MzUiLCJvcmdhbml6YXRpb25JRCI6IjIwMDAwMSIsInNlc3Npb25QYXNzd29yZCI6IndTcGR6Vm05WDJrcEQ5YUoifQ==",
+//                    new DBRLicenseVerificationListener() {
+//                        @Override
+//                        public void DBRLicenseVerificationCallback(boolean isSuccessful, Exception e) {
+//                        }
+//                    });
+//            mBarcodeReader = new BarcodeReader();
+//        }
+//        catch (Exception e) {
+//            throw new RuntimeException(e);
+//        }
+        hBarcode = createBarcodeReader("DLS2eyJoYW5kc2hha2VDb2RlIjoiMjAwMDAxLTE2NDk4Mjk3OTI2MzUiLCJvcmdhbml6YXRpb25JRCI6IjIwMDAwMSIsInNlc3Npb25QYXNzd29yZCI6IndTcGR6Vm05WDJrcEQ5YUoifQ==");
     }
 
     @Override
