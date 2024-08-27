@@ -18,3 +18,5 @@ This project demonstrates how to utilize the Dynamsoft Capture Vision SDK for de
 - [Fast Moving QR Code Detection](examples/9.x/shutter_speed/README.md)
     
     ![Android Camera2 shutter speed](https://www.dynamsoft.com/codepool/img/2019/05/android-camera2-barcode.gif)
+
+- [Decoding Camera Frames in JNI C++](examples/9.x/ndk_jni/README.md)
