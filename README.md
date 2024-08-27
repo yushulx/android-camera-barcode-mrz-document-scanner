@@ -14,3 +14,7 @@ This project demonstrates how to utilize the Dynamsoft Capture Vision SDK for de
 - [Google ML Kit vs. Dynamsoft Barcode Reader](examples/9.x/dense_qr/README.md)
     
     <img src="https://www.dynamsoft.com/codepool/img/2021/10/high-density-qr-detection-performance.jpg" width="500"/>
+
+- [Fast Moving QR Code Detection](examples/9.x/shutter_speed/README.md)
+    
+    ![Android Camera2 shutter speed](https://www.dynamsoft.com/codepool/img/2019/05/android-camera2-barcode.gif)
