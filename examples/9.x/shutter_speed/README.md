@@ -30,6 +30,6 @@ This sample project demonstrates how to scan barcodes from fast-moving objects b
 
 
 ## Blog
-[Android Barcode Detection from Fast Moving Objects](https://www.dynamsoft.com/codepool/android-barcode-detection-fast-moving-object.html)
+[High-Speed Barcode and QR Code Detection on Android Using Camera2 API](https://www.dynamsoft.com/codepool/android-barcode-detection-fast-moving-object.html)
 
 
