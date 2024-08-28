@@ -43,15 +43,8 @@ def getVersion(String productSimpleName, String defaultValue) {
 
 dependencies {
     implementation "com.dynamsoft:dynamsoftbarcodereaderbundle:10.2.1100"
-    if(!project.ext.useDynamsoftMaven) {
-        //For user
-        implementation "com.dynamsoft:dynamsoftcodeparser:2.2.11"
-        implementation "com.dynamsoft:dynamsoftcodeparserdedicator:1.2.20"
-    } else {
-        //For developer
-        implementation "com.dynamsoft:dynamsoftcodeparser:2.2.11-SNAPSHOT"
-        implementation "com.dynamsoft:dynamsoftcodeparserdedicator:1.2.20-SNAPSHOT"
-    }
+    implementation "com.dynamsoft:dynamsoftcodeparser:2.2.11"
+    implementation "com.dynamsoft:dynamsoftcodeparserdedicator:1.2.20"
     implementation 'androidx.appcompat:appcompat:1.5.1'
     implementation 'com.google.android.material:material:1.6.0'
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
