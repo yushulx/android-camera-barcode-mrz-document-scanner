@@ -19,6 +19,7 @@ import com.dynamsoft.dbr.DecodedBarcodesResult;
 import com.dynamsoft.dce.CameraEnhancer;
 import com.dynamsoft.dce.CameraEnhancerException;
 import com.dynamsoft.dcp.ParsedResult;
+import com.dynamsoft.dcv.driverslicensescanner.FileUtil;
 import com.dynamsoft.dcv.driverslicensescanner.MainViewModel;
 import com.dynamsoft.dcv.driverslicensescanner.ParseUtil;
 import com.dynamsoft.dcv.driverslicensescanner.R;
@@ -94,7 +95,8 @@ public class ScannerFragment extends Fragment {
     private void initCaptureVisionRouter() {
         mRouter = new CaptureVisionRouter(requireContext());
         try {
-            mRouter.initSettingsFromFile(TEMPLATE_ASSETS_FILE_NAME);
+            String template = FileUtil.readAssetFileToString(requireContext(), TEMPLATE_ASSETS_FILE_NAME);
+            mRouter.initSettings(template);
         } catch (CaptureVisionRouterException e) {
             e.printStackTrace();
         }
