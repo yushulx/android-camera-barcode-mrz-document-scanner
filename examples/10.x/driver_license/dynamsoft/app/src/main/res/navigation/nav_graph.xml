@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/ScannerFragment">
+
+    <fragment
+        android:id="@+id/ScannerFragment"
+        android:name="com.dynamsoft.dcv.driverslicensescanner.fragments.ScannerFragment"
+        android:label="@string/app_name"
+        tools:layout="@layout/fragment_scanner">
+
+        <action
+            android:id="@+id/action_ScannerFragment_to_ResultFragment"
+            app:destination="@id/ResultFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/ResultFragment"
+        android:name="com.dynamsoft.dcv.driverslicensescanner.fragments.ResultFragment"
+        android:label="@string/result_fragment_label"
+        tools:layout="@layout/fragment_result">
+
+        <action
+            android:id="@+id/action_ResultFragment_to_ScannerFragment"
+            app:destination="@id/ScannerFragment" />
+    </fragment>
+</navigation>

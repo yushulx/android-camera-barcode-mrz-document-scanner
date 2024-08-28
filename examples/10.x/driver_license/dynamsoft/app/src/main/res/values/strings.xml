@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">Drivers\' License Scanner</string>
+
+    <string name="scanner_fragment_label">Scanner Fragment</string>
+    <string name="result_fragment_label">Result Fragment</string>
+
+</resources>

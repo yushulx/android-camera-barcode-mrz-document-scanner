@@ -1,0 +1,182 @@
+{
+	"BarcodeFormatSpecificationOptions" : 
+	[
+		{
+			"Name" : "bfs_pdf_417",
+			"BarcodeBytesLengthRangeArray" : 
+			[
+				{
+					"MaxValue" : 2147483647,
+					"MinValue" : 0
+				}
+			],
+			"BarcodeFormatIds" : 
+			[
+				"BF_DEFAULT",
+				"BF_POSTALCODE",
+				"BF_PHARMACODE",
+				"BF_NONSTANDARD_BARCODE",
+				"BF_DOTCODE"
+			],
+			"BarcodeHeightRangeArray" : null,
+			"BarcodeTextLengthRangeArray" : 
+			[
+				{
+					"MaxValue" : 2147483647,
+					"MinValue" : 0
+				}
+			],
+			"MinResultConfidence" : 30,
+			"MirrorMode" : "MM_NORMAL",
+			"PartitionModes" : 
+			[
+				"PM_WHOLE_BARCODE",
+				"PM_ALIGNMENT_PARTITION"
+			]
+		}
+	],
+	"BarcodeReaderTaskSettingOptions" : 
+	[
+		{
+			"Name" : "pdf_417_task",
+			"BarcodeColourModes" : 
+			[
+				{
+					"LightReflection" : 1,
+					"Mode" : "BICM_DARK_ON_LIGHT"
+				}
+			],
+			"BarcodeFormatSpecificationNameArray" : 
+			[
+				"bfs_pdf_417"
+			],
+			"DeblurModes" : null,
+			"LocalizationModes" : 
+			[
+				{
+					"Mode" : "LM_CONNECTED_BLOCKS"
+				},
+				{
+					"Mode" : "LM_LINES"
+				},
+				{
+					"Mode" : "LM_STATISTICS"
+				}
+			],
+			"MaxThreadsInOneTask" : 1,
+			"SectionImageParameterArray" : 
+			[
+				{
+					"ContinueWhenPartialResultsGenerated" : 1,
+					"ImageParameterName" : "ip_localize_barcode",
+					"Section" : "ST_REGION_PREDETECTION"
+				},
+				{
+					"ContinueWhenPartialResultsGenerated" : 1,
+					"ImageParameterName" : "ip_localize_barcode",
+					"Section" : "ST_BARCODE_LOCALIZATION"
+				},
+				{
+					"ContinueWhenPartialResultsGenerated" : 1,
+					"ImageParameterName" : "ip_decode_barcode",
+					"Section" : "ST_BARCODE_DECODING"
+				}
+			]
+		}
+	],
+	"CaptureVisionTemplates" : 
+	[
+		{
+			"Name" : "ReadPDF417",
+			"ImageROIProcessingNameArray" : 
+			[
+				"roi_pdf_417"
+			],
+			"ImageSource" : "",
+			"MaxParallelTasks" : 4,
+			"MinImageCaptureInterval" : 0,
+			"OutputOriginalImage" : 0,
+			"SemanticProcessingNameArray": [ "sp_pdf_417" ],
+			"Timeout" : 10000
+		}
+	],
+	"GlobalParameter" : 
+	{
+		"MaxTotalImageDimension" : 0
+	},
+	"ImageParameterOptions" : 
+	[
+		{
+			"Name" : "ip_localize_barcode",
+			"BinarizationModes" : 
+			[
+				{
+					"BinarizationThreshold" : -1,
+					"BlockSizeX" : 71,
+					"BlockSizeY" : 71,
+					"EnableFillBinaryVacancy" : 0,
+					"GrayscaleEnhancementModesIndex" : -1,
+					"Mode" : "BM_LOCAL_BLOCK",
+					"ThresholdCompensation" : 10
+				}
+			],
+			"GrayscaleEnhancementModes" : 
+			[
+				{
+					"Mode" : "GEM_GENERAL"
+				}
+			]
+		},
+		{
+			"Name" : "ip_decode_barcode",
+			"ScaleDownThreshold" : 99999
+		},
+		{
+			"Name": "ip_recognize_text",
+			"TextDetectionMode": {
+				"Mode": "TTDM_LINE",
+				"Direction": "HORIZONTAL",
+				"CharHeightRange": [
+					20,
+					1000,
+					1
+				],
+				"Sensitivity": 7
+			}
+		}
+	],
+	"TargetROIDefOptions" : 
+	[
+		{
+			"Name" : "roi_pdf_417",
+			"TaskSettingNameArray" : 
+			[
+				"pdf_417_task"
+			]
+		}
+	],
+	"CharacterModelOptions": [
+		{
+            "Name" : "NumberLetter"
+        }
+    ],
+	"SemanticProcessingOptions": [
+		{
+		  	"Name": "sp_pdf_417",
+		  	"ReferenceObjectFilter": {
+				"ReferenceTargetROIDefNameArray": [
+			  		"roi_pdf_417"
+				]
+			},
+			"TaskSettingNameArray": [
+				"dcp_pdf_417"
+			]
+		}
+	],
+	"CodeParserTaskSettingOptions": [
+		{
+			"Name": "dcp_pdf_417",
+			"CodeSpecifications": ["AAMVA_DL_ID","AAMVA_DL_ID_WITH_MAG_STRIPE","SOUTH_AFRICA_DL"]
+		}
+	]
+}
