@@ -1,5 +1,5 @@
 # Passport MRZ Recognition on Android
-This project demonstrates how to recognize the Machine Readable Zone (MRZ) of a passport on Android using the [Dynamsoft Label Recognizer SDK](https://www.dynamsoft.com/label-recognition/docs/mobile/programming/android/).
+This project demonstrates how to recognize the **Machine Readable Zone (MRZ)** of a passport on Android using the [Dynamsoft Label Recognizer SDK](https://www.dynamsoft.com/label-recognition/docs/mobile/programming/android/).
 
 ## Prerequisites
 - Obtain a [Dynamsoft Capture Vision Trial License](https://www.dynamsoft.com/customer/license/trialLicense/?product=dcv&package=cross-platform)

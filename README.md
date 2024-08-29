@@ -24,3 +24,4 @@ This project demonstrates how to utilize the Dynamsoft Capture Vision SDK for de
     
     https://github.com/yushulx/android-arcore-barcode-qr-detection/assets/2202306/be665855-4720-4896-a838-f9105cd5f9c2
 - [Driver's License Recognition](examples/10.x/driver_license/README.md)
+- [MRZ Recognition](examples/10.x/mrz/README.md)
