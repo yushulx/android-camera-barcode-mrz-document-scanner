@@ -1,0 +1,54 @@
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    namespace 'com.dynamsoft.mrzscanner'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId "com.dynamsoft.mrzscanner"
+        minSdk 21
+        targetSdk 34
+        versionCode 1
+        versionName "1.0"
+
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+}
+
+dependencies {
+//    implementation "com.dynamsoft:${artifactId.dlr}:${versions.dlr}"
+//    implementation "com.dynamsoft:${artifactId.util}:${versions.util}"
+//    implementation "com.dynamsoft:${artifactId.dce}:${versions.dce}"
+//    implementation "com.dynamsoft:${artifactId.cvr}:${versions.cvr}"
+//    implementation "com.dynamsoft:${artifactId.core}:${versions.core}"
+//    implementation "com.dynamsoft:${artifactId.license}:${versions.license}"
+//    implementation "com.dynamsoft:${artifactId.dip}:${versions.dip}"
+//    implementation "com.dynamsoft:${artifactId.dcp}:${versions.dcp}"
+//    implementation "com.dynamsoft:${artifactId.dcpd}:${versions.dcpd}"
+
+    //use bundles instead.
+    implementation "com.dynamsoft:dynamsoftlabelrecognizerbundle:3.2.3000"
+    implementation "com.dynamsoft:${artifactId.dcpd}:${versions.dcpd}"
+    implementation "com.dynamsoft:${artifactId.dcp}:${versions.dcp}"
+
+
+    implementation 'androidx.appcompat:appcompat:1.6.1'
+    implementation 'com.google.android.material:material:1.9.0'
+    implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
+    testImplementation 'junit:junit:4.13.2'
+    androidTestImplementation 'androidx.test.ext:junit:1.1.5'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
+}

@@ -9,13 +9,12 @@ This project demonstrates how to recognize driver's licenses on Android using th
 2. Replace the placeholder with your license key in `MainActivity.java`:
 
     ```java
-    BarcodeReader.initLicense(
-        "LICENSE-KEY",
-        new DBRLicenseVerificationListener() {
-            @Override
-            public void DBRLicenseVerificationCallback(boolean isSuccessful, Exception e) {
-            }
-        });
+    LicenseManager.initLicense("LICENSE-KEY", this, (isSuccessful, error) -> {
+                if (!isSuccessful) {
+                    error.printStackTrace();
+                    runOnUiThread(() -> ((TextView) findViewById(R.id.tv_license_error)).setText("License initialization failed: "+error.getMessage()));
+                }
+            });
     ```
 
 3. Compile the project and run it on your Android device.
