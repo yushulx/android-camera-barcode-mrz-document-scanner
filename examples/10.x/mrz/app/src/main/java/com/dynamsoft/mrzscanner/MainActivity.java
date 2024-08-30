@@ -96,13 +96,6 @@ public class MainActivity extends AppCompatActivity {
 		});
 	}
 
-	private void saveBeepStatus() {
-		SharedPreferences sp = getSharedPreferences("beep", Context.MODE_PRIVATE);
-		SharedPreferences.Editor editor=sp.edit();
-		editor.putBoolean("status", mBeepStatus);
-		editor.apply();
-	}
-
 	@Override
 	protected void onResume() {
 		super.onResume();
