@@ -63,8 +63,5 @@ public class ResultActivity extends AppCompatActivity {
 		content.addView(childView("Date of Birth(YYYY-MM-DD):", properties.get("Date of Birth(YYYY-MM-DD)")));
 		content.addView(childView("Sex:", Character.toUpperCase(properties.get("Sex").charAt(0)) + properties.get("Sex").substring(1)));
 		content.addView(childView("Date of Expiry(YYYY-MM-DD):", properties.get("Date of Expiry(YYYY-MM-DD)")));
-//		content.addView(childView("Personal Number:", properties.get("Personal Number")));
-//		content.addView(childView("Primary Identifier(s):", properties.get("Primary Identifier(s)")));
-//		content.addView(childView("Secondary Identifier(s):", properties.get("Secondary Identifier(s)")));
 	}
 }

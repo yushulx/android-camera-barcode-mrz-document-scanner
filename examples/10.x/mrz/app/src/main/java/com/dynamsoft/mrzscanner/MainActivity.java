@@ -5,7 +5,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.dynamsoft.core.basic_structures.CompletionListener;
@@ -18,7 +17,6 @@ import com.dynamsoft.dce.CameraEnhancerException;
 import com.dynamsoft.dce.CameraView;
 import com.dynamsoft.dce.DrawingLayer;
 import com.dynamsoft.dce.EnumEnhancerFeatures;
-import com.dynamsoft.dce.Feedback;
 import com.dynamsoft.dce.utils.PermissionUtil;
 import com.dynamsoft.dcp.ParsedResult;
 import com.dynamsoft.dcp.ParsedResultItem;
@@ -33,7 +31,6 @@ import java.util.Locale;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.content.res.ResourcesCompat;
 
 public class MainActivity extends AppCompatActivity {
 	private CameraEnhancer mCamera;
@@ -51,9 +48,6 @@ public class MainActivity extends AppCompatActivity {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_scan);
 		PermissionUtil.requestCameraPermission(this);
-        // Initialize the license.
-        // The license string here is a trial license. Note that network connection is required for this license to work.
-        // You can request an extension via the following link: https://www.dynamsoft.com/customer/license/trialLicense?product=cvs&utm_source=samples&package=android
 		LicenseManager.initLicense("DLS2eyJoYW5kc2hha2VDb2RlIjoiMjAwMDAxLTE2NDk4Mjk3OTI2MzUiLCJvcmdhbml6YXRpb25JRCI6IjIwMDAwMSIsInNlc3Npb25QYXNzd29yZCI6IndTcGR6Vm05WDJrcEQ5YUoifQ==",
 				this,
 				(isSuccess, error) -> {

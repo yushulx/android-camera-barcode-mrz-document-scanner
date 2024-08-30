@@ -29,20 +29,9 @@ android {
 }
 
 dependencies {
-//    implementation "com.dynamsoft:${artifactId.dlr}:${versions.dlr}"
-//    implementation "com.dynamsoft:${artifactId.util}:${versions.util}"
-//    implementation "com.dynamsoft:${artifactId.dce}:${versions.dce}"
-//    implementation "com.dynamsoft:${artifactId.cvr}:${versions.cvr}"
-//    implementation "com.dynamsoft:${artifactId.core}:${versions.core}"
-//    implementation "com.dynamsoft:${artifactId.license}:${versions.license}"
-//    implementation "com.dynamsoft:${artifactId.dip}:${versions.dip}"
-//    implementation "com.dynamsoft:${artifactId.dcp}:${versions.dcp}"
-//    implementation "com.dynamsoft:${artifactId.dcpd}:${versions.dcpd}"
-
-    //use bundles instead.
     implementation "com.dynamsoft:dynamsoftlabelrecognizerbundle:3.2.3000"
-    implementation "com.dynamsoft:${artifactId.dcpd}:${versions.dcpd}"
-    implementation "com.dynamsoft:${artifactId.dcp}:${versions.dcp}"
+    implementation "com.dynamsoft:dynamsoftcodeparser:2.2.11"
+    implementation "com.dynamsoft:dynamsoftcodeparserdedicator:1.2.20"
 
 
     implementation 'androidx.appcompat:appcompat:1.6.1'

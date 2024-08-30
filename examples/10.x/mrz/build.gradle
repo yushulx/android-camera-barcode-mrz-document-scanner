@@ -10,30 +10,3 @@ allprojects {
         mavenCentral()
     }
 }
-
-
-def loadLocalProperties() {
-    File file = rootProject.file('local.properties')
-    def useLocalDeps = false
-    if (file.exists()) {
-        InputStream inputStream = rootProject.file('local.properties').newDataInputStream();
-        Properties properties = new Properties()
-        properties.load(inputStream)
-
-        if (properties.containsKey("useLocalDeps")) {
-            useLocalDeps = properties.getProperty("useLocalDeps").toBoolean()
-        }
-    }
-    return useLocalDeps
-}
-
-
-
-if(loadLocalProperties() == true) {
-    def local_script_file = rootProject.file('../../../mobile_sample_script/local_dependencies.gradle')
-    if(local_script_file.exists()) {
-        apply from: local_script_file
-    }
-} else {
-    apply from: rootProject.file('release_dependencies.gradle')
-}
