@@ -1,6 +1,8 @@
 # Driver's License Recognition on Android
 This project demonstrates how to recognize driver's licenses on Android using the Dynamsoft Barcode Reader and Google Mobile Vision.
 
+https://github.com/user-attachments/assets/2ec16f20-2571-4977-b0fd-c4a584641343
+
 ## Prerequisites
 - Obtain a [Dynamsoft Capture Vision Trial License](https://www.dynamsoft.com/customer/license/trialLicense/?product=dcv&package=cross-platform)
 
