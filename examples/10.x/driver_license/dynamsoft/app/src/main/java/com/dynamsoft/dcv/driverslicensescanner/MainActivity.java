@@ -24,7 +24,7 @@ public class MainActivity extends AppCompatActivity {
             // Initialize the license.
             // The license string here is a trial license. Note that network connection is required for this license to work.
             // You can request an extension via the following link: https://www.dynamsoft.com/customer/license/trialLicense?product=cvs&utm_source=samples&package=android
-            LicenseManager.initLicense("DLS2eyJoYW5kc2hha2VDb2RlIjoiMjAwMDAxLTE2NDk4Mjk3OTI2MzUiLCJvcmdhbml6YXRpb25JRCI6IjIwMDAwMSIsInNlc3Npb25QYXNzd29yZCI6IndTcGR6Vm05WDJrcEQ5YUoifQ==", this, (isSuccessful, error) -> {
+            LicenseManager.initLicense("LICENSE-KEY", this, (isSuccessful, error) -> {
                 if (!isSuccessful) {
                     error.printStackTrace();
                     runOnUiThread(() -> ((TextView) findViewById(R.id.tv_license_error)).setText("License initialization failed: "+error.getMessage()));
