@@ -1,6 +1,7 @@
 package com.example.barcodescanner;
 
 import android.os.Bundle;
+import android.view.View;
 import android.widget.TextView;
 
 import androidx.activity.EdgeToEdge;
@@ -10,10 +11,12 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
+import com.dynamsoft.dbr.BarcodeResultItem;
 import com.dynamsoft.dbrbundle.ui.*;
 
 public class MainActivity extends AppCompatActivity {
     private ActivityResultLauncher<BarcodeScannerConfig> launcher;
+    private BarcodeScannerConfig config = new BarcodeScannerConfig();
     private TextView textView;
     private final String LICENSE_KEY = "LICENSE-KEY";
     @Override
@@ -27,14 +30,19 @@ public class MainActivity extends AppCompatActivity {
             return insets;
         });
 
-        BarcodeScannerConfig config = new BarcodeScannerConfig();
         config.setLicense(LICENSE_KEY);
 
         launcher = registerForActivityResult(new BarcodeScannerActivity.ResultContract(), result -> {
             if (result.getResultStatus() == BarcodeScanResult.EnumResultStatus.RS_FINISHED && result.getBarcodes() != null) {
-                String content = "Result: format: " + result.getBarcodes()[0].getFormatString() + "\n" + "content: "
-                        + result.getBarcodes()[0].getText();
-                textView.setText(content);
+                textView.setText("");
+                for (int i = 0; i < result.getBarcodes().length; i++) {
+                    BarcodeResultItem barcode = result.getBarcodes()[i];
+                    String content = String.format("Result %d:\nFormat: %s\nContent: %s\n\n", i,
+                            barcode.getFormatString(),
+                            barcode.getText());
+
+                    textView.append(content);
+                }
             } else if(result.getResultStatus() == BarcodeScanResult.EnumResultStatus.RS_CANCELED ){
                 textView.setText("Scan canceled.");
             }
@@ -42,7 +50,19 @@ public class MainActivity extends AppCompatActivity {
                 textView.setText(result.getErrorString());
             }
         });
-        findViewById(R.id.btn_navigate).setOnClickListener(v -> launcher.launch(config));
+        findViewById(R.id.btn_single).setOnClickListener(this::handleButtonClick);
+        findViewById(R.id.btn_multi).setOnClickListener(this::handleButtonClick);
+
         textView = findViewById(R.id.tv_result);
+    }
+
+    private void handleButtonClick(View v) {
+        int id = v.getId();
+        if (id == R.id.btn_single) {
+            config.setScanningMode(EnumScanningMode.SM_SINGLE);
+        } else if (id == R.id.btn_multi) {
+            config.setScanningMode(EnumScanningMode.SM_MULTIPLE);
+        }
+        launcher.launch(config);
     }
 }
