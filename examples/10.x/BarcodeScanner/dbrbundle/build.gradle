@@ -1,15 +1,13 @@
 plugins {
-    alias(libs.plugins.android.application)
+    id 'com.android.library'
 }
 
-
-
 android {
-    namespace 'com.example.barcodescanner'
+    namespace 'com.dynamsoft.dbrbundle'
     compileSdk 35
 
     defaultConfig {
-        applicationId "com.example.barcodescanner"
+//        applicationId "com.dynamsoft.dbrbundle"
         minSdk 30
         targetSdk 34
         versionCode 1
@@ -34,13 +32,15 @@ dependencies {
 
     implementation libs.appcompat
     implementation libs.material
-    implementation libs.activity
-    implementation libs.constraintlayout
     testImplementation libs.junit
     androidTestImplementation libs.ext.junit
     androidTestImplementation libs.espresso.core
 
-//    implementation 'com.dynamsoft:dynamsoftbarcodereaderbundle:10.4.3001'
-
-    implementation project(':dbrbundle')
+    api "com.dynamsoft:dynamsoftlicense:3.4.40"
+    api "com.dynamsoft:dynamsoftcore:3.4.20"
+    api "com.dynamsoft:dynamsoftcameraenhancer:4.2.20"
+    api "com.dynamsoft:dynamsoftcapturevisionrouter:2.4.21"
+    api "com.dynamsoft:dynamsoftbarcodereader:10.4.20"
+    api "com.dynamsoft:dynamsoftimageprocessing:2.4.20"
+    api "com.dynamsoft:dynamsoftutility:1.4.20"
 }
