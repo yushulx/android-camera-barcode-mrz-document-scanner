@@ -70,6 +70,7 @@ public class BarcodeScannerActivity extends AppCompatActivity {
 	private View mTouchView;
 	private Button btnToggle;
 	private Button btnTorch;
+	private Button btnCapture;
 	private ConfigSerial configuration;
 	private final int radius = 40;
 	private HashMap<String, BarcodeResultItem> mapResultItem;
@@ -83,6 +84,7 @@ public class BarcodeScannerActivity extends AppCompatActivity {
 	private int expectedBarcodesCount;
 	private boolean isTorchOn;
 	private boolean useBackCamera = true;
+	private DecodedBarcodesResult mResult;
 
 	@Override
 	protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -104,6 +106,7 @@ public class BarcodeScannerActivity extends AppCompatActivity {
 		}
 		btnToggle = findViewById(R.id.btn_toggle);
 		btnTorch = findViewById(R.id.btn_torch);
+		btnCapture = findViewById(R.id.btn_capture);
 
 		scanMode = configuration.getScanningMode();
 		maxConsecutiveStableFrames = configuration.getMaxConsecutiveStableFramesToExit();
@@ -187,7 +190,8 @@ public class BarcodeScannerActivity extends AppCompatActivity {
 				if (scanMode == EnumScanningMode.SM_SINGLE) {
 					resultSingle(result);
 				} else {
-					resultMultiple(result);
+//					resultMultiple(result);
+					mResult = result;
 				}
 			}
 		});
@@ -199,6 +203,7 @@ public class BarcodeScannerActivity extends AppCompatActivity {
 				initTorchButton();
 				initAutoZoom();
 				initToggleButton();
+				initCaptureButton();
 			}
 
 			@Override
@@ -348,6 +353,21 @@ public class BarcodeScannerActivity extends AppCompatActivity {
 			}
 		} catch (CameraEnhancerException e) {
 			e.printStackTrace();
+		}
+	}
+
+	private void initCaptureButton() {
+		if (scanMode == EnumScanningMode.SM_SINGLE) {
+			btnCapture.setVisibility(View.GONE);
+		}
+		else {
+			btnCapture.setVisibility(View.VISIBLE);
+			btnCapture.setOnClickListener(v -> {
+				if (mResult != null) {
+					resultOK(BarcodeScanResult.EnumResultStatus.RS_FINISHED, mResult.getItems());
+					finish();
+				}
+			});
 		}
 	}
 

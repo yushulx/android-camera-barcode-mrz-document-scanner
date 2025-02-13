@@ -43,4 +43,15 @@
 			android:layout_height="40dp"
 			android:background="@drawable/toggle_lens" />
 	</LinearLayout>
+
+	<Button
+		android:id="@+id/btn_capture"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:layout_centerHorizontal="true"
+		android:layout_above="@id/action_view"
+		android:layout_marginBottom="16dp"
+		android:text="Capture"
+		android:src="@drawable/circle"/>
+
 </RelativeLayout>
