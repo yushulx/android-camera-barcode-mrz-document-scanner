@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	xmlns:app="http://schemas.android.com/apk/res-auto"
+	android:layout_width="match_parent"
+	android:layout_height="match_parent">
+
+	<androidx.appcompat.widget.Toolbar
+		android:id="@+id/toolbar"
+		android:layout_width="match_parent"
+		android:layout_height="?attr/actionBarSize"
+		android:background="@color/colorPrimary"
+		android:elevation="4dp"
+		android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar">
+
+		<RelativeLayout
+			android:layout_width="match_parent"
+			android:layout_height="match_parent">
+
+			<!-- Back Button (Top Left) -->
+			<ImageView
+				android:id="@+id/iv_back"
+				android:layout_width="25dp"
+				android:layout_height="25dp"
+				android:layout_marginStart="16dp"
+				android:layout_marginTop="16dp"
+				android:src="@drawable/ic_arrow_left" />
+
+			<TextView
+				android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:layout_centerInParent="true"
+				android:text="Barcode Scanner"
+				android:textColor="@android:color/white"
+				android:textSize="18sp"
+				android:textStyle="bold" />
+
+			<!-- Check Button (Top Right) -->
+			<ImageView
+				android:id="@+id/btn_check"
+				android:layout_width="25dp"
+				android:layout_height="25dp"
+				android:layout_alignParentEnd="true"
+				android:layout_marginEnd="16dp"
+				android:layout_marginTop="16dp"
+				android:src="@drawable/done" />
+
+
+
+		</RelativeLayout>
+	</androidx.appcompat.widget.Toolbar>
+
+	<!-- Camera View -->
+	<com.dynamsoft.dce.CameraView
+		android:id="@+id/camera_view"
+		android:layout_width="match_parent"
+		android:layout_height="match_parent" />
+
+	<!-- Touch View -->
+	<View
+		android:id="@+id/touch_view"
+		android:layout_width="match_parent"
+		android:layout_height="match_parent" />
+
+
+
+	<!-- Action Buttons (Bottom Center) -->
+	<LinearLayout
+		android:id="@+id/action_view"
+		android:layout_width="wrap_content"
+		android:layout_centerHorizontal="true"
+		android:layout_height="wrap_content"
+		android:layout_alignParentBottom="true"
+		android:gravity="center"
+		android:layout_marginBottom="90dp">
+
+		<android.widget.Button
+			android:id="@+id/btn_torch"
+			android:layout_width="40dp"
+			android:layout_height="40dp"
+			android:background="@drawable/icon_flash_off" />
+
+		<android.widget.Button
+			android:id="@+id/btn_toggle"
+			android:layout_marginStart="50dp"
+			android:layout_width="40dp"
+			android:layout_height="40dp"
+			android:background="@drawable/toggle_lens" />
+	</LinearLayout>
+
+	<!-- Capture Button -->
+	<Button
+		android:id="@+id/btn_capture"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:layout_centerHorizontal="true"
+		android:layout_above="@id/action_view"
+		android:layout_marginBottom="16dp"
+		android:text="Capture"
+		android:src="@drawable/circle" />
+</RelativeLayout>
