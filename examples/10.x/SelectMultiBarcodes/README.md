@@ -1,7 +1,7 @@
 # Multiple Barcode Scanner App for Android
 This Android project demonstrates how to **scan** and **select** multiple barcodes using [Dynamsoft Barcode Scanner API](https://www.dynamsoft.com/barcode-reader/docs/mobile/programming/android/api-reference/barcode-scanner/index.html).
 
-https://github.com/user-attachments/assets/b7d8d32d-1158-4a49-9efa-6c037cbc1522
+https://github.com/user-attachments/assets/4fc9af7a-689b-4629-8ef1-447235fc0612
 
 ## Prerequisites
 - Obtain a free trial license from [Dynamsoft's website](https://www.dynamsoft.com/customer/license/trialLicense/?product=dcv&package=cross-platform).
