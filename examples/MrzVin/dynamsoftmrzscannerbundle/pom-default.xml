@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+	<!-- This module was also published with a richer model, Gradle metadata,  -->
+	<!-- which should be used instead. Do not delete the following line which  -->
+	<!-- is to indicate to Gradle or any Gradle module metadata file consumer  -->
+	<!-- that they should prefer consuming it instead. -->
+	<!-- do_not_remove: published-with-gradle-metadata -->
+	<modelVersion>4.0.0</modelVersion>
+	<groupId>com.dynamsoft</groupId>
+	<artifactId>mrzscannerbundle</artifactId>
+	<version>2.0.1</version>
+	<packaging>aar</packaging>
+	<dependencies>
+		<dependency>
+			<groupId>com.dynamsoft</groupId>
+			<artifactId>dynamsoftlicense</artifactId>
+			<version>3.4.40</version>
+			<scope>compile</scope>
+		</dependency>
+		<dependency>
+			<groupId>com.dynamsoft</groupId>
+			<artifactId>dynamsoftcore</artifactId>
+			<version>3.4.30</version>
+			<scope>compile</scope>
+		</dependency>
+		<dependency>
+			<groupId>com.dynamsoft</groupId>
+			<artifactId>dynamsoftcameraenhancer</artifactId>
+			<version>4.2.22</version>
+			<scope>compile</scope>
+		</dependency>
+		<dependency>
+			<groupId>com.dynamsoft</groupId>
+			<artifactId>dynamsoftcapturevisionrouter</artifactId>
+			<version>2.4.30</version>
+			<scope>compile</scope>
+		</dependency>
+		<dependency>
+			<groupId>com.dynamsoft</groupId>
+			<artifactId>dynamsoftimageprocessing</artifactId>
+			<version>2.4.31</version>
+			<scope>compile</scope>
+		</dependency>
+		<dependency>
+			<groupId>com.dynamsoft</groupId>
+			<artifactId>dynamsoftutility</artifactId>
+			<version>1.4.30</version>
+			<scope>compile</scope>
+		</dependency>
+		<dependency>
+			<groupId>com.dynamsoft</groupId>
+			<artifactId>dynamsoftlabelrecognizer</artifactId>
+			<version>3.4.30</version>
+			<scope>compile</scope>
+		</dependency>
+		<dependency>
+			<groupId>com.dynamsoft</groupId>
+			<artifactId>dynamsoftneuralnetwork</artifactId>
+			<version>1.0.21</version>
+			<scope>compile</scope>
+		</dependency>
+		<dependency>
+			<groupId>com.dynamsoft</groupId>
+			<artifactId>dynamsoftcodeparser</artifactId>
+			<version>2.4.30</version>
+			<scope>compile</scope>
+		</dependency>
+		<dependency>
+			<groupId>com.dynamsoft</groupId>
+			<artifactId>dynamsoftcodeparserdedicator</artifactId>
+			<version>1.2.31</version>
+			<scope>compile</scope>
+		</dependency>
+		<dependency>
+			<groupId>com.dynamsoft</groupId>
+			<artifactId>dynamsoftmrz</artifactId>
+			<version>3.4.20</version>
+			<scope>compile</scope>
+		</dependency>
+
+		<!-- AndroidX and Google Material dependencies -->
+		<dependency>
+			<groupId>androidx.appcompat</groupId>
+			<artifactId>appcompat</artifactId>
+			<version>1.6.1</version>
+			<scope>compile</scope>
+		</dependency>
+		<dependency>
+			<groupId>com.google.android.material</groupId>
+			<artifactId>material</artifactId>
+			<version>1.9.0</version>
+			<scope>compile</scope>
+		</dependency>
+	</dependencies>
+</project>

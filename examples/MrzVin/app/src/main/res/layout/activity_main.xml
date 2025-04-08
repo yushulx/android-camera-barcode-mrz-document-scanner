@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	xmlns:app="http://schemas.android.com/apk/res-auto"
+	xmlns:tools="http://schemas.android.com/tools"
+	android:layout_width="match_parent"
+	android:layout_height="match_parent"
+	android:orientation="vertical"
+	tools:context=".MainActivity">
+
+	<RadioGroup
+		android:id="@+id/radio_group_mode"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:orientation="horizontal"
+		android:layout_centerHorizontal="true"
+		android:layout_marginTop="40dp">
+
+		<RadioButton
+			android:id="@+id/radio_mrz"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:text="MRZ"
+			android:checked="true"
+			android:buttonTint="@color/orange"
+			android:textColor="@android:color/black" />
+
+		<RadioButton
+			android:id="@+id/radio_vin"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:text="VIN"
+			android:buttonTint="@color/orange"
+			android:textColor="@android:color/black" />
+	</RadioGroup>
+
+	<ScrollView
+		android:layout_width="match_parent"
+		android:layout_height="match_parent"
+		android:layout_above="@+id/btn_nav"
+		android:layout_below="@+id/radio_group_mode"
+		android:orientation="vertical"
+		android:padding="20dp">
+		<LinearLayout
+			android:id="@+id/ll_content"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:orientation="vertical">
+			<TextView
+				android:id="@+id/tv_name"
+				android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:textSize="18sp"
+				android:textStyle="bold" />
+		</LinearLayout>
+	</ScrollView>
+
+	<Button
+		android:id="@+id/btn_nav"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:layout_alignParentBottom="true"
+		android:layout_centerHorizontal="true"
+		android:layout_marginBottom="30dp"
+		android:text="START SCANNING" />
+</RelativeLayout>

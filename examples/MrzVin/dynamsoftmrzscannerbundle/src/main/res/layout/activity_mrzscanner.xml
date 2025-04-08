@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	android:layout_width="match_parent"
+	android:layout_height="match_parent">
+
+	<com.dynamsoft.dce.CameraView
+		android:id="@+id/dce_camera_view"
+		android:layout_width="match_parent"
+		android:layout_height="match_parent" />
+
+	<ImageView
+		android:id="@+id/iv_back"
+		android:layout_width="25dp"
+		android:layout_height="25dp"
+		android:layout_marginStart="16dp"
+		android:layout_marginTop="16dp"
+		android:src="@drawable/icon_close" />
+
+	<ImageView
+		android:id="@+id/iv_guide_frame"
+		android:layout_width="318dp"
+		android:layout_height="200dp"
+		android:layout_centerInParent="true"
+		android:layout_marginHorizontal="24dp"
+		android:background="@drawable/guide_frame" />
+
+
+	<LinearLayout
+		android:id="@+id/action_view"
+		android:layout_width="wrap_content"
+		android:layout_centerHorizontal="true"
+		android:layout_height="wrap_content"
+		android:layout_alignParentBottom="true"
+		android:gravity="center"
+		android:layout_marginBottom="90dp">
+		<android.widget.Button
+			android:id="@+id/btn_torch"
+			android:layout_width="40dp"
+			android:layout_height="40dp"
+			android:background="@drawable/icon_flash_off" />
+
+		<android.widget.Button
+			android:id="@+id/btn_toggle"
+			android:layout_marginStart="50dp"
+			android:layout_width="40dp"
+			android:layout_height="40dp"
+			android:background="@drawable/toggle_lens" />
+	</LinearLayout>
+	<TextView
+		android:id="@+id/tv_alert"
+		android:layout_alignParentBottom="true"
+		android:textColor="@color/red00"
+		android:layout_marginHorizontal="40dp"
+		android:layout_marginBottom="100dp"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"/>
+
+</RelativeLayout>
