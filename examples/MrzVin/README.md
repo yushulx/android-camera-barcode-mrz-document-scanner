@@ -1,0 +1,13 @@
+# Android MRZ/VIN Scanner
+This project demonstrates how to build a simple Android application that scans **MRZ (Machine Readable Zone)** and **VIN (Vehicle Identification Number)** using the **Dynamsoft Capture Vision SDK**.
+
+## Prerequisites
+- [License Key for Dynamsoft Capture Vision SDK](https://www.dynamsoft.com/customer/license/trialLicense/?product=dcv&package=cross-platform)
+
+## Getting Started
+1. Open the project in Android Studio.
+2. Set the license key in the `MainActivity.java` file:
+   ```java
+   config.setLicense("LICENSE-KEY");
+   ```
+3. Build and run the application on an Android device.
