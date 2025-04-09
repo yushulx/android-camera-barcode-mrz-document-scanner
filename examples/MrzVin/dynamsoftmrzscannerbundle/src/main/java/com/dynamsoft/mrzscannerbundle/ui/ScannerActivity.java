@@ -9,6 +9,7 @@ import android.widget.Button;
 import android.widget.ImageView;
 
 import com.dynamsoft.core.basic_structures.CompletionListener;
+import com.dynamsoft.core.basic_structures.DSRect;
 import com.dynamsoft.core.basic_structures.EnumCapturedResultItemType;
 import com.dynamsoft.cvr.CaptureVisionRouter;
 import com.dynamsoft.cvr.CaptureVisionRouterException;
@@ -62,7 +63,7 @@ public class ScannerActivity extends AppCompatActivity {
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		setContentView(R.layout.activity_mrzscanner);
+		setContentView(R.layout.activity_scanner);
 		PermissionUtil.requestCameraPermission(this);
 
 		Intent requestIntent = getIntent();
@@ -86,7 +87,6 @@ public class ScannerActivity extends AppCompatActivity {
 
 		boolean isGuideFrameVisible = configuration.isGuideFrameVisible();
 		ImageView guideFrame = findViewById(R.id.iv_guide_frame);
-		guideFrame.setVisibility(isGuideFrameVisible ? View.VISIBLE : View.GONE);
 
 		mCameraView = findViewById(R.id.dce_camera_view);
 
@@ -98,13 +98,30 @@ public class ScannerActivity extends AppCompatActivity {
 		// CameraEnhancer is the class for controlling the camera and obtaining high-quality video input.
 		mCamera = new CameraEnhancer(mCameraView, this);
 
-		// Enable the frame filter feature. It will improve the accuracy of the MRZ scanning.
-		try {
-			mCamera.enableEnhancedFeatures(EnumEnhancerFeatures.EF_FRAME_FILTER);
-		} catch (CameraEnhancerException e) {
-			throw new RuntimeException(e);
+		switch (configuration.getDetectionType()) {
+			case MRZ:
+			{
+				guideFrame.setVisibility(isGuideFrameVisible ? View.VISIBLE : View.GONE);
+				// Enable the frame filter feature. It will improve the accuracy of the MRZ scanning.
+				try {
+					mCamera.enableEnhancedFeatures(EnumEnhancerFeatures.EF_FRAME_FILTER);
+				} catch (CameraEnhancerException e) {
+					throw new RuntimeException(e);
+				}
+			}
+				break;
+			case VIN: {
+				guideFrame.setVisibility(View.GONE);
+				try {
+					mCamera.setScanRegion(new DSRect(0.1f, 0.4f, 0.9f, 0.6f, true));
+				} catch (CameraEnhancerException e) {
+					e.printStackTrace();
+				}
+			}
+				break;
+			default:
+				break;
 		}
-
 	}
 
 	private void configCVR() {
