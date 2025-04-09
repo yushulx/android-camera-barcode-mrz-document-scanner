@@ -2,12 +2,7 @@ package com.dynamsoft.mrzscannerbundle.ui;
 
 import java.io.Serializable;
 
-/**
- * @author: dynamsoft
- * Time: 2024/12/2
- * Description:
- */
-public class MRZScannerConfig implements Serializable {
+public class ScannerConfig implements Serializable {
 	public static final String TAG = "MRZScannerConfig";
 	@Deprecated
 	private String templateFilePath;
@@ -19,6 +14,15 @@ public class MRZScannerConfig implements Serializable {
 	private boolean guideFrameVisible = true;
 	private boolean isCameraToggleButtonVisible;
 	private String templateFile;
+	private EnumDetectionType detectionType = EnumDetectionType.MRZ;
+
+	public EnumDetectionType getDetectionType() {
+		return detectionType;
+	}
+
+	public void setDetectionType(EnumDetectionType detectionType) {
+		this.detectionType = detectionType;
+	}
 
 	public boolean isCloseButtonVisible() {
 		return isCloseButtonVisible;

@@ -5,28 +5,17 @@ import android.content.Intent;
 import java.util.Calendar;
 import java.util.HashMap;
 
-import androidx.annotation.IntDef;
+import static com.dynamsoft.mrzscannerbundle.ui.ScannerActivity.EXTRA_DOC_TYPE;
+import static com.dynamsoft.mrzscannerbundle.ui.ScannerActivity.EXTRA_ERROR_CODE;
+import static com.dynamsoft.mrzscannerbundle.ui.ScannerActivity.EXTRA_ERROR_STRING;
+import static com.dynamsoft.mrzscannerbundle.ui.ScannerActivity.EXTRA_ISSUING_STATE;
+import static com.dynamsoft.mrzscannerbundle.ui.ScannerActivity.EXTRA_NATIONALITY;
+import static com.dynamsoft.mrzscannerbundle.ui.ScannerActivity.EXTRA_NUMBER;
+import static com.dynamsoft.mrzscannerbundle.ui.ScannerActivity.EXTRA_RESULT;
+import static com.dynamsoft.mrzscannerbundle.ui.ScannerActivity.EXTRA_STATUS_CODE;
 
-import static com.dynamsoft.mrzscannerbundle.ui.MRZScanResult.EnumResultStatus.RS_CANCELED;
-import static com.dynamsoft.mrzscannerbundle.ui.MRZScanResult.EnumResultStatus.RS_EXCEPTION;
-import static com.dynamsoft.mrzscannerbundle.ui.MRZScanResult.EnumResultStatus.RS_FINISHED;
-import static com.dynamsoft.mrzscannerbundle.ui.MRZScannerActivity.EXTRA_DOC_TYPE;
-import static com.dynamsoft.mrzscannerbundle.ui.MRZScannerActivity.EXTRA_ERROR_CODE;
-import static com.dynamsoft.mrzscannerbundle.ui.MRZScannerActivity.EXTRA_ERROR_STRING;
-import static com.dynamsoft.mrzscannerbundle.ui.MRZScannerActivity.EXTRA_ISSUING_STATE;
-import static com.dynamsoft.mrzscannerbundle.ui.MRZScannerActivity.EXTRA_NATIONALITY;
-import static com.dynamsoft.mrzscannerbundle.ui.MRZScannerActivity.EXTRA_NUMBER;
-import static com.dynamsoft.mrzscannerbundle.ui.MRZScannerActivity.EXTRA_RESULT;
-import static com.dynamsoft.mrzscannerbundle.ui.MRZScannerActivity.EXTRA_STATUS_CODE;
-
-/**
- * @author: dynamsoft
- * Time: 2024/12/2
- * Description:
- */
-public final class MRZScanResult {
+public final class MRZScanResult extends CommonResult {
 	private int mBirthYear;
-	private String docType;
 	private String firstName;
 	private String lastName;
 	private String sex;
@@ -37,23 +26,14 @@ public final class MRZScanResult {
 	private String documentNumber;
 	private int age;
 	private String mrzText = "";
-	@EnumResultStatus
-	private int resultStatus;
-	private int errorCode;
-	private String errorString;
+
 	private MRZData mrzData;
+	private String docType;
 
-	@IntDef(value = {RS_FINISHED, RS_CANCELED, RS_EXCEPTION})
-	public @interface EnumResultStatus {
-		int RS_FINISHED = 0;
-		int RS_CANCELED = 1;
-		int RS_EXCEPTION = 2;
-	}
-
-	public MRZScanResult(int resultCode, Intent data) {
+	public MRZScanResult(int resultCode, Intent data, EnumDetectionType type) {
 		if (data != null) {
 			docType = data.getStringExtra(EXTRA_DOC_TYPE);
-			resultStatus = data.getIntExtra(EXTRA_STATUS_CODE, 0);
+			resultStatus = data.getIntExtra(EXTRA_STATUS_CODE, resultCode);
 			errorCode = data.getIntExtra(EXTRA_ERROR_CODE, 0);
 			errorString = data.getStringExtra(EXTRA_ERROR_STRING);
 			nationality = data.getStringExtra(EXTRA_NATIONALITY);
@@ -62,6 +42,7 @@ public final class MRZScanResult {
 			assembleMap((HashMap<String, String>) data.getSerializableExtra(EXTRA_RESULT));
 			mrzData = new MRZData(firstName, lastName, sex, issuingState, nationality, dateOfBirth, dateOfExpire,
 					documentNumber, age, mrzText, docType);
+			detectionType = type;
 		}
 	}
 
@@ -69,21 +50,10 @@ public final class MRZScanResult {
 		return mrzData;
 	}
 
-	@EnumResultStatus
-	public int getResultStatus() {
-		return resultStatus;
-	}
-
-	public int getErrorCode() {
-		return errorCode;
-	}
-
-	public String getErrorString() {
-		return errorString;
-	}
 
 
-	private void assembleMap(HashMap<String, String> entry) {
+	@Override
+	public void assembleMap(HashMap<String, String> entry) {
 		// Parsed fields are stored in a HashMap with field name as the key and field value as the value.
 		// The following code shows how to get the parsed field values.
 		if (entry == null) {

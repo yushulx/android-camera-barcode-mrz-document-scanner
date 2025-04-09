@@ -37,12 +37,7 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 
-/**
- * @author: dynamsoft
- * Time: 2024/12/2
- * Description:
- */
-public class MRZScannerActivity extends AppCompatActivity {
+public class ScannerActivity extends AppCompatActivity {
 	public final static String EXTRA_SCANNER_CONFIG = "scanner_config";
 	public final static String EXTRA_STATUS_CODE = "extra_status_code";
 	public final static String EXTRA_ERROR_CODE = "extra_error_code";
@@ -59,7 +54,7 @@ public class MRZScannerActivity extends AppCompatActivity {
 	private CaptureVisionRouter mRouter;
 	private boolean succeed = false;
 	private String mCurrentTemplate = "ReadPassportAndId";
-	private MRZScannerConfig configuration;
+	private ScannerConfig configuration;
 	private String number;
 	private boolean isTorchOn;
 	private boolean useBackCamera = true;
@@ -72,12 +67,9 @@ public class MRZScannerActivity extends AppCompatActivity {
 
 		Intent requestIntent = getIntent();
 		if (requestIntent != null) {
-			configuration = (MRZScannerConfig) requestIntent.getSerializableExtra(EXTRA_SCANNER_CONFIG);
+			configuration = (ScannerConfig) requestIntent.getSerializableExtra(EXTRA_SCANNER_CONFIG);
 		}
 
-		// Initialize the license.
-		// The license string here is a trial license. Note that network connection is required for this license to work.
-		// You can request an extension via the following link: https://www.dynamsoft.com/customer/license/trialLicense?product=mrz&utm_source=samples&package=android
 		if (configuration.getLicense() != null) {
 			LicenseManager.initLicense(configuration.getLicense(), this, (isSuccess, error) -> {
 				if (!isSuccess) {
@@ -99,7 +91,7 @@ public class MRZScannerActivity extends AppCompatActivity {
 		mCameraView = findViewById(R.id.dce_camera_view);
 
 		findViewById(R.id.iv_back).setOnClickListener((v) -> {
-			resultOK(MRZScanResult.EnumResultStatus.RS_CANCELED, null);
+			resultOK(CommonResult.EnumResultStatus.RS_CANCELED, null);
 			finish();
 		});
 
@@ -130,19 +122,28 @@ public class MRZScannerActivity extends AppCompatActivity {
 				mCurrentTemplate = "";
 				mRouter.initSettingsFromFile(configuration.getTemplateFilePath());
 			} else {
-				if (configuration.getDocumentType() != null) {
-					switch (configuration.getDocumentType()) {
-						case DT_ALL:
-							mCurrentTemplate = "ReadPassportAndId";
-							break;
-						case DT_ID:
-							mCurrentTemplate = "ReadId";
-							break;
-						case DT_PASSPORT:
-							mCurrentTemplate = "ReadPassport";
-							break;
-					}
+				switch (configuration.getDetectionType()) {
+					case MRZ:
+					{
+						if (configuration.getDocumentType() != null) {
+							switch (configuration.getDocumentType()) {
+								case DT_ALL:
+									mCurrentTemplate = "ReadPassportAndId";
+									break;
+								case DT_ID:
+									mCurrentTemplate = "ReadId";
+									break;
+								case DT_PASSPORT:
+									mCurrentTemplate = "ReadPassport";
+									break;
+							}
 
+						}
+					}
+						break;
+					case VIN:
+						mCurrentTemplate = "ReadVINText";
+						break;
 				}
 			}
 		} catch (CaptureVisionRouterException e) {
@@ -306,7 +307,7 @@ public class MRZScannerActivity extends AppCompatActivity {
 
 	@Override
 	public void onBackPressed() {
-		resultOK(MRZScanResult.EnumResultStatus.RS_CANCELED, null);
+		resultOK(CommonResult.EnumResultStatus.RS_CANCELED, null);
 		super.onBackPressed();
 	}
 
@@ -316,12 +317,13 @@ public class MRZScannerActivity extends AppCompatActivity {
 		}
 		// If failed to parse the MRZ, the following code shows the recognized text on the view.
 		if (result.getItems().length != 0) {
-			if (formerFilter(result.getItems()[0])) {
+			ParsedResultItem item = result.getItems()[0];
+			if (item.getCodeType().equals("VIN") || formerFilter(item)) {
 				if (configuration.isBeepEnabled()) {
 					Feedback.beep(this);
 				}
 				succeed = true;
-				resultOK(MRZScanResult.EnumResultStatus.RS_FINISHED, result.getItems()[0]);
+				resultOK(CommonResult.EnumResultStatus.RS_FINISHED, item);
 				finish();
 			}
 		}
@@ -329,6 +331,7 @@ public class MRZScannerActivity extends AppCompatActivity {
 
 	private boolean formerFilter(ParsedResultItem item) {
 		HashMap<String, String> entry = item.getParsedFields();
+		String codeType = item.getCodeType();
 
 		number = entry.get("passportNumber") == null ? entry.get("documentNumber") == null
 				? entry.get("longDocumentNumber") == null ? "" : entry.get("longDocumentNumber") :
@@ -347,9 +350,12 @@ public class MRZScannerActivity extends AppCompatActivity {
 		intent.putExtra(EXTRA_STATUS_CODE, statusCode);
 		if (item != null) {
 			intent.putExtra(EXTRA_DOC_TYPE, item.getCodeType());
-			intent.putExtra(EXTRA_NATIONALITY, item.getFieldRawValue("nationality"));
-			intent.putExtra(EXTRA_ISSUING_STATE, item.getFieldRawValue("issuingState"));
-			intent.putExtra(EXTRA_NUMBER, number);
+			if (!item.getCodeType().equals("VIN")) {
+				intent.putExtra(EXTRA_NATIONALITY, item.getFieldRawValue("nationality"));
+				intent.putExtra(EXTRA_ISSUING_STATE, item.getFieldRawValue("issuingState"));
+				intent.putExtra(EXTRA_NUMBER, number);
+			}
+
 			intent.putExtra(EXTRA_RESULT, item.getParsedFields());
 		}
 		setResult(RESULT_OK, intent);
@@ -370,25 +376,40 @@ public class MRZScannerActivity extends AppCompatActivity {
 
 	private void resultError(int errorCode, String errorString) {
 		Intent intent = new Intent();
-		intent.putExtra(EXTRA_STATUS_CODE, MRZScanResult.EnumResultStatus.RS_EXCEPTION);
+		intent.putExtra(EXTRA_STATUS_CODE, CommonResult.EnumResultStatus.RS_EXCEPTION);
 		intent.putExtra(EXTRA_ERROR_CODE, errorCode);
 		intent.putExtra(EXTRA_ERROR_STRING, errorString);
 		setResult(RESULT_OK, intent);
 	}
 
-	public static final class ResultContract extends ActivityResultContract<MRZScannerConfig, MRZScanResult> {
+	public static final class ResultContract extends ActivityResultContract<ScannerConfig, CommonResult> {
+		private EnumDetectionType detectionType;
+		private ScannerConfig config;
 
 		@NonNull
 		@Override
-		public Intent createIntent(@NonNull Context context, MRZScannerConfig mrzScannerConfig) {
-			Intent intent = new Intent(context, MRZScannerActivity.class);
-			intent.putExtra(MRZScannerActivity.EXTRA_SCANNER_CONFIG, mrzScannerConfig);
+		public Intent createIntent(@NonNull Context context, ScannerConfig scannerConfig) {
+			Intent intent = new Intent(context, ScannerActivity.class);
+			intent.putExtra(ScannerActivity.EXTRA_SCANNER_CONFIG, scannerConfig);
+			config = scannerConfig;
 			return intent;
 		}
 
 		@Override
-		public MRZScanResult parseResult(int i, @Nullable Intent intent) {
-			return new MRZScanResult(i, intent);
+		public CommonResult parseResult(int i, @Nullable Intent intent) {
+			switch (config.getDetectionType()) {
+				case MRZ: {
+					return new MRZScanResult(i, intent, config.getDetectionType());
+				}
+
+				case VIN:
+				{
+					return new VINScanResult(i, intent, config.getDetectionType());
+				}
+
+			}
+
+			return null;
 		}
 	}
 }

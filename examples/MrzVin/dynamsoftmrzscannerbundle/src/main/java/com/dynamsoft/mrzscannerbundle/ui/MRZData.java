@@ -1,10 +1,5 @@
 package com.dynamsoft.mrzscannerbundle.ui;
 
-/**
- * @author: dynamsoft
- * Time: 2024/12/11
- * Description:
- */
 public class MRZData {
 	private final String enumDocType;
 	private final String firstName;

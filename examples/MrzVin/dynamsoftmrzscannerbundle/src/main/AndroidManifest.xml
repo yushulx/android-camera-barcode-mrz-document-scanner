@@ -3,7 +3,7 @@
 
 	<application>
 		<activity
-			android:name=".ui.MRZScannerActivity"
+			android:name=".ui.ScannerActivity"
 			android:theme="@style/Theme.AppCompat.DayNight.NoActionBar"
 			android:screenOrientation="portrait"/>
 	</application>
