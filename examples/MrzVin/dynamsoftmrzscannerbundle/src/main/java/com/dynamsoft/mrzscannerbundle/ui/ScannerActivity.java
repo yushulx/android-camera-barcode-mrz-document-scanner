@@ -59,11 +59,16 @@ public class ScannerActivity extends AppCompatActivity {
 	private String number;
 	private boolean isTorchOn;
 	private boolean useBackCamera = true;
-
+	private boolean enableCapture = false;
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_scanner);
+
+		findViewById(R.id.btn_capture).setOnClickListener(v -> {
+			enableCapture = true;
+		});
+
 		PermissionUtil.requestCameraPermission(this);
 
 		Intent requestIntent = getIntent();
@@ -325,10 +330,10 @@ public class ScannerActivity extends AppCompatActivity {
 	}
 
 	private void onParsedResultReceived(ParsedResult result) {
-		if (result.getItems() == null) {
+		if (result.getItems() == null || !enableCapture) {
 			return;
 		}
-		// If failed to parse the MRZ, the following code shows the recognized text on the view.
+
 		if (result.getItems().length != 0) {
 			ParsedResultItem item = result.getItems()[0];
 			if (item.getCodeType().equals("VIN") || formerFilter(item)) {

@@ -54,5 +54,12 @@
 		android:layout_marginBottom="100dp"
 		android:layout_width="wrap_content"
 		android:layout_height="wrap_content"/>
-
+	<Button
+		android:id="@+id/btn_capture"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:layout_alignParentBottom="true"
+		android:layout_centerHorizontal="true"
+		android:layout_marginBottom="30dp"
+		android:text="Capture" />
 </RelativeLayout>
