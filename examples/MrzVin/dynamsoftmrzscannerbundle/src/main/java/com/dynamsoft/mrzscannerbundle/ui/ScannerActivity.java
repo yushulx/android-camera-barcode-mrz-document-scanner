@@ -172,20 +172,15 @@ public class ScannerActivity extends AppCompatActivity {
 
 	// The implementation of restartCapture().
 	private void restartCapture(String template) {
-		// Start capturing.
-		// The template name is a string specified in the template file.
-		// In this sample we can use "ReadPassportAndId", "ReadId" and "ReadPassport".
-		// Here the template name is what the user selected on the UI.
-		// The completion listener is implemented below. It calls back when the capturing is successful or failed.
 		mRouter.startCapturing(template, new CompletionListener() {
 			@Override
 			public void onSuccess() {
-				initTorchButton();
-				initToggleButton();
+				runOnUiThread(() -> {
+					initTorchButton();
+					initToggleButton();
+				});
 			}
 
-			// If failed, it shows an error message that describes the reasons.
-			// License error can be one of the reason of a failure. Besure that you have a valid license when starting capturing.
 			@Override
 			public void onFailure(int errorCode, String errorString) {
 				runOnUiThread(() -> {
@@ -299,6 +294,7 @@ public class ScannerActivity extends AppCompatActivity {
 			e.printStackTrace();
 		}
 		restartCapture(mCurrentTemplate);
+
 	}
 
 	@Override
