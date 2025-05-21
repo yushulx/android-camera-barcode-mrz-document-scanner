@@ -130,7 +130,7 @@ public class ScannerActivity extends AppCompatActivity {
 	}
 
 	private void configCVR() {
-		mRouter = new CaptureVisionRouter(this);
+		mRouter = new CaptureVisionRouter();
 		try {
 			if (configuration.getTemplateFile() != null && !configuration.getTemplateFile().isEmpty()) {
 				String template = configuration.getTemplateFile();
@@ -197,21 +197,13 @@ public class ScannerActivity extends AppCompatActivity {
 	}
 
 	private void turnOnTorch() {
-		try {
-			mCamera.turnOnTorch();
-			btnTorch.setBackground(ContextCompat.getDrawable(this, R.drawable.icon_flash_on));
-		} catch (CameraEnhancerException e) {
-			e.printStackTrace();
-		}
+		mCamera.turnOnTorch();
+		btnTorch.setBackground(ContextCompat.getDrawable(this, R.drawable.icon_flash_on));
 	}
 
 	private void turnOffTorch() {
-		try {
-			mCamera.turnOffTorch();
-			btnTorch.setBackground(ContextCompat.getDrawable(this, R.drawable.icon_flash_off));
-		} catch (CameraEnhancerException e) {
-			e.printStackTrace();
-		}
+		mCamera.turnOffTorch();
+		btnTorch.setBackground(ContextCompat.getDrawable(this, R.drawable.icon_flash_off));
 	}
 
 	private void initTorchButton() {
@@ -243,19 +235,15 @@ public class ScannerActivity extends AppCompatActivity {
 			resetToggleButton(0);
 		}
 		btnToggle.setOnClickListener(v -> {
-			try {
-				useBackCamera = !useBackCamera;
-				mCamera.selectCamera(useBackCamera ? EnumCameraPosition.CP_BACK : EnumCameraPosition.CP_FRONT);
-				if (configuration.isTorchButtonVisible()) {
-					btnTorch.setVisibility(useBackCamera ? View.VISIBLE : View.GONE);
-					resetToggleButton(useBackCamera ? dpToPx(50) : 0);
-					if (!useBackCamera) {
-						isTorchOn = false;
-						turnOffTorch();
-					}
+			useBackCamera = !useBackCamera;
+			mCamera.selectCamera(useBackCamera ? EnumCameraPosition.CP_BACK : EnumCameraPosition.CP_FRONT);
+			if (configuration.isTorchButtonVisible()) {
+				btnTorch.setVisibility(useBackCamera ? View.VISIBLE : View.GONE);
+				resetToggleButton(useBackCamera ? dpToPx(50) : 0);
+				if (!useBackCamera) {
+					isTorchOn = false;
+					turnOffTorch();
 				}
-			} catch (CameraEnhancerException e) {
-				e.printStackTrace();
 			}
 		});
 	}
@@ -293,11 +281,7 @@ public class ScannerActivity extends AppCompatActivity {
 				}
 			}
 		});
-		try {
-			mCamera.open();
-		} catch (CameraEnhancerException e) {
-			e.printStackTrace();
-		}
+		mCamera.open();
 		restartCapture(mCurrentTemplate);
 
 	}
@@ -306,12 +290,7 @@ public class ScannerActivity extends AppCompatActivity {
 	protected void onPause() {
 		super.onPause();
 		succeed = false;
-		try {
-			mCamera.close();
-
-		} catch (CameraEnhancerException e) {
-			e.printStackTrace();
-		}
+		mCamera.close();
 		mRouter.stopCapturing();
 	}
 

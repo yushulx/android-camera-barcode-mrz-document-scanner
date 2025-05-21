@@ -19,8 +19,6 @@ android {
     defaultConfig {
         minSdk 21
         targetSdk 34
-        versionCode 1
-        versionName "1.0"
     }
 
     buildTypes {
@@ -36,19 +34,8 @@ android {
 }
 
 dependencies {
-    // api "com.dynamsoft:dynamsoftlicense:3.4.40"
-    // api "com.dynamsoft:dynamsoftcore:3.4.30"
-    // api "com.dynamsoft:dynamsoftcameraenhancer:4.2.22"
-    // api "com.dynamsoft:dynamsoftcapturevisionrouter:2.4.30"
-    // api "com.dynamsoft:dynamsoftimageprocessing:2.4.31"
-    // api "com.dynamsoft:dynamsoftutility:1.4.30"
-    // api "com.dynamsoft:dynamsoftlabelrecognizer:3.4.30"
-    // api "com.dynamsoft:dynamsoftneuralnetwork:1.0.21"
-    // api "com.dynamsoft:dynamsoftcodeparser:2.4.30"
-    // api "com.dynamsoft:dynamsoftcodeparserdedicator:1.2.31"
-    api "com.dynamsoft:dynamsoftcapturevisionbundle:2.6.1003"
-    api 'com.dynamsoft:dynamsoftmrz:3.4.20'
-    api "com.dynamsoft:dynamsoftvin:3.4.20"
+    api "com.dynamsoft:capturevisionbundle:3.0.3000"
+    api 'com.dynamsoft:vinmodel:1.0.0'
 
     implementation 'androidx.appcompat:appcompat:1.6.1'
 }
