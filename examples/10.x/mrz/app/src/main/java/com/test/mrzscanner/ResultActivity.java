@@ -1,4 +1,4 @@
-package com.dynamsoft.mrzscanner;
+package com.test.mrzscanner;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;

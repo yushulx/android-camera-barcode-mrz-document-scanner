@@ -1,4 +1,4 @@
-package com.dynamsoft.mrzscanner;
+package com.test.mrzscanner;
 
 import android.app.AlertDialog;
 import android.content.Context;
@@ -8,22 +8,18 @@ import android.os.Bundle;
 import android.widget.TextView;
 
 import com.dynamsoft.core.basic_structures.CompletionListener;
-import com.dynamsoft.core.basic_structures.EnumCapturedResultItemType;
 import com.dynamsoft.cvr.CaptureVisionRouter;
 import com.dynamsoft.cvr.CaptureVisionRouterException;
 import com.dynamsoft.cvr.CapturedResultReceiver;
 import com.dynamsoft.dce.CameraEnhancer;
-import com.dynamsoft.dce.CameraEnhancerException;
 import com.dynamsoft.dce.CameraView;
 import com.dynamsoft.dce.DrawingLayer;
-import com.dynamsoft.dce.EnumEnhancerFeatures;
 import com.dynamsoft.dce.utils.PermissionUtil;
 import com.dynamsoft.dcp.ParsedResult;
 import com.dynamsoft.dcp.ParsedResultItem;
 import com.dynamsoft.dlr.RecognizedTextLinesResult;
 import com.dynamsoft.dlr.TextLineResultItem;
 import com.dynamsoft.license.LicenseManager;
-import com.dynamsoft.utility.MultiFrameResultCrossFilter;
 
 import java.util.Calendar;
 import java.util.HashMap;
@@ -35,7 +31,7 @@ import androidx.appcompat.app.AppCompatActivity;
 public class MainActivity extends AppCompatActivity {
 	private CameraEnhancer mCamera;
 	private CameraView mCameraView;
-	private CaptureVisionRouter mRouter;
+	private final CaptureVisionRouter mRouter = new CaptureVisionRouter();
 	private String mText;
 	private AlertDialog mAlertDialog;
 	private boolean succeed = false;
@@ -48,8 +44,7 @@ public class MainActivity extends AppCompatActivity {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_scan);
 		PermissionUtil.requestCameraPermission(this);
-		LicenseManager.initLicense("LICENSE-KEY",
-				this,
+		LicenseManager.initLicense("DLS2eyJoYW5kc2hha2VDb2RlIjoiMjAwMDAxLTE2NDk4Mjk3OTI2MzUiLCJvcmdhbml6YXRpb25JRCI6IjIwMDAwMSIsInNlc3Npb25QYXNzd29yZCI6IndTcGR6Vm05WDJrcEQ5YUoifQ==",
 				(isSuccess, error) -> {
 					if (!isSuccess) {
 						runOnUiThread(() -> {
@@ -64,17 +59,6 @@ public class MainActivity extends AppCompatActivity {
 		mCamera = new CameraEnhancer(mCameraView, this);
 
 		try {
-			mCamera.enableEnhancedFeatures(EnumEnhancerFeatures.EF_FRAME_FILTER);
-		} catch (CameraEnhancerException e) {
-			throw new RuntimeException(e);
-		}
-
-		mRouter = new CaptureVisionRouter(this);
-		MultiFrameResultCrossFilter filter = new MultiFrameResultCrossFilter();
-		filter.enableResultCrossVerification(EnumCapturedResultItemType.CRIT_TEXT_LINE, true);
-		mRouter.addResultFilter(filter);
-		try {
-			mRouter.initSettingsFromFile("MRZScanner.json");
 			mRouter.setInput(mCamera);
 		} catch (CaptureVisionRouterException e) {
 			throw new RuntimeException(e);
@@ -99,12 +83,8 @@ public class MainActivity extends AppCompatActivity {
 	@Override
 	protected void onResume() {
 		super.onResume();
-		try {
-			mCamera.open();
-		} catch (CameraEnhancerException e) {
-			e.printStackTrace();
-		}
-		mRouter.startCapturing("ReadMRZ", new CompletionListener() {
+		mCamera.open();
+		mRouter.startCapturing("ReadPassportAndId", new CompletionListener() {
 			@Override
 			public void onSuccess() {
 			}
@@ -121,12 +101,7 @@ public class MainActivity extends AppCompatActivity {
 	protected void onPause() {
 		super.onPause();
 		succeed = false;
-		try {
-			mCamera.close();
-
-		} catch (CameraEnhancerException e) {
-			e.printStackTrace();
-		}
+		mCamera.close();
 		mRouter.stopCapturing();
 	}
 
@@ -163,7 +138,7 @@ public class MainActivity extends AppCompatActivity {
 			});
 		} else {
 			HashMap<String, String> labelMap = assembleMap(result.getItems()[0]);
-			if (labelMap != null && !labelMap.isEmpty()) {
+			if (!labelMap.isEmpty()) {
 				succeed = true;
 				Intent intent = new Intent(this, ResultActivity.class);
 				intent.putExtra("labelMap", labelMap);
