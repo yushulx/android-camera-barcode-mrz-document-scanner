@@ -1,6 +1,8 @@
 # React Native Barcode Scanner with Real-time Overlays
 
-A React Native application that provides real-time barcode scanning with visual overlays using the Dynamsoft Barcode Reader SDK. The app displays detected barcode information and draws precise contours around detected barcodes using their corner coordinates.
+A React Native application that provides real-time barcode scanning with visual overlays using the [Dynamsoft Barcode Reader SDK](https://www.npmjs.com/package/dynamsoft-barcode-reader-bundle-react-native). The app displays detected barcode information and draws precise contours around detected barcodes using their corner coordinates.
+
+https://github.com/user-attachments/assets/72a7383d-c46c-4f07-813c-4bd8bfd4f211
 
 ## Features
 
