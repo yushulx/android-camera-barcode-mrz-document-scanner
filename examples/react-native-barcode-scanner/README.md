@@ -47,6 +47,8 @@ npx react-native run-android
 npx react-native run-ios
 ```
 
+![react-native barcode scanner](https://www.dynamsoft.com/codepool/img/2025/07/react-native-barcode-scanner-dynamsoft.jpg)
+
 **Note**: For optimal performance and camera access, run on a physical device rather than an emulator.
 
 
