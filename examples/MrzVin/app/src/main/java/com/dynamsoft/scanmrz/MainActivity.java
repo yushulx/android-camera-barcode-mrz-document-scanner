@@ -1,9 +1,13 @@
 package com.dynamsoft.scanmrz;
 
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.os.Bundle;
+import android.util.Base64;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RadioGroup;
 import android.widget.TextView;
@@ -151,6 +155,38 @@ public class MainActivity extends AppCompatActivity {
 		cameraXLauncher.launch(intent);
 	}
 
+	private void displayFaceImage(String faceImageBase64) {
+		try {
+			// Decode Base64 string to bitmap
+			byte[] decodedBytes = Base64.decode(faceImageBase64, Base64.DEFAULT);
+			Bitmap faceBitmap = BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.length);
+
+			if (faceBitmap != null) {
+				// Create a new ImageView since content.removeAllViews() removed the original one
+				ImageView faceImageView = new ImageView(this);
+				faceImageView.setId(R.id.iv_face);
+
+				// Set layout parameters to match the original ImageView
+				LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+					(int) (120 * getResources().getDisplayMetrics().density), // 120dp to pixels
+					(int) (120 * getResources().getDisplayMetrics().density)  // 120dp to pixels
+				);
+				params.gravity = android.view.Gravity.CENTER_HORIZONTAL;
+				params.setMargins(0, 0, 0, (int) (16 * getResources().getDisplayMetrics().density)); // 16dp bottom margin
+
+				faceImageView.setLayoutParams(params);
+				faceImageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
+				faceImageView.setBackground(ContextCompat.getDrawable(this, android.R.drawable.gallery_thumb));
+				faceImageView.setImageBitmap(faceBitmap);
+
+				// Add the ImageView at the beginning of the content layout
+				content.addView(faceImageView, 0);
+			}
+		} catch (Exception e) {
+			// If face image display fails, just continue without showing it
+		}
+	}
+
 	private final ActivityResultLauncher<Intent> cameraXLauncher = registerForActivityResult(
 			new ActivityResultContracts.StartActivityForResult(),
 			result -> {
@@ -186,6 +222,12 @@ public class MainActivity extends AppCompatActivity {
 							String nationality = data.getStringExtra("nationality");
 							String dateOfBirth = resultData.get("dateOfBirth");
 							String dateOfExpiry = resultData.get("dateOfExpiry");
+
+							// Check if face image is available and display it
+							String faceImageBase64 = data.getStringExtra("face_image");
+							if (faceImageBase64 != null && !faceImageBase64.isEmpty()) {
+								displayFaceImage(faceImageBase64);
+							}
 
 							content.addView(childView("Name:", firstName + " " + lastName));
 							content.addView(childView("Sex:", sex != null && !sex.isEmpty() ?

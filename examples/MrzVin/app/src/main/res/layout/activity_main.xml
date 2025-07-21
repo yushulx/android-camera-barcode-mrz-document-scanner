@@ -45,6 +45,18 @@
 			android:layout_width="match_parent"
 			android:layout_height="wrap_content"
 			android:orientation="vertical">
+
+			<!-- Face Image Display -->
+			<ImageView
+				android:id="@+id/iv_face"
+				android:layout_width="120dp"
+				android:layout_height="120dp"
+				android:layout_gravity="center"
+				android:layout_marginBottom="16dp"
+				android:scaleType="centerCrop"
+				android:background="@android:drawable/gallery_thumb"
+				android:visibility="gone" />
+
 			<TextView
 				android:id="@+id/tv_name"
 				android:layout_width="wrap_content"

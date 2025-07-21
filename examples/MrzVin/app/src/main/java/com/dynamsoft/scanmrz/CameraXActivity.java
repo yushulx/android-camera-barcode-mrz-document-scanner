@@ -3,7 +3,9 @@ package com.dynamsoft.scanmrz;
 import android.Manifest;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
+import android.graphics.Rect;
 import android.os.Bundle;
+import android.util.Base64;
 import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
@@ -27,9 +29,18 @@ import com.dynamsoft.dcp.ParsedResultItem;
 import com.dynamsoft.license.LicenseManager;
 import com.dynamsoft.mrzscannerbundle.ui.EnumDetectionType;
 import com.dynamsoft.mrzscannerbundle.ui.ScannerConfig;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.mlkit.vision.common.InputImage;
+import com.google.mlkit.vision.face.Face;
+import com.google.mlkit.vision.face.FaceDetection;
+import com.google.mlkit.vision.face.FaceDetector;
+import com.google.mlkit.vision.face.FaceDetectorOptions;
 
+import java.io.ByteArrayOutputStream;
 import java.nio.ByteBuffer;
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -45,6 +56,13 @@ public class CameraXActivity extends AppCompatActivity {
     private ScannerConfig configuration;
     private String mCurrentTemplate = "ReadPassportAndId";
     private boolean isProcessing = false;
+    private Bitmap mLastProcessedBitmap; // Store the last bitmap for face detection
+
+    // Result validation fields
+    private static final int VALIDATION_FRAME_COUNT = 5;
+    private static final int REQUIRED_MATCHES = 2;
+    private java.util.List<String> recentResults = new java.util.ArrayList<>();
+    private java.util.Map<String, Integer> resultCounts = new java.util.HashMap<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -147,6 +165,9 @@ public class CameraXActivity extends AppCompatActivity {
                 // Convert ImageProxy to Bitmap
                 Bitmap bitmap = imageProxyToBitmap(imageProxy);
                 if (bitmap != null) {
+                    // Store the bitmap for potential face detection
+                    mLastProcessedBitmap = bitmap;
+
                     // Process with Dynamsoft SDK
                     CapturedResult capturedResult = mRouter.capture(bitmap, mCurrentTemplate);
                     CapturedResultItem[] items = capturedResult.getItems();
@@ -155,10 +176,13 @@ public class CameraXActivity extends AppCompatActivity {
                         if (item instanceof ParsedResultItem) {
                             ParsedResultItem parsedItem = (ParsedResultItem) item;
                             if (isValidMRZResult(parsedItem)) {
-                                runOnUiThread(() -> {
-                                    returnResult(parsedItem);
-                                });
-                                return;
+                                // Use validation strategy instead of immediate return
+                                if (shouldReturnResult(parsedItem)) {
+                                    runOnUiThread(() -> {
+                                        returnResult(parsedItem);
+                                    });
+                                    return;
+                                }
                             }
                         }
                     }
@@ -223,6 +247,62 @@ public class CameraXActivity extends AppCompatActivity {
         }
     }
 
+    private boolean shouldReturnResult(ParsedResultItem item) {
+        // Create a unique identifier for this MRZ result based on key fields
+        String resultKey = createResultKey(item);
+
+        // Add this result to our recent results list
+        recentResults.add(resultKey);
+
+        // Update the count for this result
+        resultCounts.put(resultKey, resultCounts.getOrDefault(resultKey, 0) + 1);
+
+        // Keep only the last VALIDATION_FRAME_COUNT results
+        if (recentResults.size() > VALIDATION_FRAME_COUNT) {
+            String removedResult = recentResults.remove(0);
+            int count = resultCounts.get(removedResult);
+            if (count <= 1) {
+                resultCounts.remove(removedResult);
+            } else {
+                resultCounts.put(removedResult, count - 1);
+            }
+        }
+
+        // Check if we have at least REQUIRED_MATCHES of the same result
+        int currentCount = resultCounts.getOrDefault(resultKey, 0);
+        boolean shouldReturn = currentCount >= REQUIRED_MATCHES;
+
+        if (shouldReturn) {
+            Log.d(TAG, "MRZ validation passed: " + currentCount + " matches out of " + recentResults.size() + " frames");
+        } else {
+            Log.d(TAG, "MRZ validation pending: " + currentCount + " matches, need " + REQUIRED_MATCHES);
+        }
+
+        return shouldReturn;
+    }
+
+    private String createResultKey(ParsedResultItem item) {
+        // Create a unique key based on critical MRZ fields that should remain consistent
+        java.util.HashMap<String, String> entry = item.getParsedFields();
+        StringBuilder keyBuilder = new StringBuilder();
+
+        // Use document number as primary identifier
+        String documentNumber = entry.get("passportNumber") != null ? entry.get("passportNumber") :
+                               entry.get("documentNumber") != null ? entry.get("documentNumber") :
+                               entry.get("longDocumentNumber");
+        if (documentNumber != null) {
+            keyBuilder.append(documentNumber).append("|");
+        }
+
+        // Add other critical fields
+        keyBuilder.append(entry.get("dateOfBirth")).append("|");
+        keyBuilder.append(entry.get("dateOfExpiry")).append("|");
+        keyBuilder.append(entry.get("nationality")).append("|");
+        keyBuilder.append(entry.get("issuingState"));
+
+        return keyBuilder.toString();
+    }
+
     private void returnResult(ParsedResultItem item) {
         android.content.Intent intent = new android.content.Intent();
         intent.putExtra("status_code", 1); // Success
@@ -243,6 +323,8 @@ public class CameraXActivity extends AppCompatActivity {
             vinData.put("serialNumber", entry.get("serialNumber"));
 
             intent.putExtra("result", vinData);
+            setResult(RESULT_OK, intent);
+            finish();
         } else {
             // Handle MRZ results - format to match ScannerActivity output
             intent.putExtra("nationality", item.getFieldRawValue("nationality"));
@@ -311,10 +393,131 @@ public class CameraXActivity extends AppCompatActivity {
             }
 
             intent.putExtra("result", resultData);
+
+            // For MRZ results, try to detect and crop face from the current frame
+            detectAndCropFace(intent);
+        }
+    }
+
+    private void detectAndCropFace(android.content.Intent intent) {
+        try {
+            // Get the current frame bitmap for face detection
+            Bitmap currentBitmap = getCurrentFrameBitmap();
+            if (currentBitmap == null) {
+                // No face image available, proceed with normal result
+                setResult(RESULT_OK, intent);
+                finish();
+                return;
+            }
+
+            // Configure face detector for high accuracy
+            FaceDetectorOptions options = new FaceDetectorOptions.Builder()
+                    .setPerformanceMode(FaceDetectorOptions.PERFORMANCE_MODE_ACCURATE)
+                    .setLandmarkMode(FaceDetectorOptions.LANDMARK_MODE_ALL)
+                    .setClassificationMode(FaceDetectorOptions.CLASSIFICATION_MODE_ALL)
+                    .setMinFaceSize(0.1f)
+                    .enableTracking()
+                    .build();
+
+            FaceDetector detector = FaceDetection.getClient(options);
+            InputImage image = InputImage.fromBitmap(currentBitmap, 0);
+
+            detector.process(image)
+                    .addOnSuccessListener(new OnSuccessListener<List<Face>>() {
+                        @Override
+                        public void onSuccess(List<Face> faces) {
+                            if (!faces.isEmpty()) {
+                                // Get the largest face (most likely the main subject)
+                                Face largestFace = getLargestFace(faces);
+                                Bitmap croppedFace = cropFaceFromBitmap(currentBitmap, largestFace);
+
+                                if (croppedFace != null) {
+                                    // Convert cropped face to Base64 string for transfer
+                                    String faceImageBase64 = bitmapToBase64(croppedFace);
+                                    intent.putExtra("face_image", faceImageBase64);
+                                    Log.d(TAG, "Face detected and cropped successfully");
+                                }
+                            }
+
+                            setResult(RESULT_OK, intent);
+                            finish();
+                        }
+                    })
+                    .addOnFailureListener(new OnFailureListener() {
+                        @Override
+                        public void onFailure(@NonNull Exception e) {
+                            Log.e(TAG, "Face detection failed: " + e.getMessage());
+                            // Proceed without face image
+                            setResult(RESULT_OK, intent);
+                            finish();
+                        }
+                    });
+
+        } catch (Exception e) {
+            Log.e(TAG, "Error in face detection: " + e.getMessage());
+            // Proceed without face image
+            setResult(RESULT_OK, intent);
+            finish();
+        }
+    }
+
+    private Bitmap getCurrentFrameBitmap() {
+        // This would need to be implemented to capture the current frame
+        // For now, we'll use the last processed bitmap
+        // You might want to store the bitmap from the last successful MRZ detection
+        return mLastProcessedBitmap;
+    }
+
+    private Face getLargestFace(List<Face> faces) {
+        Face largestFace = faces.get(0);
+        float largestArea = largestFace.getBoundingBox().width() * largestFace.getBoundingBox().height();
+
+        for (Face face : faces) {
+            Rect boundingBox = face.getBoundingBox();
+            float area = boundingBox.width() * boundingBox.height();
+            if (area > largestArea) {
+                largestArea = area;
+                largestFace = face;
+            }
         }
 
-        setResult(RESULT_OK, intent);
-        finish();
+        return largestFace;
+    }
+
+    private Bitmap cropFaceFromBitmap(Bitmap originalBitmap, Face face) {
+        try {
+            Rect boundingBox = face.getBoundingBox();
+
+            // Add some padding around the face
+            int padding = Math.min(boundingBox.width(), boundingBox.height()) / 4;
+            int left = Math.max(0, boundingBox.left - padding);
+            int top = Math.max(0, boundingBox.top - padding);
+            int right = Math.min(originalBitmap.getWidth(), boundingBox.right + padding);
+            int bottom = Math.min(originalBitmap.getHeight(), boundingBox.bottom + padding);
+
+            int width = right - left;
+            int height = bottom - top;
+
+            if (width > 0 && height > 0) {
+                return Bitmap.createBitmap(originalBitmap, left, top, width, height);
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error cropping face: " + e.getMessage());
+        }
+
+        return null;
+    }
+
+    private String bitmapToBase64(Bitmap bitmap) {
+        try {
+            ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 80, byteArrayOutputStream);
+            byte[] byteArray = byteArrayOutputStream.toByteArray();
+            return Base64.encodeToString(byteArray, Base64.DEFAULT);
+        } catch (Exception e) {
+            Log.e(TAG, "Error converting bitmap to Base64: " + e.getMessage());
+            return null;
+        }
     }
 
     private boolean allPermissionsGranted() {
