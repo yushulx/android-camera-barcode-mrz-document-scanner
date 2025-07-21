@@ -9,6 +9,7 @@ import android.widget.TextView;
 
 import com.dynamsoft.mrzscannerbundle.ui.CommonResult;
 import com.dynamsoft.mrzscannerbundle.ui.EnumDetectionType;
+import com.dynamsoft.mrzscannerbundle.ui.EnumScanMode;
 import com.dynamsoft.mrzscannerbundle.ui.MRZData;
 import com.dynamsoft.mrzscannerbundle.ui.MRZScanResult;
 import com.dynamsoft.mrzscannerbundle.ui.ScannerActivity;
@@ -94,7 +95,13 @@ public class MainActivity extends AppCompatActivity {
 			}
 		});
 
-		findViewById(R.id.btn_nav).setOnClickListener(v -> {
+		findViewById(R.id.btn_camera_scan).setOnClickListener(v -> {
+			config.setScanMode(EnumScanMode.CAMERA);
+			launcher.launch(config);
+		});
+
+		findViewById(R.id.btn_picture_scan).setOnClickListener(v -> {
+			config.setScanMode(EnumScanMode.PICTURE);
 			launcher.launch(config);
 		});
 

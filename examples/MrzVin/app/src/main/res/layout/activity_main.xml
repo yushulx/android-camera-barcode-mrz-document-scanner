@@ -36,7 +36,7 @@
 	<ScrollView
 		android:layout_width="match_parent"
 		android:layout_height="match_parent"
-		android:layout_above="@+id/btn_nav"
+		android:layout_above="@+id/ll_buttons"
 		android:layout_below="@+id/radio_group_mode"
 		android:orientation="vertical"
 		android:padding="20dp">
@@ -54,12 +54,28 @@
 		</LinearLayout>
 	</ScrollView>
 
-	<Button
-		android:id="@+id/btn_nav"
+	<LinearLayout
+		android:id="@+id/ll_buttons"
 		android:layout_width="wrap_content"
 		android:layout_height="wrap_content"
 		android:layout_alignParentBottom="true"
 		android:layout_centerHorizontal="true"
 		android:layout_marginBottom="30dp"
-		android:text="START SCANNING" />
+		android:orientation="horizontal">
+
+		<Button
+			android:id="@+id/btn_camera_scan"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_marginEnd="10dp"
+			android:text="CAMERA SCAN" />
+
+		<Button
+			android:id="@+id/btn_picture_scan"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_marginStart="10dp"
+			android:text="PICTURE SCAN" />
+
+	</LinearLayout>
 </RelativeLayout>

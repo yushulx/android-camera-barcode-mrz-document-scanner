@@ -15,6 +15,7 @@ public class ScannerConfig implements Serializable {
 	private boolean isCameraToggleButtonVisible;
 	private String templateFile;
 	private EnumDetectionType detectionType = EnumDetectionType.MRZ;
+	private EnumScanMode scanMode = EnumScanMode.CAMERA;
 
 	public EnumDetectionType getDetectionType() {
 		return detectionType;
@@ -96,5 +97,13 @@ public class ScannerConfig implements Serializable {
 
 	public void setCameraToggleButtonVisible(boolean cameraToggleButtonVisible) {
 		isCameraToggleButtonVisible = cameraToggleButtonVisible;
+	}
+
+	public EnumScanMode getScanMode() {
+		return scanMode;
+	}
+
+	public void setScanMode(EnumScanMode scanMode) {
+		this.scanMode = scanMode;
 	}
 }

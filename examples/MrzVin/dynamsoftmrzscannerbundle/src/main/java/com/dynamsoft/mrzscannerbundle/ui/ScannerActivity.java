@@ -1,18 +1,27 @@
 package com.dynamsoft.mrzscannerbundle.ui;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Matrix;
+import android.media.ExifInterface;
+import android.net.Uri;
 import android.os.Bundle;
+import android.provider.MediaStore;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageView;
 
+import com.dynamsoft.core.basic_structures.CapturedResultItem;
 import com.dynamsoft.core.basic_structures.CompletionListener;
 import com.dynamsoft.core.basic_structures.DSRect;
 import com.dynamsoft.core.basic_structures.EnumCapturedResultItemType;
 import com.dynamsoft.cvr.CaptureVisionRouter;
 import com.dynamsoft.cvr.CaptureVisionRouterException;
+import com.dynamsoft.cvr.CapturedResult;
 import com.dynamsoft.cvr.CapturedResultReceiver;
 import com.dynamsoft.dce.CameraEnhancer;
 import com.dynamsoft.dce.CameraEnhancerException;
@@ -30,6 +39,9 @@ import com.dynamsoft.license.LicenseManager;
 import com.dynamsoft.mrzscannerbundle.R;
 import com.dynamsoft.utility.MultiFrameResultCrossFilter;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.InputStream;
 import java.util.HashMap;
 
 import androidx.activity.result.contract.ActivityResultContract;
@@ -60,14 +72,13 @@ public class ScannerActivity extends AppCompatActivity {
 	private boolean isTorchOn;
 	private boolean useBackCamera = true;
 	private boolean enableCapture = false;
+	private static final int REQUEST_IMAGE_PICK = 1001;
+	private Uri photoUri;
+	private boolean isPictureMode = false;
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_scanner);
-
-		findViewById(R.id.btn_capture).setOnClickListener(v -> {
-			enableCapture = true;
-		});
 
 		PermissionUtil.requestCameraPermission(this);
 
@@ -83,49 +94,61 @@ public class ScannerActivity extends AppCompatActivity {
 				}
 			});
 		}
-		btnToggle = findViewById(R.id.btn_toggle);
-		btnTorch = findViewById(R.id.btn_torch);
 
-		boolean isCloseButtonVisible = configuration.isCloseButtonVisible();
-		ImageView closeButton = findViewById(R.id.iv_back);
-		closeButton.setVisibility(isCloseButtonVisible ? View.VISIBLE : View.GONE);
+		if (configuration.getScanMode() == EnumScanMode.PICTURE) {
+			isPictureMode = true;
+			launchSystemCamera();
+			return;
+		}
+		else {
+			findViewById(R.id.btn_capture).setOnClickListener(v -> {
+				enableCapture = true;
+			});
 
-		boolean isGuideFrameVisible = configuration.isGuideFrameVisible();
-		ImageView guideFrame = findViewById(R.id.iv_guide_frame);
+			btnToggle = findViewById(R.id.btn_toggle);
+			btnTorch = findViewById(R.id.btn_torch);
 
-		mCameraView = findViewById(R.id.dce_camera_view);
+			boolean isCloseButtonVisible = configuration.isCloseButtonVisible();
+			ImageView closeButton = findViewById(R.id.iv_back);
+			closeButton.setVisibility(isCloseButtonVisible ? View.VISIBLE : View.GONE);
 
-		findViewById(R.id.iv_back).setOnClickListener((v) -> {
-			resultOK(CommonResult.EnumResultStatus.RS_CANCELED, null);
-			finish();
-		});
+			boolean isGuideFrameVisible = configuration.isGuideFrameVisible();
+			ImageView guideFrame = findViewById(R.id.iv_guide_frame);
 
-		// CameraEnhancer is the class for controlling the camera and obtaining high-quality video input.
-		mCamera = new CameraEnhancer(mCameraView, this);
+			mCameraView = findViewById(R.id.dce_camera_view);
 
-		switch (configuration.getDetectionType()) {
-			case MRZ:
-			{
-				guideFrame.setVisibility(isGuideFrameVisible ? View.VISIBLE : View.GONE);
-				// Enable the frame filter feature. It will improve the accuracy of the MRZ scanning.
-				try {
-					mCamera.enableEnhancedFeatures(EnumEnhancerFeatures.EF_FRAME_FILTER);
-				} catch (CameraEnhancerException e) {
-					throw new RuntimeException(e);
+			findViewById(R.id.iv_back).setOnClickListener((v) -> {
+				resultOK(CommonResult.EnumResultStatus.RS_CANCELED, null);
+				finish();
+			});
+
+			// CameraEnhancer is the class for controlling the camera and obtaining high-quality video input.
+			mCamera = new CameraEnhancer(mCameraView, this);
+
+			switch (configuration.getDetectionType()) {
+				case MRZ:
+				{
+					guideFrame.setVisibility(isGuideFrameVisible ? View.VISIBLE : View.GONE);
+					// Enable the frame filter feature. It will improve the accuracy of the MRZ scanning.
+					try {
+						mCamera.enableEnhancedFeatures(EnumEnhancerFeatures.EF_FRAME_FILTER);
+					} catch (CameraEnhancerException e) {
+						throw new RuntimeException(e);
+					}
 				}
-			}
 				break;
-			case VIN: {
-				guideFrame.setVisibility(View.GONE);
-				try {
-					mCamera.setScanRegion(new DSRect(0.1f, 0.4f, 0.9f, 0.6f, true));
-				} catch (CameraEnhancerException e) {
-					e.printStackTrace();
+				case VIN: {
+					guideFrame.setVisibility(View.GONE);
+					try {
+						mCamera.setScanRegion(new DSRect(0.1f, 0.4f, 0.9f, 0.6f, true));
+					} catch (CameraEnhancerException e) {
+						e.printStackTrace();
+					}
 				}
+				break;
+				default:
+					break;
 			}
-				break;
-			default:
-				break;
 		}
 	}
 
@@ -253,44 +276,45 @@ public class ScannerActivity extends AppCompatActivity {
 		super.onResume();
 		configCVR();
 
-		// Enable the multi-frame cross verification feature. It will improve the accuracy of the MRZ scanning.
-		MultiFrameResultCrossFilter filter = new MultiFrameResultCrossFilter();
-		filter.enableResultCrossVerification(EnumCapturedResultItemType.CRIT_TEXT_LINE, true);
-		mRouter.addResultFilter(filter);
+		if (!isPictureMode) {
+			// Enable the multi-frame cross verification feature. It will improve the accuracy of the MRZ scanning.
+			MultiFrameResultCrossFilter filter = new MultiFrameResultCrossFilter();
+			filter.enableResultCrossVerification(EnumCapturedResultItemType.CRIT_TEXT_LINE, true);
+			mRouter.addResultFilter(filter);
 
-		try {
-			// Set the input.
-			mRouter.setInput(mCamera);
-		} catch (CaptureVisionRouterException e) {
-			throw new RuntimeException(e);
-		}
-
-
-		mRouter.addResultReceiver(new CapturedResultReceiver() {
-
-			// Implement this method to receive raw MRZ recognized results. It includes the string only.
-			@Override
-			public void onRecognizedTextLinesReceived(@NonNull RecognizedTextLinesResult result) {
+			try {
+				// Set the input.
+				mRouter.setInput(mCamera);
+			} catch (CaptureVisionRouterException e) {
+				throw new RuntimeException(e);
 			}
 
-			// Implement this method to receive parsed MRZ results. It includes the detailed information.
-			@Override
-			public void onParsedResultsReceived(@NonNull ParsedResult result) {
-				if (!succeed) {
-					onParsedResultReceived(result);
+
+			mRouter.addResultReceiver(new CapturedResultReceiver() {
+
+				// Implement this method to receive raw MRZ recognized results. It includes the string only.
+				@Override
+				public void onRecognizedTextLinesReceived(@NonNull RecognizedTextLinesResult result) {
 				}
-			}
-		});
-		mCamera.open();
-		restartCapture(mCurrentTemplate);
 
+				// Implement this method to receive parsed MRZ results. It includes the detailed information.
+				@Override
+				public void onParsedResultsReceived(@NonNull ParsedResult result) {
+					if (!succeed) {
+						onParsedResultReceived(result);
+					}
+				}
+			});
+			mCamera.open();
+			restartCapture(mCurrentTemplate);
+		}
 	}
 
 	@Override
 	protected void onPause() {
 		super.onPause();
 		succeed = false;
-		mCamera.close();
+		if (mCamera != null) mCamera.close();
 		mRouter.stopCapturing();
 	}
 
@@ -298,7 +322,7 @@ public class ScannerActivity extends AppCompatActivity {
 	protected void onStop() {
 		// DrawingItem in this sample is the green quadrilateral that highlights the recognized text.
 		// Clear the DrawingItem before you leave the camera page.
-		mCameraView.getDrawingLayer(DrawingLayer.DLR_LAYER_ID).clearDrawingItems();
+		if (mCameraView != null) mCameraView.getDrawingLayer(DrawingLayer.DLR_LAYER_ID).clearDrawingItems();
 		super.onStop();
 	}
 
@@ -377,6 +401,96 @@ public class ScannerActivity extends AppCompatActivity {
 		intent.putExtra(EXTRA_ERROR_CODE, errorCode);
 		intent.putExtra(EXTRA_ERROR_STRING, errorString);
 		setResult(RESULT_OK, intent);
+	}
+
+	private void launchSystemCamera() {
+		Intent pickImageIntent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+		pickImageIntent.setType("image/*");
+		if (pickImageIntent.resolveActivity(getPackageManager()) != null) {
+			startActivityForResult(pickImageIntent, REQUEST_IMAGE_PICK);
+		} else {
+			resultOK(CommonResult.EnumResultStatus.RS_CANCELED, null);
+			finish();
+		}
+	}
+
+	@Override
+	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+		super.onActivityResult(requestCode, resultCode, data);
+		if (requestCode == REQUEST_IMAGE_PICK && resultCode == Activity.RESULT_OK && data != null) {
+			Uri imageUri = data.getData();
+			if (imageUri != null) {
+				processCapturedImage(imageUri);
+			} else {
+				resultOK(CommonResult.EnumResultStatus.RS_CANCELED, null);
+				finish();
+			}
+		} else if (requestCode == REQUEST_IMAGE_PICK) {
+			resultOK(CommonResult.EnumResultStatus.RS_CANCELED, null);
+			finish();
+		}
+	}
+
+	private void processCapturedImage(Uri imageUri) {
+		try {
+			// For modern Android, use InputStream instead of file path
+			InputStream inputStream = getContentResolver().openInputStream(imageUri);
+			if (inputStream != null) {
+				// Create a temporary file to work with the capture() method
+				File tempFile = createTempFileFromStream(inputStream);
+				inputStream.close();
+
+				if (tempFile != null && tempFile.exists()) {
+					// Use the temporary file path with capture() method
+					CapturedResult capturedResult = mRouter.capture(tempFile.getAbsolutePath(), mCurrentTemplate);
+					CapturedResultItem[] items = capturedResult.getItems();
+					for (CapturedResultItem item : items) {
+						if (item instanceof ParsedResultItem) {
+							ParsedResultItem parsedItem = (ParsedResultItem) item;
+							if (parsedItem.getCodeType().equals("VIN") || formerFilter(parsedItem)) {
+								if (configuration.isBeepEnabled()) {
+									Feedback.beep(this);
+								}
+								succeed = true;
+								// Clean up temp file
+								tempFile.delete();
+								resultOK(CommonResult.EnumResultStatus.RS_FINISHED, parsedItem);
+								finish();
+								return;
+							}
+						}
+					}
+					// Clean up temp file
+					tempFile.delete();
+				}
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+			resultError(-1, "Error processing image: " + e.getMessage());
+			finish();
+			return;
+		}
+		resultOK(CommonResult.EnumResultStatus.RS_CANCELED, null);
+		finish();
+	}
+
+	private File createTempFileFromStream(InputStream inputStream) {
+		try {
+			File tempFile = File.createTempFile("mrz_scan", ".jpg", getCacheDir());
+			FileOutputStream outputStream = new FileOutputStream(tempFile);
+
+			byte[] buffer = new byte[1024];
+			int length;
+			while ((length = inputStream.read(buffer)) > 0) {
+				outputStream.write(buffer, 0, length);
+			}
+
+			outputStream.close();
+			return tempFile;
+		} catch (Exception e) {
+			e.printStackTrace();
+			return null;
+		}
 	}
 
 	public static final class ResultContract extends ActivityResultContract<ScannerConfig, CommonResult> {
