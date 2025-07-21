@@ -1,5 +1,6 @@
 package com.dynamsoft.scanmrz;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.view.ViewGroup;
@@ -18,7 +19,10 @@ import com.dynamsoft.mrzscannerbundle.ui.VINData;
 import com.dynamsoft.mrzscannerbundle.ui.VINScanResult;
 import com.google.android.material.button.MaterialButtonToggleGroup;
 
+import java.util.HashMap;
+
 import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
@@ -105,6 +109,10 @@ public class MainActivity extends AppCompatActivity {
 			launcher.launch(config);
 		});
 
+		findViewById(R.id.btn_camerax_scan).setOnClickListener(v -> {
+			launchCameraXActivity();
+		});
+
 		radioGroup = findViewById(R.id.radio_group_mode);
 
 		radioGroup.setOnCheckedChangeListener((group, checkedId) -> {
@@ -136,4 +144,64 @@ public class MainActivity extends AppCompatActivity {
 		layout.addView(textView);
 		return layout;
 	}
+
+	private void launchCameraXActivity() {
+		Intent intent = new Intent(this, CameraXActivity.class);
+		intent.putExtra("scanner_config", config);
+		cameraXLauncher.launch(intent);
+	}
+
+	private final ActivityResultLauncher<Intent> cameraXLauncher = registerForActivityResult(
+			new ActivityResultContracts.StartActivityForResult(),
+			result -> {
+				if (result.getResultCode() == RESULT_OK && result.getData() != null) {
+					Intent data = result.getData();
+					int statusCode = data.getIntExtra("status_code", 0);
+
+					if (statusCode == 1) { // Success
+						String docType = data.getStringExtra("doc_type");
+						HashMap<String, String> resultData = (HashMap<String, String>) data.getSerializableExtra("result");
+
+						content.removeAllViews();
+
+						if ("VIN".equals(docType)) {
+							// Handle VIN results
+							content.addView(childView("VIN:", resultData.get("vinString")));
+							content.addView(childView("WMI:", resultData.get("wmi")));
+							content.addView(childView("Region:", resultData.get("region")));
+							content.addView(childView("VDS:", resultData.get("vds")));
+							content.addView(childView("Check Digit:", resultData.get("checkDigit")));
+							content.addView(childView("Model Year:", resultData.get("modelYear")));
+							content.addView(childView("Plant Code:", resultData.get("plantCode")));
+							content.addView(childView("Serial Number:", resultData.get("serialNumber")));
+						} else {
+							// Handle MRZ results
+							String firstName = resultData.get("firstName") != null ? resultData.get("firstName") : "";
+							String lastName = resultData.get("lastName") != null ? resultData.get("lastName") : "";
+							String sex = resultData.get("sex");
+							String age = resultData.get("age");
+							String documentType = resultData.get("documentType");
+							String documentNumber = data.getStringExtra("number");
+							String issuingState = data.getStringExtra("issuing_state");
+							String nationality = data.getStringExtra("nationality");
+							String dateOfBirth = resultData.get("dateOfBirth");
+							String dateOfExpiry = resultData.get("dateOfExpiry");
+
+							content.addView(childView("Name:", firstName + " " + lastName));
+							content.addView(childView("Sex:", sex != null && !sex.isEmpty() ?
+									sex.substring(0, 1).toUpperCase() + sex.substring(1) : ""));
+							content.addView(childView("Age:", age != null ? age : ""));
+							content.addView(childView("Document Type:", documentType != null ? documentType : ""));
+							content.addView(childView("Document Number:", documentNumber != null ? documentNumber : ""));
+							content.addView(childView("Issuing State:", issuingState != null ? issuingState : ""));
+							content.addView(childView("Nationality:", nationality != null ? nationality : ""));
+							content.addView(childView("Date of Birth(YYYY-MM-DD):", dateOfBirth != null ? dateOfBirth : ""));
+							content.addView(childView("Date of Expiry(YYYY-MM-DD):", dateOfExpiry != null ? dateOfExpiry : ""));
+						}
+					}
+				} else {
+					content.removeAllViews();
+					content.addView(childView("CameraX scan canceled.", ""));
+				}
+			});
 }

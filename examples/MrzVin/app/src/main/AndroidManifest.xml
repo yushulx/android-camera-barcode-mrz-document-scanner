@@ -3,6 +3,7 @@
 
 	<uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
 	<uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+	<uses-permission android:name="android.permission.CAMERA" />
 
 	<application
 		android:allowBackup="true"
@@ -21,6 +22,10 @@
 				<category android:name="android.intent.category.LAUNCHER" />
 			</intent-filter>
 		</activity>
+		<activity
+			android:name=".CameraXActivity"
+			android:exported="false"
+			android:screenOrientation="portrait" />
 	</application>
 
 </manifest>

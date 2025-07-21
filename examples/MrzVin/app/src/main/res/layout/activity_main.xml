@@ -61,21 +61,38 @@
 		android:layout_alignParentBottom="true"
 		android:layout_centerHorizontal="true"
 		android:layout_marginBottom="30dp"
-		android:orientation="horizontal">
+		android:orientation="vertical">
 
-		<Button
-			android:id="@+id/btn_camera_scan"
+		<!-- First row of buttons -->
+		<LinearLayout
 			android:layout_width="wrap_content"
 			android:layout_height="wrap_content"
-			android:layout_marginEnd="10dp"
-			android:text="CAMERA SCAN" />
+			android:orientation="horizontal"
+			android:layout_marginBottom="10dp">
 
+			<Button
+				android:id="@+id/btn_camera_scan"
+				android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:layout_marginEnd="10dp"
+				android:text="CAMERA SCAN" />
+
+			<Button
+				android:id="@+id/btn_picture_scan"
+				android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:layout_marginStart="10dp"
+				android:text="PICTURE SCAN" />
+
+		</LinearLayout>
+
+		<!-- Second row with CameraX button -->
 		<Button
-			android:id="@+id/btn_picture_scan"
+			android:id="@+id/btn_camerax_scan"
 			android:layout_width="wrap_content"
 			android:layout_height="wrap_content"
-			android:layout_marginStart="10dp"
-			android:text="PICTURE SCAN" />
+			android:layout_gravity="center"
+			android:text="CAMERAX LIVE SCAN" />
 
 	</LinearLayout>
 </RelativeLayout>
