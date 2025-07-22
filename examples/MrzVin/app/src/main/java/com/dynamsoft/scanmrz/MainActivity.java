@@ -23,6 +23,7 @@ import com.dynamsoft.mrzscannerbundle.ui.VINData;
 import com.dynamsoft.mrzscannerbundle.ui.VINScanResult;
 import com.google.android.material.button.MaterialButtonToggleGroup;
 
+import java.io.File;
 import java.util.HashMap;
 
 import androidx.activity.result.ActivityResultLauncher;
@@ -129,14 +130,49 @@ public class MainActivity extends AppCompatActivity {
 							String dateOfExpiry = resultData.get("dateOfExpiry");
 
 							// Check if face image is available and display it
-                            String faceImageBase64 = data.getStringExtra("face_image");
-                            if (faceImageBase64 != null && !faceImageBase64.isEmpty()) {
-                                displayFaceImage(faceImageBase64);
+                            String faceImagePath = data.getStringExtra("face_image_path");
+                            if (faceImagePath != null && !faceImagePath.isEmpty()) {
+                                displayFaceImage(faceImagePath);
                             }
 
-                            String documentImageBase64 = data.getStringExtra("document_image");
-                            if (documentImageBase64 != null && !documentImageBase64.isEmpty()) {
-                                displayDocumentImage(documentImageBase64);
+                            String documentImagePath = data.getStringExtra("document_image_path");
+                            if (documentImagePath != null && !documentImagePath.isEmpty()) {
+                                displayDocumentImage(documentImagePath);
+                            }
+                            
+                            // For backward compatibility
+                            if (faceImagePath == null) {
+                                String faceImageBase64 = data.getStringExtra("face_image");
+                                if (faceImageBase64 != null && !faceImageBase64.isEmpty()) {
+                                    // Convert Base64 to bitmap and display
+                                    byte[] decodedString = Base64.decode(faceImageBase64, Base64.DEFAULT);
+                                    BitmapFactory.Options options = new BitmapFactory.Options();
+                                    options.inPreferredConfig = Bitmap.Config.ARGB_8888;
+                                    faceBitmap = BitmapFactory.decodeByteArray(decodedString, 0, decodedString.length, options);
+                                    ivFace.setImageBitmap(faceBitmap);
+                                    ivFace.setVisibility(View.VISIBLE);
+                                    ivFace.setScaleType(ImageView.ScaleType.FIT_CENTER);
+                                }
+                            }
+                            
+                            if (documentImagePath == null) {
+                                String documentImageBase64 = data.getStringExtra("document_image");
+                                if (documentImageBase64 != null && !documentImageBase64.isEmpty()) {
+                                    // Convert Base64 to bitmap and display
+                                    try {
+                                        byte[] decodedString = Base64.decode(documentImageBase64, Base64.DEFAULT);
+                                        BitmapFactory.Options options = new BitmapFactory.Options();
+                                        options.inPreferredConfig = Bitmap.Config.ARGB_8888;
+                                        documentBitmap = BitmapFactory.decodeByteArray(decodedString, 0, decodedString.length, options);
+                                        if (documentBitmap != null) {
+                                            ivDocument.setImageBitmap(documentBitmap);
+                                            ivDocument.setVisibility(View.VISIBLE);
+                                            ivDocument.setScaleType(ImageView.ScaleType.FIT_CENTER);
+                                        }
+                                    } catch (Exception e) {
+                                        e.printStackTrace();
+                                    }
+                                }
                             }
 
 							content.addView(childView("Name:", firstName + " " + lastName), params);
@@ -178,6 +214,9 @@ public class MainActivity extends AppCompatActivity {
         content = findViewById(R.id.ll_content);
         ivFace = findViewById(R.id.iv_face);
         ivDocument = findViewById(R.id.iv_document);
+        
+        // Clean up old cache files
+        cleanupCacheFiles();
         btnSharePdf = findViewById(R.id.btn_share_pdf);
         btnOpenPdf = findViewById(R.id.btn_open_pdf);
         btnSharePdf.setOnClickListener(v -> sharePdf());
@@ -387,20 +426,61 @@ public class MainActivity extends AppCompatActivity {
         cameraXLauncher.launch(intent);
     }
 
-    private void displayFaceImage(String faceImageBase64) {
-        byte[] decodedString = Base64.decode(faceImageBase64, Base64.DEFAULT);
-        faceBitmap = BitmapFactory.decodeByteArray(decodedString, 0, decodedString.length);
-        ivFace.setImageBitmap(faceBitmap);
-        ivFace.setVisibility(View.VISIBLE);
+    private void cleanupCacheFiles() {
+        File cacheDir = getCacheDir();
+        if (cacheDir != null && cacheDir.exists()) {
+            File[] files = cacheDir.listFiles();
+            if (files != null) {
+                // Delete files older than 24 hours
+                long cutoff = System.currentTimeMillis() - (24 * 60 * 60 * 1000);
+                for (File file : files) {
+                    if (file.lastModified() < cutoff) {
+                        file.delete();
+                    }
+                }
+            }
+        }
+    }
+    
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        // Clean up cache files when activity is destroyed
+        cleanupCacheFiles();
+    }
+    
+    private void displayFaceImage(String faceImagePath) {
+        if (faceImagePath == null) return;
+        
+        try {
+            // Use options to maintain original quality
+            BitmapFactory.Options options = new BitmapFactory.Options();
+            options.inPreferredConfig = Bitmap.Config.ARGB_8888;
+            faceBitmap = BitmapFactory.decodeFile(faceImagePath, options);
+            if (faceBitmap != null) {
+                ivFace.setImageBitmap(faceBitmap);
+                ivFace.setVisibility(View.VISIBLE);
+                // Set scale type to maintain aspect ratio without distortion
+                ivFace.setScaleType(ImageView.ScaleType.FIT_CENTER);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
-    private void displayDocumentImage(String base64Image) {
+    private void displayDocumentImage(String documentImagePath) {
+        if (documentImagePath == null) return;
+        
         try {
-            byte[] decodedString = Base64.decode(base64Image, Base64.DEFAULT);
-            documentBitmap = BitmapFactory.decodeByteArray(decodedString, 0, decodedString.length);
+            // Use options to maintain original quality
+            BitmapFactory.Options options = new BitmapFactory.Options();
+            options.inPreferredConfig = Bitmap.Config.ARGB_8888;
+            documentBitmap = BitmapFactory.decodeFile(documentImagePath, options);
             if (documentBitmap != null) {
                 ivDocument.setImageBitmap(documentBitmap);
                 ivDocument.setVisibility(View.VISIBLE);
+                // Set scale type to maintain aspect ratio without distortion
+                ivDocument.setScaleType(ImageView.ScaleType.FIT_CENTER);
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -463,9 +543,16 @@ public class MainActivity extends AppCompatActivity {
             faceBitmap.compress(Bitmap.CompressFormat.JPEG, 100, fos);
             fos.close();
             Image faceImage = new Image(ImageDataFactory.create(tempImage.getAbsolutePath()));
-            faceImage.setWidth(200);
-            faceImage.setHeight(200 * faceBitmap.getHeight() / faceBitmap.getWidth());
-            document.add(new Paragraph("Face Image:"));
+            
+            // Calculate appropriate size while maintaining aspect ratio
+            float pageWidth = pdf.getDefaultPageSize().getWidth() - 50; // Margin
+            float imageWidth = Math.min(pageWidth, 300); // Max width 300pt
+            float aspectRatio = (float) faceBitmap.getWidth() / faceBitmap.getHeight();
+            float imageHeight = imageWidth / aspectRatio;
+            
+            faceImage.setWidth(imageWidth);
+            faceImage.setHeight(imageHeight);
+            document.add(new Paragraph("Face Image:").setBold());
             document.add(faceImage);
             document.add(new Paragraph("\n"));
         }
@@ -477,9 +564,16 @@ public class MainActivity extends AppCompatActivity {
             documentBitmap.compress(Bitmap.CompressFormat.JPEG, 100, fos);
             fos.close();
             Image docImage = new Image(ImageDataFactory.create(tempDocImage.getAbsolutePath()));
-            docImage.setWidth(400);
-            docImage.setHeight(400 * documentBitmap.getHeight() / documentBitmap.getWidth());
-            document.add(new Paragraph("Document Image:"));
+            
+            // Calculate appropriate size while maintaining aspect ratio
+            float pageWidth = pdf.getDefaultPageSize().getWidth() - 50; // Margin
+            float imageWidth = Math.min(pageWidth, 450); // Max width 450pt for document
+            float aspectRatio = (float) documentBitmap.getWidth() / documentBitmap.getHeight();
+            float imageHeight = imageWidth / aspectRatio;
+            
+            docImage.setWidth(imageWidth);
+            docImage.setHeight(imageHeight);
+            document.add(new Paragraph("Document Image:").setBold());
             document.add(docImage);
             document.add(new Paragraph("\n"));
         }

@@ -1,5 +1,9 @@
 package com.dynamsoft.scanmrz;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+
 import android.Manifest;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
@@ -17,8 +21,11 @@ import androidx.camera.core.CameraSelector;
 import androidx.camera.core.ImageAnalysis;
 import androidx.camera.core.ImageProxy;
 import androidx.camera.core.Preview;
+import androidx.camera.core.resolutionselector.ResolutionSelector;
+import androidx.camera.core.resolutionselector.ResolutionStrategy;
 import androidx.camera.lifecycle.ProcessCameraProvider;
 import androidx.camera.view.PreviewView;
+import android.util.Size;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
@@ -147,9 +154,19 @@ public class CameraXActivity extends AppCompatActivity {
 
                 Preview preview = new Preview.Builder().build();
                 preview.setSurfaceProvider(previewView.getSurfaceProvider());
-
+                
+                // Create a ResolutionSelector with target resolution 1920x1080
+                ResolutionSelector resolutionSelector = new ResolutionSelector.Builder()
+                        .setResolutionStrategy(new ResolutionStrategy(
+                                new Size(1920, 1080),
+                                ResolutionStrategy.FALLBACK_RULE_CLOSEST_HIGHER_THEN_LOWER))
+                        .build();
+                
                 ImageAnalysis imageAnalyzer = new ImageAnalysis.Builder()
                         .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
+                        // Set target resolution to 1920x1080 for better image quality
+                        .setResolutionSelector(resolutionSelector)
+                        .setOutputImageFormat(ImageAnalysis.OUTPUT_IMAGE_FORMAT_YUV_420_888)
                         .build();
 
                 imageAnalyzer.setAnalyzer(cameraExecutor, new MRZAnalyzer());
@@ -236,7 +253,7 @@ public class CameraXActivity extends AppCompatActivity {
 
             android.graphics.YuvImage yuvImage = new android.graphics.YuvImage(nv21, android.graphics.ImageFormat.NV21, imageProxy.getWidth(), imageProxy.getHeight(), null);
             java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream();
-            yuvImage.compressToJpeg(new android.graphics.Rect(0, 0, imageProxy.getWidth(), imageProxy.getHeight()), 50, out);
+            yuvImage.compressToJpeg(new android.graphics.Rect(0, 0, imageProxy.getWidth(), imageProxy.getHeight()), 100, out);
             byte[] imageBytes = out.toByteArray();
             Bitmap bitmap = android.graphics.BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.length);
 
@@ -418,9 +435,9 @@ public class CameraXActivity extends AppCompatActivity {
 
             // Add document image if available
             if (mLastDocumentBitmap != null) {
-                String documentImageBase64 = bitmapToBase64(mLastDocumentBitmap);
-                intent.putExtra("document_image", documentImageBase64);
-                Log.d(TAG, "Document image added to result");
+                String documentImagePath = saveBitmapToCache(mLastDocumentBitmap, "document");
+                intent.putExtra("document_image_path", documentImagePath);
+                Log.d(TAG, "Document image saved to: " + documentImagePath);
             }
 
             // For MRZ results, try to detect and crop face from the current frame
@@ -461,10 +478,10 @@ public class CameraXActivity extends AppCompatActivity {
                                 Bitmap croppedFace = cropFaceFromBitmap(currentBitmap, largestFace);
 
                                 if (croppedFace != null) {
-                                    // Convert cropped face to Base64 string for transfer
-                                    String faceImageBase64 = bitmapToBase64(croppedFace);
-                                    intent.putExtra("face_image", faceImageBase64);
-                                    Log.d(TAG, "Face detected and cropped successfully");
+                                    // Save cropped face to cache file and pass the file path
+                                    String faceImagePath = saveBitmapToCache(croppedFace, "face");
+                                    intent.putExtra("face_image_path", faceImagePath);
+                                    Log.d(TAG, "Face detected and saved to: " + faceImagePath);
                                 }
                             }
 
@@ -557,10 +574,33 @@ public class CameraXActivity extends AppCompatActivity {
 
     // Removed sortCorners method as it's no longer needed without OpenCV
 
+    private String saveBitmapToCache(Bitmap bitmap, String prefix) {
+        try {
+            // Create a file in the cache directory
+            File cacheDir = getApplicationContext().getCacheDir();
+            File imageFile = new File(cacheDir, prefix + "_" + System.currentTimeMillis() + ".jpg");
+            
+            // Save the bitmap to the file
+            FileOutputStream fos = new FileOutputStream(imageFile);
+            // Compress with high quality to avoid artifacts
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 100, fos);
+            fos.flush();
+            fos.close();
+            
+            // Return the file path
+            return imageFile.getAbsolutePath();
+        } catch (Exception e) {
+            Log.e(TAG, "Error saving bitmap to cache: " + e.getMessage());
+            return null;
+        }
+    }
+    
+    // Keep this method for backward compatibility if needed
     private String bitmapToBase64(Bitmap bitmap) {
         try {
             ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-            bitmap.compress(Bitmap.CompressFormat.JPEG, 80, byteArrayOutputStream);
+            // Increase quality from 80 to 100 to avoid compression artifacts
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 100, byteArrayOutputStream);
             byte[] byteArray = byteArrayOutputStream.toByteArray();
             return Base64.encodeToString(byteArray, Base64.DEFAULT);
         } catch (Exception e) {
