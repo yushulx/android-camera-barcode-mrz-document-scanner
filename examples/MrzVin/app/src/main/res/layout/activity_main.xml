@@ -79,6 +79,17 @@
 				android:background="@android:drawable/gallery_thumb"
 				android:visibility="gone" />
 
+			<!-- Document Image Display -->
+			<ImageView
+				android:id="@+id/iv_document"
+				android:layout_width="200dp"
+				android:layout_height="120dp"
+				android:layout_gravity="center"
+				android:layout_marginBottom="16dp"
+				android:scaleType="centerCrop"
+				android:background="@android:drawable/gallery_thumb"
+				android:visibility="gone" />
+
 			<LinearLayout
 				android:id="@+id/ll_content"
 				android:layout_width="match_parent"

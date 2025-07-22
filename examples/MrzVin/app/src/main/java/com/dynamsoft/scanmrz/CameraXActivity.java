@@ -25,7 +25,9 @@ import androidx.core.content.ContextCompat;
 import com.dynamsoft.core.basic_structures.CapturedResultItem;
 import com.dynamsoft.cvr.CaptureVisionRouter;
 import com.dynamsoft.cvr.CapturedResult;
+import com.dynamsoft.cvr.EnumPresetTemplate;
 import com.dynamsoft.dcp.ParsedResultItem;
+import com.dynamsoft.ddn.DeskewedImageResultItem;
 import com.dynamsoft.license.LicenseManager;
 import com.dynamsoft.mrzscannerbundle.ui.EnumDetectionType;
 import com.dynamsoft.mrzscannerbundle.ui.ScannerConfig;
@@ -37,6 +39,15 @@ import com.google.mlkit.vision.face.Face;
 import com.google.mlkit.vision.face.FaceDetection;
 import com.google.mlkit.vision.face.FaceDetector;
 import com.google.mlkit.vision.face.FaceDetectorOptions;
+
+// Removed OpenCV imports - using Android built-in APIs for document detection
+import java.util.ArrayList;
+import java.util.List;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Paint;
+import android.graphics.Path;
+import android.graphics.RectF;
 
 import java.io.ByteArrayOutputStream;
 import java.nio.ByteBuffer;
@@ -57,6 +68,7 @@ public class CameraXActivity extends AppCompatActivity {
     private String mCurrentTemplate = "ReadPassportAndId";
     private boolean isProcessing = false;
     private Bitmap mLastProcessedBitmap; // Store the last bitmap for face detection
+    private Bitmap mLastDocumentBitmap; // Store the last cropped document
 
     // Result validation fields
     private static final int VALIDATION_FRAME_COUNT = 5;
@@ -100,6 +112,12 @@ public class CameraXActivity extends AppCompatActivity {
         } else {
             ActivityCompat.requestPermissions(this, REQUIRED_PERMISSIONS, REQUEST_CODE_PERMISSIONS);
         }
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        // Document detection will use Android's built-in image processing
     }
 
     private void initializeCVR() {
@@ -167,6 +185,9 @@ public class CameraXActivity extends AppCompatActivity {
                 if (bitmap != null) {
                     // Store the bitmap for potential face detection
                     mLastProcessedBitmap = bitmap;
+
+                    // Detect and crop document using Android APIs
+            mLastDocumentBitmap = detectAndCropDocument(bitmap);
 
                     // Process with Dynamsoft SDK
                     CapturedResult capturedResult = mRouter.capture(bitmap, mCurrentTemplate);
@@ -255,7 +276,8 @@ public class CameraXActivity extends AppCompatActivity {
         recentResults.add(resultKey);
 
         // Update the count for this result
-        resultCounts.put(resultKey, resultCounts.getOrDefault(resultKey, 0) + 1);
+        Integer currentCount = resultCounts.get(resultKey);
+        resultCounts.put(resultKey, (currentCount != null ? currentCount : 0) + 1);
 
         // Keep only the last VALIDATION_FRAME_COUNT results
         if (recentResults.size() > VALIDATION_FRAME_COUNT) {
@@ -269,13 +291,13 @@ public class CameraXActivity extends AppCompatActivity {
         }
 
         // Check if we have at least REQUIRED_MATCHES of the same result
-        int currentCount = resultCounts.getOrDefault(resultKey, 0);
-        boolean shouldReturn = currentCount >= REQUIRED_MATCHES;
+        int finalCount = (currentCount != null ? currentCount : 0);
+        boolean shouldReturn = finalCount >= REQUIRED_MATCHES;
 
         if (shouldReturn) {
-            Log.d(TAG, "MRZ validation passed: " + currentCount + " matches out of " + recentResults.size() + " frames");
+            Log.d(TAG, "MRZ validation passed: " + finalCount + " matches out of " + recentResults.size() + " frames");
         } else {
-            Log.d(TAG, "MRZ validation pending: " + currentCount + " matches, need " + REQUIRED_MATCHES);
+            Log.d(TAG, "MRZ validation pending: " + finalCount + " matches, need " + REQUIRED_MATCHES);
         }
 
         return shouldReturn;
@@ -394,6 +416,13 @@ public class CameraXActivity extends AppCompatActivity {
 
             intent.putExtra("result", resultData);
 
+            // Add document image if available
+            if (mLastDocumentBitmap != null) {
+                String documentImageBase64 = bitmapToBase64(mLastDocumentBitmap);
+                intent.putExtra("document_image", documentImageBase64);
+                Log.d(TAG, "Document image added to result");
+            }
+
             // For MRZ results, try to detect and crop face from the current frame
             detectAndCropFace(intent);
         }
@@ -506,6 +535,27 @@ public class CameraXActivity extends AppCompatActivity {
 
         return null;
     }
+
+    private Bitmap detectAndCropDocument(Bitmap originalBitmap) {
+        try {
+            CapturedResult capturedResult = mRouter.capture(originalBitmap, EnumPresetTemplate.PT_DETECT_AND_NORMALIZE_DOCUMENT);
+            CapturedResultItem[] items = capturedResult.getItems();
+
+            for (CapturedResultItem item : items) {
+                if (item instanceof DeskewedImageResultItem) {
+                    DeskewedImageResultItem deskewedImageResultItem = (DeskewedImageResultItem) item;
+                    return deskewedImageResultItem.getImageData().toBitmap();
+                }
+            }
+            Log.d(TAG, "Document detection using Android APIs not yet implemented");
+            return originalBitmap;
+        } catch (Exception e) {
+            Log.e(TAG, "Error in document detection: " + e.getMessage());
+            return originalBitmap;
+        }
+    }
+
+    // Removed sortCorners method as it's no longer needed without OpenCV
 
     private String bitmapToBase64(Bitmap bitmap) {
         try {

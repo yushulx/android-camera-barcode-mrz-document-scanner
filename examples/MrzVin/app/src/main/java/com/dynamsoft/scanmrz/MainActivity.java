@@ -55,7 +55,9 @@ public class MainActivity extends AppCompatActivity {
 	private ImageView btnSharePdf;
 	private ImageView btnOpenPdf;
 	private ImageView ivFace;
-	private Bitmap faceBitmap;
+    private ImageView ivDocument;
+    private Bitmap faceBitmap;
+    private Bitmap documentBitmap;
 	private List<String> scannedInfo = new ArrayList<>();
 	private String currentDocType;
 	private File lastCreatedPdfFile;
@@ -127,10 +129,15 @@ public class MainActivity extends AppCompatActivity {
 							String dateOfExpiry = resultData.get("dateOfExpiry");
 
 							// Check if face image is available and display it
-							String faceImageBase64 = data.getStringExtra("face_image");
-							if (faceImageBase64 != null && !faceImageBase64.isEmpty()) {
-								displayFaceImage(faceImageBase64);
-							}
+                            String faceImageBase64 = data.getStringExtra("face_image");
+                            if (faceImageBase64 != null && !faceImageBase64.isEmpty()) {
+                                displayFaceImage(faceImageBase64);
+                            }
+
+                            String documentImageBase64 = data.getStringExtra("document_image");
+                            if (documentImageBase64 != null && !documentImageBase64.isEmpty()) {
+                                displayDocumentImage(documentImageBase64);
+                            }
 
 							content.addView(childView("Name:", firstName + " " + lastName), params);
 							scannedInfo.add("Name: " + firstName + " " + lastName);
@@ -170,6 +177,7 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         content = findViewById(R.id.ll_content);
         ivFace = findViewById(R.id.iv_face);
+        ivDocument = findViewById(R.id.iv_document);
         btnSharePdf = findViewById(R.id.btn_share_pdf);
         btnOpenPdf = findViewById(R.id.btn_open_pdf);
         btnSharePdf.setOnClickListener(v -> sharePdf());
@@ -181,6 +189,10 @@ public class MainActivity extends AppCompatActivity {
         config.setCloseButtonVisible(true);
 
         launcher = registerForActivityResult(new ScannerActivity.ResultContract(), commonResult -> {
+            if (documentBitmap != null) {
+                documentBitmap = null; // Clear previous document image if any
+            }
+
             if (commonResult == null) return;
 
             // In the launcher result callback:
@@ -190,6 +202,7 @@ public class MainActivity extends AppCompatActivity {
                 btnSharePdf.setVisibility(View.VISIBLE);
                 btnOpenPdf.setVisibility(View.VISIBLE); // Show both buttons together
                 ivFace.setVisibility(View.GONE);
+                ivDocument.setVisibility(View.GONE);
                 switch (commonResult.getDetectionType()) {
                     case MRZ:
                         MRZScanResult result = (MRZScanResult) commonResult;
@@ -197,6 +210,7 @@ public class MainActivity extends AppCompatActivity {
                             MRZData data = result.getData();
                             content.removeAllViews();
                              ivFace.setVisibility(View.GONE);
+                             ivDocument.setVisibility(View.GONE);
                             
                             // Face image handling is done through CameraXActivity intent extras
                             // Header and child views for MRZ
@@ -253,6 +267,8 @@ public class MainActivity extends AppCompatActivity {
                         if (vinResult.getData() != null) {
                             VINData data = vinResult.getData();
                             content.removeAllViews();
+                            ivFace.setVisibility(View.GONE);
+                            ivDocument.setVisibility(View.GONE);
                             TextView header = new TextView(this);
                             header.setText("Scan Results");
                             header.setTextSize(20);
@@ -378,16 +394,27 @@ public class MainActivity extends AppCompatActivity {
         ivFace.setVisibility(View.VISIBLE);
     }
 
+    private void displayDocumentImage(String base64Image) {
+        try {
+            byte[] decodedString = Base64.decode(base64Image, Base64.DEFAULT);
+            documentBitmap = BitmapFactory.decodeByteArray(decodedString, 0, decodedString.length);
+            if (documentBitmap != null) {
+                ivDocument.setImageBitmap(documentBitmap);
+                ivDocument.setVisibility(View.VISIBLE);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
     private void sharePdf() {
         if (scannedInfo.isEmpty()) return;
 
-        if (lastCreatedPdfFile == null || !lastCreatedPdfFile.exists()) {
-            try {
-                createPdf();
-            } catch (Exception e) {
-                e.printStackTrace();
-                return;
-            }
+        try {
+            createPdf();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return;
         }
 
         btnOpenPdf.setVisibility(View.VISIBLE); // Show Open PDF button after creation
@@ -400,13 +427,11 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void openPdf() {
-        if (lastCreatedPdfFile == null || !lastCreatedPdfFile.exists()) {
-            try {
-                createPdf();
-            } catch (Exception e) {
-                e.printStackTrace();
-                return;
-            }
+        try {
+            createPdf();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return;
         }
 
         try {
@@ -430,14 +455,35 @@ public class MainActivity extends AppCompatActivity {
         PdfWriter writer = new PdfWriter(pdfFile);
         PdfDocument pdf = new PdfDocument(writer);
         Document document = new Document(pdf);
+        
+        // Add face image if available
         if (faceBitmap != null) {
             File tempImage = new File(getCacheDir(), "face.jpg");
             FileOutputStream fos = new FileOutputStream(tempImage);
             faceBitmap.compress(Bitmap.CompressFormat.JPEG, 100, fos);
             fos.close();
             Image faceImage = new Image(ImageDataFactory.create(tempImage.getAbsolutePath()));
+            faceImage.setWidth(200);
+            faceImage.setHeight(200 * faceBitmap.getHeight() / faceBitmap.getWidth());
+            document.add(new Paragraph("Face Image:"));
             document.add(faceImage);
+            document.add(new Paragraph("\n"));
         }
+        
+        // Add document image if available
+        if (documentBitmap != null) {
+            File tempDocImage = new File(getCacheDir(), "document.jpg");
+            FileOutputStream fos = new FileOutputStream(tempDocImage);
+            documentBitmap.compress(Bitmap.CompressFormat.JPEG, 100, fos);
+            fos.close();
+            Image docImage = new Image(ImageDataFactory.create(tempDocImage.getAbsolutePath()));
+            docImage.setWidth(400);
+            docImage.setHeight(400 * documentBitmap.getHeight() / documentBitmap.getWidth());
+            document.add(new Paragraph("Document Image:"));
+            document.add(docImage);
+            document.add(new Paragraph("\n"));
+        }
+        
         for (String info : scannedInfo) {
             document.add(new Paragraph(info).setTextAlignment(TextAlignment.LEFT));
         }
