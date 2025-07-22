@@ -8,6 +8,17 @@
 	tools:context=".MainActivity">
 
 	<ImageButton
+		android:id="@+id/btn_open_pdf"
+		android:layout_width="48dp"
+		android:layout_height="48dp"
+		android:layout_alignParentTop="true"
+		android:layout_alignParentStart="true"
+		android:layout_margin="16dp"
+		android:src="@android:drawable/ic_menu_view"
+		android:contentDescription="Open PDF"
+		android:visibility="gone" />
+
+	<ImageButton
 		android:id="@+id/btn_share_pdf"
 		android:layout_width="48dp"
 		android:layout_height="48dp"

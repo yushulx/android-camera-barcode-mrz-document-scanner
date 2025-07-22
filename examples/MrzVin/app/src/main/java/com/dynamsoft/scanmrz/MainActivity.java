@@ -53,10 +53,12 @@ import android.graphics.Typeface;
 
 public class MainActivity extends AppCompatActivity {
 	private ImageView btnSharePdf;
+	private ImageView btnOpenPdf;
 	private ImageView ivFace;
 	private Bitmap faceBitmap;
 	private List<String> scannedInfo = new ArrayList<>();
 	private String currentDocType;
+	private File lastCreatedPdfFile;
 	private ActivityResultLauncher<ScannerConfig> launcher;
 	private LinearLayout content;
 	private MaterialButtonToggleGroup toggleGroup;
@@ -78,6 +80,7 @@ public class MainActivity extends AppCompatActivity {
 						faceBitmap = null;
 						currentDocType = docType;
 						btnSharePdf.setVisibility(View.VISIBLE);
+						btnOpenPdf.setVisibility(View.VISIBLE); // Show both buttons together
 						ivFace.setVisibility(View.GONE);
 
 						// Add header
@@ -154,6 +157,7 @@ public class MainActivity extends AppCompatActivity {
 					content.removeAllViews();
 					content.addView(childView("CameraX scan canceled.", ""));
 					btnSharePdf.setVisibility(View.GONE);
+					btnOpenPdf.setVisibility(View.GONE);
 					ivFace.setVisibility(View.GONE);
 				}
 			});
@@ -167,7 +171,9 @@ public class MainActivity extends AppCompatActivity {
         content = findViewById(R.id.ll_content);
         ivFace = findViewById(R.id.iv_face);
         btnSharePdf = findViewById(R.id.btn_share_pdf);
+        btnOpenPdf = findViewById(R.id.btn_open_pdf);
         btnSharePdf.setOnClickListener(v -> sharePdf());
+        btnOpenPdf.setOnClickListener(v -> openPdf());
 
         config = new ScannerConfig();
         config.setLicense("DLS2eyJoYW5kc2hha2VDb2RlIjoiMjAwMDAxLTE2NDk4Mjk3OTI2MzUiLCJvcmdhbml6YXRpb25JRCI6IjIwMDAwMSIsInNlc3Npb25QYXNzd29yZCI6IndTcGR6Vm05WDJrcEQ5YUoifQ==");
@@ -182,6 +188,7 @@ public class MainActivity extends AppCompatActivity {
                 scannedInfo.clear();
                 faceBitmap = null;
                 btnSharePdf.setVisibility(View.VISIBLE);
+                btnOpenPdf.setVisibility(View.VISIBLE); // Show both buttons together
                 ivFace.setVisibility(View.GONE);
                 switch (commonResult.getDetectionType()) {
                     case MRZ:
@@ -295,10 +302,13 @@ public class MainActivity extends AppCompatActivity {
                 content.removeAllViews();
                 content.addView(childView("Scan canceled.", ""));
                 btnSharePdf.setVisibility(View.GONE);
+                btnOpenPdf.setVisibility(View.GONE);
             }
             if (commonResult.getErrorString() != null && !commonResult.getErrorString().isEmpty()) {
                 content.removeAllViews();
                 content.addView(childView("Error:", commonResult.getErrorString()));
+                btnSharePdf.setVisibility(View.GONE);
+                btnOpenPdf.setVisibility(View.GONE);
             }
         });
 
@@ -370,24 +380,53 @@ public class MainActivity extends AppCompatActivity {
 
     private void sharePdf() {
         if (scannedInfo.isEmpty()) return;
-        try {
-            File pdfFile = createPdf();
-            if (pdfFile != null) {
-                Uri pdfUri = FileProvider.getUriForFile(this, getPackageName() + ".provider", pdfFile);
-                Intent shareIntent = new Intent(Intent.ACTION_SEND);
-                shareIntent.setType("application/pdf");
-                shareIntent.putExtra(Intent.EXTRA_STREAM, pdfUri);
-                shareIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-                startActivity(Intent.createChooser(shareIntent, "Share PDF"));
+
+        if (lastCreatedPdfFile == null || !lastCreatedPdfFile.exists()) {
+            try {
+                createPdf();
+            } catch (Exception e) {
+                e.printStackTrace();
+                return;
             }
+        }
+
+        btnOpenPdf.setVisibility(View.VISIBLE); // Show Open PDF button after creation
+        Uri pdfUri = FileProvider.getUriForFile(this, getPackageName() + ".provider", lastCreatedPdfFile);
+        Intent shareIntent = new Intent(Intent.ACTION_SEND);
+        shareIntent.setType("application/pdf");
+        shareIntent.putExtra(Intent.EXTRA_STREAM, pdfUri);
+        shareIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        startActivity(Intent.createChooser(shareIntent, "Share PDF"));
+    }
+
+    private void openPdf() {
+        if (lastCreatedPdfFile == null || !lastCreatedPdfFile.exists()) {
+            try {
+                createPdf();
+            } catch (Exception e) {
+                e.printStackTrace();
+                return;
+            }
+        }
+
+        try {
+            Uri pdfUri = FileProvider.getUriForFile(this, getPackageName() + ".provider", lastCreatedPdfFile);
+            Intent openIntent = new Intent(Intent.ACTION_VIEW);
+            openIntent.setDataAndType(pdfUri, "application/pdf");
+            openIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            openIntent.addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY);
+            startActivity(openIntent);
         } catch (Exception e) {
+            // If no PDF app is available or there's an error, show a message
             e.printStackTrace();
+            // Optionally show a toast or dialog to inform the user
         }
     }
 
     private File createPdf() throws IOException {
         String fileName = currentDocType + "_Scan_" + System.currentTimeMillis() + ".pdf";
         File pdfFile = new File(getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS), fileName);
+        lastCreatedPdfFile = pdfFile; // Save the last created PDF file
         PdfWriter writer = new PdfWriter(pdfFile);
         PdfDocument pdf = new PdfDocument(writer);
         Document document = new Document(pdf);
