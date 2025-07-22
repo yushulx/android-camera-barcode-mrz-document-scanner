@@ -410,12 +410,12 @@ public class CameraXActivity extends AppCompatActivity {
                 return;
             }
 
-            // Configure face detector for high accuracy
+            // Configure face detector for faster detection
             FaceDetectorOptions options = new FaceDetectorOptions.Builder()
-                    .setPerformanceMode(FaceDetectorOptions.PERFORMANCE_MODE_ACCURATE)
+                    .setPerformanceMode(FaceDetectorOptions.PERFORMANCE_MODE_FAST)
                     .setLandmarkMode(FaceDetectorOptions.LANDMARK_MODE_ALL)
                     .setClassificationMode(FaceDetectorOptions.CLASSIFICATION_MODE_ALL)
-                    .setMinFaceSize(0.1f)
+                    .setMinFaceSize(0.05f)
                     .enableTracking()
                     .build();
 
@@ -462,7 +462,6 @@ public class CameraXActivity extends AppCompatActivity {
     }
 
     private Bitmap getCurrentFrameBitmap() {
-        // This would need to be implemented to capture the current frame
         // For now, we'll use the last processed bitmap
         // You might want to store the bitmap from the last successful MRZ detection
         return mLastProcessedBitmap;

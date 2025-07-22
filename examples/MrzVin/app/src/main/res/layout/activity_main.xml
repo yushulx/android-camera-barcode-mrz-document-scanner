@@ -7,6 +7,17 @@
 	android:orientation="vertical"
 	tools:context=".MainActivity">
 
+	<ImageButton
+		android:id="@+id/btn_share_pdf"
+		android:layout_width="48dp"
+		android:layout_height="48dp"
+		android:layout_alignParentTop="true"
+		android:layout_alignParentEnd="true"
+		android:layout_margin="16dp"
+		android:src="@android:drawable/ic_menu_share"
+		android:contentDescription="Share PDF"
+		android:visibility="gone" />
+
 	<RadioGroup
 		android:id="@+id/radio_group_mode"
 		android:layout_width="wrap_content"

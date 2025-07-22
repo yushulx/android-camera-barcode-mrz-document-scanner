@@ -26,6 +26,7 @@ android {
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
+        //coreLibraryDesugaringEnabled true
     }
 }
 
@@ -43,5 +44,10 @@ dependencies {
     // ML Kit Face Detection
     implementation 'com.google.mlkit:face-detection:16.1.5'
 
-     implementation project(':dynamsoftmrzscannerbundle')
+    // iText for PDF generation
+    implementation 'com.itextpdf:itext7-core:7.1.15'
+
+    //coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:1.1.5'
+
+    implementation project(':dynamsoftmrzscannerbundle')
 }
