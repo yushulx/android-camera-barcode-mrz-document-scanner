@@ -51,8 +51,8 @@
 		android:layout_below="@+id/radio_group_mode"
 		android:orientation="vertical"
 		android:padding="20dp">
+
 		<LinearLayout
-			android:id="@+id/ll_content"
 			android:layout_width="match_parent"
 			android:layout_height="wrap_content"
 			android:orientation="vertical">
@@ -68,12 +68,19 @@
 				android:background="@android:drawable/gallery_thumb"
 				android:visibility="gone" />
 
-			<TextView
-				android:id="@+id/tv_name"
-				android:layout_width="wrap_content"
+			<LinearLayout
+				android:id="@+id/ll_content"
+				android:layout_width="match_parent"
 				android:layout_height="wrap_content"
-				android:textSize="18sp"
-				android:textStyle="bold" />
+				android:orientation="vertical">
+
+				<TextView
+					android:id="@+id/tv_name"
+					android:layout_width="wrap_content"
+					android:layout_height="wrap_content"
+					android:textSize="18sp"
+					android:textStyle="bold" />
+			</LinearLayout>
 		</LinearLayout>
 	</ScrollView>
 
