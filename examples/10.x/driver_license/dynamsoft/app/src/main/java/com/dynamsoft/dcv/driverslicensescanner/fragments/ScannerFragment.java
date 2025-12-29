@@ -55,11 +55,7 @@ public class ScannerFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
-        try {
-            mCamera.open();
-        } catch (CameraEnhancerException e) {
-            e.printStackTrace();
-        }
+        mCamera.open();
         mRouter.startCapturing(TEMPLATE_READ_PDF417, new CompletionListener() {
 
             @Override
@@ -78,11 +74,7 @@ public class ScannerFragment extends Fragment {
     @Override
     public void onPause() {
         super.onPause();
-        try {
-            mCamera.close();
-        } catch (CameraEnhancerException e) {
-            e.printStackTrace();
-        }
+        mCamera.close();
         mRouter.stopCapturing();
     }
 
