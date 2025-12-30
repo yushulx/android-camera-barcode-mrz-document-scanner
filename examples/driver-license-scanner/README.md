@@ -2,6 +2,8 @@
 
 This is an Android example application that demonstrates how to scan and parse driver licenses using **Dynamsoft Barcode Reader** and **Google ML Kit**.
 
+https://github.com/user-attachments/assets/b7ba3eb5-276d-498c-bcb2-d98db875c41d
+
 ## Features
 
 -   **Multiple Scanning Solutions**:
