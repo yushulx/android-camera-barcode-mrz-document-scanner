@@ -21,7 +21,7 @@ import android.graphics.Paint;
 import android.graphics.RectF;
 
 import com.dynamsoft.dcv.driverslicensescanner.google.ui.camera.GraphicOverlay;
-import com.google.android.gms.vision.barcode.Barcode;
+import com.google.mlkit.vision.barcode.common.Barcode;
 
 /**
  * Graphic instance for rendering barcode position, size, and ID within an
@@ -101,6 +101,6 @@ public class BarcodeGraphic extends GraphicOverlay.Graphic {
 
         // Draws a label at the bottom of the barcode indicate the barcode value that
         // was detected.
-        canvas.drawText(barcode.rawValue, rect.left, rect.bottom, mTextPaint);
+        canvas.drawText(barcode.getRawValue(), rect.left, rect.bottom, mTextPaint);
     }
 }

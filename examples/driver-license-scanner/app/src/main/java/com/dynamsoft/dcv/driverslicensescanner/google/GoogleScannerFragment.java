@@ -5,12 +5,9 @@ import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
-import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.hardware.Camera;
 import android.os.Bundle;
-
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -28,18 +25,24 @@ import com.dynamsoft.dcv.driverslicensescanner.MainViewModel;
 import com.dynamsoft.dcv.driverslicensescanner.R;
 import com.dynamsoft.dcv.driverslicensescanner.google.ui.camera.CameraSource;
 import com.dynamsoft.dcv.driverslicensescanner.google.ui.camera.CameraSourcePreview;
+import com.dynamsoft.dcv.driverslicensescanner.google.ui.camera.FrameProcessor;
 import com.dynamsoft.dcv.driverslicensescanner.google.ui.camera.GraphicOverlay;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
-import com.google.android.gms.vision.MultiProcessor;
-import com.google.android.gms.vision.barcode.Barcode;
-import com.google.android.gms.vision.barcode.BarcodeDetector;
+import com.google.mlkit.vision.barcode.BarcodeScanner;
+import com.google.mlkit.vision.barcode.BarcodeScannerOptions;
+import com.google.mlkit.vision.barcode.BarcodeScanning;
+import com.google.mlkit.vision.barcode.common.Barcode;
+import com.google.mlkit.vision.common.InputImage;
+import com.google.android.gms.tasks.Tasks;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 
-public class GoogleScannerFragment extends Fragment implements BarcodeGraphicTracker.BarcodeUpdateListener {
+public class GoogleScannerFragment extends Fragment implements FrameProcessor {
 
     private static final String TAG = "GoogleScanner";
     private static final int RC_HANDLE_GMS = 9001;
@@ -50,6 +53,7 @@ public class GoogleScannerFragment extends Fragment implements BarcodeGraphicTra
     private GraphicOverlay<BarcodeGraphic> mGraphicOverlay;
     private boolean isNavigating = false;
     private MainViewModel viewModel;
+    private BarcodeScanner scanner;
 
     @Nullable
     @Override
@@ -64,6 +68,11 @@ public class GoogleScannerFragment extends Fragment implements BarcodeGraphicTra
         super.onViewCreated(view, savedInstanceState);
         mPreview = view.findViewById(R.id.preview);
         mGraphicOverlay = view.findViewById(R.id.graphicOverlay);
+
+        BarcodeScannerOptions options = new BarcodeScannerOptions.Builder()
+                .setBarcodeFormats(Barcode.FORMAT_ALL_FORMATS)
+                .build();
+        scanner = BarcodeScanning.getClient(options);
 
         int rc = ActivityCompat.checkSelfPermission(requireContext(), Manifest.permission.CAMERA);
         if (rc == PackageManager.PERMISSION_GRANTED) {
@@ -92,23 +101,7 @@ public class GoogleScannerFragment extends Fragment implements BarcodeGraphicTra
     private void createCameraSource(boolean autoFocus, boolean useFlash) {
         Context context = requireContext();
 
-        BarcodeDetector barcodeDetector = new BarcodeDetector.Builder(context).build();
-        BarcodeTrackerFactory barcodeFactory = new BarcodeTrackerFactory(mGraphicOverlay, this);
-        barcodeDetector.setProcessor(
-                new MultiProcessor.Builder<>(barcodeFactory).build());
-
-        if (!barcodeDetector.isOperational()) {
-            Log.w(TAG, "Detector dependencies are not yet available.");
-            IntentFilter lowstorageFilter = new IntentFilter(Intent.ACTION_DEVICE_STORAGE_LOW);
-            boolean hasLowStorage = requireActivity().registerReceiver(null, lowstorageFilter) != null;
-
-            if (hasLowStorage) {
-                Toast.makeText(requireContext(), "Low Storage", Toast.LENGTH_LONG).show();
-                Log.w(TAG, "Low Storage");
-            }
-        }
-
-        CameraSource.Builder builder = new CameraSource.Builder(requireContext(), barcodeDetector)
+        CameraSource.Builder builder = new CameraSource.Builder(requireContext(), this)
                 .setFacing(CameraSource.CAMERA_FACING_BACK)
                 .setRequestedPreviewSize(1600, 1024)
                 .setRequestedFps(15.0f);
@@ -144,6 +137,9 @@ public class GoogleScannerFragment extends Fragment implements BarcodeGraphicTra
         super.onDestroy();
         if (mPreview != null) {
             mPreview.release();
+        }
+        if (scanner != null) {
+            scanner.close();
         }
     }
 
@@ -198,61 +194,84 @@ public class GoogleScannerFragment extends Fragment implements BarcodeGraphicTra
     }
 
     @Override
-    public void onBarcodeDetected(Barcode barcode) {
-        if (barcode != null && !isNavigating) {
-            if (barcode.format == Barcode.PDF417 && barcode.driverLicense != null) {
-                isNavigating = true;
-                if (getActivity() != null) {
-                    getActivity().runOnUiThread(() -> {
-                        if (isAdded() && getView() != null) {
-                            try {
-                                List<String> list = new ArrayList<>();
-                                Barcode.DriverLicense driverLicense = barcode.driverLicense;
+    public void process(ByteBuffer data, int width, int height, int rotationDegrees) {
+        if (isNavigating) return;
 
-                                if (driverLicense.documentType != null)
-                                    list.add("Document Type: " + driverLicense.documentType);
-                                if (driverLicense.firstName != null)
-                                    list.add("First Name: " + driverLicense.firstName);
-                                if (driverLicense.middleName != null)
-                                    list.add("Middle Name: " + driverLicense.middleName);
-                                if (driverLicense.lastName != null)
-                                    list.add("Last Name: " + driverLicense.lastName);
-                                if (driverLicense.gender != null)
-                                    list.add("Gender: " + driverLicense.gender);
-                                if (driverLicense.addressStreet != null)
-                                    list.add("Street: " + driverLicense.addressStreet);
-                                if (driverLicense.addressCity != null)
-                                    list.add("City: " + driverLicense.addressCity);
-                                if (driverLicense.addressState != null)
-                                    list.add("State: " + driverLicense.addressState);
-                                if (driverLicense.addressZip != null)
-                                    list.add("Zip: " + driverLicense.addressZip);
-                                if (driverLicense.licenseNumber != null)
-                                    list.add("License Number: " + driverLicense.licenseNumber);
-                                if (driverLicense.issueDate != null)
-                                    list.add("Issue Date: " + driverLicense.issueDate);
-                                if (driverLicense.expiryDate != null)
-                                    list.add("Expiry Date: " + driverLicense.expiryDate);
-                                if (driverLicense.birthDate != null)
-                                    list.add("Birth Date: " + driverLicense.birthDate);
-                                if (driverLicense.issuingCountry != null)
-                                    list.add("Issue Country: " + driverLicense.issuingCountry);
+        InputImage image = InputImage.fromByteBuffer(data, width, height, rotationDegrees, InputImage.IMAGE_FORMAT_NV21);
+        
+        try {
+            List<Barcode> barcodes = Tasks.await(scanner.process(image));
+            
+            if (isNavigating) return;
+            mGraphicOverlay.clear();
+            if (barcodes != null) {
+                for (Barcode barcode : barcodes) {
+                    BarcodeGraphic graphic = new BarcodeGraphic(mGraphicOverlay);
+                    mGraphicOverlay.add(graphic);
+                    graphic.updateItem(barcode);
 
-                                viewModel.results = list.toArray(new String[0]);
-                                Navigation.findNavController(requireView())
-                                        .navigate(R.id.action_GoogleScannerFragment_to_ResultFragment);
-                            } catch (Exception e) {
-                                Log.e(TAG, "Error navigating to result", e);
-                                isNavigating = false;
-                            }
-                        } else {
-                            isNavigating = false;
-                        }
-                    });
+                    if (barcode.getFormat() == Barcode.FORMAT_PDF417 && barcode.getDriverLicense() != null) {
+                        isNavigating = true;
+                        navigateToResult(barcode);
+                        break; // Only process one license
+                    }
+                }
+            }
+        } catch (ExecutionException | InterruptedException e) {
+            Log.e(TAG, "Barcode detection failed", e);
+        }
+    }
+
+    private void navigateToResult(Barcode barcode) {
+        if (getActivity() != null) {
+            getActivity().runOnUiThread(() -> {
+                if (isAdded() && getView() != null) {
+                    try {
+                        List<String> list = new ArrayList<>();
+                        Barcode.DriverLicense driverLicense = barcode.getDriverLicense();
+
+                        if (driverLicense.getDocumentType() != null)
+                            list.add("Document Type: " + driverLicense.getDocumentType());
+                        if (driverLicense.getFirstName() != null)
+                            list.add("First Name: " + driverLicense.getFirstName());
+                        if (driverLicense.getMiddleName() != null)
+                            list.add("Middle Name: " + driverLicense.getMiddleName());
+                        if (driverLicense.getLastName() != null)
+                            list.add("Last Name: " + driverLicense.getLastName());
+                        if (driverLicense.getGender() != null)
+                            list.add("Gender: " + driverLicense.getGender());
+                        if (driverLicense.getAddressStreet() != null)
+                            list.add("Street: " + driverLicense.getAddressStreet());
+                        if (driverLicense.getAddressCity() != null)
+                            list.add("City: " + driverLicense.getAddressCity());
+                        if (driverLicense.getAddressState() != null)
+                            list.add("State: " + driverLicense.getAddressState());
+                        if (driverLicense.getAddressZip() != null)
+                            list.add("Zip: " + driverLicense.getAddressZip());
+                        if (driverLicense.getLicenseNumber() != null)
+                            list.add("License Number: " + driverLicense.getLicenseNumber());
+                        if (driverLicense.getIssueDate() != null)
+                            list.add("Issue Date: " + driverLicense.getIssueDate());
+                        if (driverLicense.getExpiryDate() != null)
+                            list.add("Expiry Date: " + driverLicense.getExpiryDate());
+                        if (driverLicense.getBirthDate() != null)
+                            list.add("Birth Date: " + driverLicense.getBirthDate());
+                        if (driverLicense.getIssuingCountry() != null)
+                            list.add("Issue Country: " + driverLicense.getIssuingCountry());
+
+                        viewModel.results = list.toArray(new String[0]);
+                        Navigation.findNavController(requireView())
+                                .navigate(R.id.action_GoogleScannerFragment_to_ResultFragment);
+                    } catch (Exception e) {
+                        Log.e(TAG, "Error navigating to result", e);
+                        isNavigating = false;
+                    }
                 } else {
                     isNavigating = false;
                 }
-            }
+            });
+        } else {
+            isNavigating = false;
         }
     }
 }

@@ -35,8 +35,6 @@ import android.view.SurfaceView;
 import android.view.WindowManager;
 
 import com.google.android.gms.common.images.Size;
-import com.google.android.gms.vision.Detector;
-import com.google.android.gms.vision.Frame;
 
 import java.io.IOException;
 import java.lang.Thread.State;
@@ -53,7 +51,7 @@ import java.util.Map;
 
 /**
  * Manages the camera in conjunction with an underlying
- * {@link com.google.android.gms.vision.Detector}. This receives preview frames
+ * {@link FrameProcessor}. This receives preview frames
  * from the camera at
  * a specified rate, sending those frames to the detector as fast as it is able
  * to process those
@@ -188,7 +186,7 @@ public class CameraSource {
      * Builder for configuring and creating an associated camera source.
      */
     public static class Builder {
-        private final Detector<?> mDetector;
+        private final FrameProcessor mProcessor;
         private CameraSource mCameraSource = new CameraSource();
 
         /**
@@ -197,15 +195,15 @@ public class CameraSource {
          * images will be streamed to the associated detector upon starting the camera
          * source.
          */
-        public Builder(Context context, Detector<?> detector) {
+        public Builder(Context context, FrameProcessor processor) {
             if (context == null) {
                 throw new IllegalArgumentException("No context supplied.");
             }
-            if (detector == null) {
-                throw new IllegalArgumentException("No detector supplied.");
+            if (processor == null) {
+                throw new IllegalArgumentException("No processor supplied.");
             }
 
-            mDetector = detector;
+            mProcessor = processor;
             mCameraSource.mContext = context;
         }
 
@@ -272,7 +270,7 @@ public class CameraSource {
          * Creates an instance of the camera source.
          */
         public CameraSource build() {
-            mCameraSource.mFrameProcessor = mCameraSource.new FrameProcessingRunnable(mDetector);
+            mCameraSource.mFrameProcessor = mCameraSource.new FrameProcessingRunnable(mProcessor);
             return mCameraSource;
         }
     }
@@ -1098,7 +1096,7 @@ public class CameraSource {
         }
 
         // This corresponds to the rotation constants in {@link Frame}.
-        mRotation = angle / 90;
+        mRotation = angle;
 
         camera.setDisplayOrientation(displayAngle);
         parameters.setRotation(angle);
@@ -1166,7 +1164,7 @@ public class CameraSource {
      * received frame will immediately start on the same thread.
      */
     private class FrameProcessingRunnable implements Runnable {
-        private Detector<?> mDetector;
+        private FrameProcessor mProcessor;
         private long mStartTimeMillis = SystemClock.elapsedRealtime();
 
         // This lock guards all of the member variables below.
@@ -1179,8 +1177,8 @@ public class CameraSource {
         private int mPendingFrameId = 0;
         private ByteBuffer mPendingFrameData;
 
-        FrameProcessingRunnable(Detector<?> detector) {
-            mDetector = detector;
+        FrameProcessingRunnable(FrameProcessor processor) {
+            mProcessor = processor;
         }
 
         /**
@@ -1192,10 +1190,6 @@ public class CameraSource {
         void release() {
             if (mProcessingThread != null) {
                 assert (mProcessingThread.getState() == State.TERMINATED);
-            }
-            if (mDetector != null) {
-                mDetector.release();
-                mDetector = null;
             }
         }
 
@@ -1266,7 +1260,6 @@ public class CameraSource {
          */
         @Override
         public void run() {
-            Frame outputFrame;
             ByteBuffer data;
 
             while (true) {
@@ -1290,14 +1283,6 @@ public class CameraSource {
                         return;
                     }
 
-                    outputFrame = new Frame.Builder()
-                            .setImageData(mPendingFrameData, mPreviewSize.getWidth(),
-                                    mPreviewSize.getHeight(), ImageFormat.NV21)
-                            .setId(mPendingFrameId)
-                            .setTimestampMillis(mPendingTimeMillis)
-                            .setRotation(mRotation)
-                            .build();
-
                     // Hold onto the frame data locally, so that we can use this for detection
                     // below. We need to clear mPendingFrameData to ensure that this buffer isn't
                     // recycled back to the camera before we are done using that data.
@@ -1312,7 +1297,7 @@ public class CameraSource {
                 // frame.
 
                 try {
-                    mDetector.receiveFrame(outputFrame);
+                    mProcessor.process(data, mPreviewSize.getWidth(), mPreviewSize.getHeight(), mRotation);
                 } catch (Throwable t) {
                     Log.e(TAG, "Exception thrown from receiver.", t);
                 } finally {
