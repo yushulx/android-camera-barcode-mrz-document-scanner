@@ -44,11 +44,9 @@ public class ScannerFragment extends Fragment {
         mCamera = new CameraEnhancer(binding.cameraView, getViewLifecycleOwner());
         
         if (viewModel.resolutionIndex == 0) {
-            mCamera.setResolution(EnumResolution.RESOLUTION_480P);
-        } else if (viewModel.resolutionIndex == 2) {
-            mCamera.setResolution(EnumResolution.RESOLUTION_1080P);
-        } else {
             mCamera.setResolution(EnumResolution.RESOLUTION_720P);
+        } else {
+            mCamera.setResolution(EnumResolution.RESOLUTION_1080P);
         }
 
         if (mRouter == null) {

@@ -7,8 +7,8 @@ public class MainViewModel extends ViewModel {
 
     public String parsedText;
     
-    // 0: Low (640x480), 1: Medium (1280x720), 2: High (1920x1080)
-    public int resolutionIndex = 1;
+    // 0: 720P (1280x720), 1: 1080P (1920x1080)
+    public int resolutionIndex = 0;
 
     public void reset() {
         results = null;

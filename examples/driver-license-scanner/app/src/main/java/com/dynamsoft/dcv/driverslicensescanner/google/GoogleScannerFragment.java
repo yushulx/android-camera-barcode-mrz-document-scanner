@@ -121,10 +121,7 @@ public class GoogleScannerFragment extends Fragment implements FrameProcessor {
 
         int width = 1280;
         int height = 720;
-        if (viewModel.resolutionIndex == 0) {
-            width = 640;
-            height = 480;
-        } else if (viewModel.resolutionIndex == 2) {
+        if (viewModel.resolutionIndex == 1) {
             width = 1920;
             height = 1080;
         }

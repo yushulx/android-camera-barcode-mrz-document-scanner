@@ -34,20 +34,16 @@ public class SelectionFragment extends Fragment {
 
         android.widget.RadioGroup radioGroup = view.findViewById(R.id.radio_group_resolution);
         if (viewModel.resolutionIndex == 0) {
-            radioGroup.check(R.id.radio_low);
-        } else if (viewModel.resolutionIndex == 1) {
-            radioGroup.check(R.id.radio_medium);
+            radioGroup.check(R.id.radio_720p);
         } else {
-            radioGroup.check(R.id.radio_high);
+            radioGroup.check(R.id.radio_1080p);
         }
 
         radioGroup.setOnCheckedChangeListener((group, checkedId) -> {
-            if (checkedId == R.id.radio_low) {
+            if (checkedId == R.id.radio_720p) {
                 viewModel.resolutionIndex = 0;
-            } else if (checkedId == R.id.radio_medium) {
+            } else if (checkedId == R.id.radio_1080p) {
                 viewModel.resolutionIndex = 1;
-            } else if (checkedId == R.id.radio_high) {
-                viewModel.resolutionIndex = 2;
             }
         });
 
