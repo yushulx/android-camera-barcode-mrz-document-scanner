@@ -6,6 +6,7 @@ import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.pm.PackageManager;
+import android.content.res.Configuration;
 import android.hardware.Camera;
 import android.os.Bundle;
 import android.util.Log;
@@ -51,6 +52,7 @@ public class GoogleScannerFragment extends Fragment implements FrameProcessor {
     private CameraSource mCameraSource;
     private CameraSourcePreview mPreview;
     private GraphicOverlay<BarcodeGraphic> mGraphicOverlay;
+    private android.widget.TextView tvResolution;
     private boolean isNavigating = false;
     private MainViewModel viewModel;
     private BarcodeScanner scanner;
@@ -67,7 +69,23 @@ public class GoogleScannerFragment extends Fragment implements FrameProcessor {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         mPreview = view.findViewById(R.id.preview);
+        mPreview.setOnCameraStartedListener(() -> {
+            if (mCameraSource != null) {
+                com.google.android.gms.common.images.Size size = mCameraSource.getPreviewSize();
+                if (size != null) {
+                    getActivity().runOnUiThread(() -> {
+                        int orientation = getResources().getConfiguration().orientation;
+                        if (orientation == Configuration.ORIENTATION_PORTRAIT) {
+                            tvResolution.setText("Resolution: " + size.getHeight() + "x" + size.getWidth());
+                        } else {
+                            tvResolution.setText("Resolution: " + size.getWidth() + "x" + size.getHeight());
+                        }
+                    });
+                }
+            }
+        });
         mGraphicOverlay = view.findViewById(R.id.graphicOverlay);
+        tvResolution = view.findViewById(R.id.tv_resolution);
 
         BarcodeScannerOptions options = new BarcodeScannerOptions.Builder()
                 .setBarcodeFormats(Barcode.FORMAT_ALL_FORMATS)
@@ -101,9 +119,19 @@ public class GoogleScannerFragment extends Fragment implements FrameProcessor {
     private void createCameraSource(boolean autoFocus, boolean useFlash) {
         Context context = requireContext();
 
+        int width = 1280;
+        int height = 720;
+        if (viewModel.resolutionIndex == 0) {
+            width = 640;
+            height = 480;
+        } else if (viewModel.resolutionIndex == 2) {
+            width = 1920;
+            height = 1080;
+        }
+
         CameraSource.Builder builder = new CameraSource.Builder(requireContext(), this)
                 .setFacing(CameraSource.CAMERA_FACING_BACK)
-                .setRequestedPreviewSize(1600, 1024)
+                .setRequestedPreviewSize(width, height)
                 .setRequestedFps(15.0f);
 
         if (autoFocus) {
@@ -185,6 +213,10 @@ public class GoogleScannerFragment extends Fragment implements FrameProcessor {
         if (mCameraSource != null) {
             try {
                 mPreview.start(mCameraSource, mGraphicOverlay);
+                com.google.android.gms.common.images.Size size = mCameraSource.getPreviewSize();
+                if (size != null) {
+                    tvResolution.setText("Resolution: " + size.getWidth() + "x" + size.getHeight());
+                }
             } catch (IOException e) {
                 Log.e(TAG, "Unable to start camera source.", e);
                 mCameraSource.release();

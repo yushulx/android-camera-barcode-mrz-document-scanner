@@ -18,6 +18,7 @@ import com.dynamsoft.cvr.CapturedResultReceiver;
 import com.dynamsoft.dbr.DecodedBarcodesResult;
 import com.dynamsoft.dce.CameraEnhancer;
 import com.dynamsoft.dce.CameraEnhancerException;
+import com.dynamsoft.dce.EnumResolution;
 import com.dynamsoft.dcp.ParsedResult;
 import com.dynamsoft.dcv.driverslicensescanner.FileUtil;
 import com.dynamsoft.dcv.driverslicensescanner.MainViewModel;
@@ -41,6 +42,15 @@ public class ScannerFragment extends Fragment {
         viewModel = new ViewModelProvider(requireActivity()).get(MainViewModel.class);
         viewModel.reset();
         mCamera = new CameraEnhancer(binding.cameraView, getViewLifecycleOwner());
+        
+        if (viewModel.resolutionIndex == 0) {
+            mCamera.setResolution(EnumResolution.RESOLUTION_480P);
+        } else if (viewModel.resolutionIndex == 2) {
+            mCamera.setResolution(EnumResolution.RESOLUTION_1080P);
+        } else {
+            mCamera.setResolution(EnumResolution.RESOLUTION_720P);
+        }
+
         if (mRouter == null) {
             initCaptureVisionRouter();
         }
@@ -56,6 +66,14 @@ public class ScannerFragment extends Fragment {
     public void onResume() {
         super.onResume();
         mCamera.open();
+        try {
+            android.util.Size size = mCamera.getResolution();
+            if (size != null) {
+                binding.tvResolution.setText("Resolution: " + size.getWidth() + "x" + size.getHeight());
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         mRouter.startCapturing(TEMPLATE_READ_PDF417, new CompletionListener() {
 
             @Override

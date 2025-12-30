@@ -39,6 +39,15 @@ public class CameraSourcePreview extends ViewGroup {
     private CameraSource mCameraSource;
 
     private GraphicOverlay mOverlay;
+    private OnCameraStartedListener mListener;
+
+    public interface OnCameraStartedListener {
+        void onCameraStarted();
+    }
+
+    public void setOnCameraStartedListener(OnCameraStartedListener listener) {
+        mListener = listener;
+    }
 
     public CameraSourcePreview(Context context, AttributeSet attrs) {
         super(context, attrs);
@@ -88,6 +97,9 @@ public class CameraSourcePreview extends ViewGroup {
     private void startIfReady() throws IOException, SecurityException {
         if (mStartRequested && mSurfaceAvailable) {
             mCameraSource.start(mSurfaceView.getHolder());
+            if (mListener != null) {
+                mListener.onCameraStarted();
+            }
             if (mOverlay != null) {
                 Size size = mCameraSource.getPreviewSize();
                 int min = Math.min(size.getWidth(), size.getHeight());
@@ -102,6 +114,7 @@ public class CameraSourcePreview extends ViewGroup {
                 mOverlay.clear();
             }
             mStartRequested = false;
+            requestLayout();
         }
     }
 

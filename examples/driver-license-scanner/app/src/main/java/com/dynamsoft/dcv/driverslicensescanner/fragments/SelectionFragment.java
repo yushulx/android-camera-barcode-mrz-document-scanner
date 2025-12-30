@@ -9,11 +9,15 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.cardview.widget.CardView;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.Navigation;
 
+import com.dynamsoft.dcv.driverslicensescanner.MainViewModel;
 import com.dynamsoft.dcv.driverslicensescanner.R;
 
 public class SelectionFragment extends Fragment {
+
+    private MainViewModel viewModel;
 
     @Nullable
     @Override
@@ -25,6 +29,27 @@ public class SelectionFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+
+        viewModel = new ViewModelProvider(requireActivity()).get(MainViewModel.class);
+
+        android.widget.RadioGroup radioGroup = view.findViewById(R.id.radio_group_resolution);
+        if (viewModel.resolutionIndex == 0) {
+            radioGroup.check(R.id.radio_low);
+        } else if (viewModel.resolutionIndex == 1) {
+            radioGroup.check(R.id.radio_medium);
+        } else {
+            radioGroup.check(R.id.radio_high);
+        }
+
+        radioGroup.setOnCheckedChangeListener((group, checkedId) -> {
+            if (checkedId == R.id.radio_low) {
+                viewModel.resolutionIndex = 0;
+            } else if (checkedId == R.id.radio_medium) {
+                viewModel.resolutionIndex = 1;
+            } else if (checkedId == R.id.radio_high) {
+                viewModel.resolutionIndex = 2;
+            }
+        });
 
         CardView cardDynamsoft = view.findViewById(R.id.card_dynamsoft);
         CardView cardGoogle = view.findViewById(R.id.card_google);
