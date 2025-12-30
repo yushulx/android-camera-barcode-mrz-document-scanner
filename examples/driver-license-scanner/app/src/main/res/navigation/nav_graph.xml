@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/SelectionFragment">
+
+    <fragment
+        android:id="@+id/SelectionFragment"
+        android:name="com.dynamsoft.dcv.driverslicensescanner.fragments.SelectionFragment"
+        android:label="Driver License Scanner"
+        tools:layout="@layout/fragment_selection">
+        <action
+            android:id="@+id/action_SelectionFragment_to_ScannerFragment"
+            app:destination="@id/ScannerFragment" />
+        <action
+            android:id="@+id/action_SelectionFragment_to_GoogleScannerFragment"
+            app:destination="@id/GoogleScannerFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/ScannerFragment"
+        android:name="com.dynamsoft.dcv.driverslicensescanner.fragments.ScannerFragment"
+        android:label="@string/dynamsoft_scanner_fragment_label"
+        tools:layout="@layout/fragment_scanner">
+
+        <action
+            android:id="@+id/action_ScannerFragment_to_ResultFragment"
+            app:destination="@id/ResultFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/ResultFragment"
+        android:name="com.dynamsoft.dcv.driverslicensescanner.fragments.ResultFragment"
+        android:label="@string/result_fragment_label"
+        tools:layout="@layout/fragment_result">
+
+        <action
+            android:id="@+id/action_ResultFragment_to_ScannerFragment"
+            app:destination="@id/ScannerFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/GoogleScannerFragment"
+        android:name="com.dynamsoft.dcv.driverslicensescanner.google.GoogleScannerFragment"
+        android:label="@string/google_scanner_fragment_label"
+        tools:layout="@layout/fragment_google_scanner">
+        <action
+            android:id="@+id/action_GoogleScannerFragment_to_ResultFragment"
+            app:destination="@id/ResultFragment" />
+    </fragment>
+</navigation>
