@@ -440,6 +440,7 @@ public class CameraSource {
                     // Wait for the thread to complete to ensure that we can't have multiple threads
                     // executing at the same time (i.e., which would happen if we called start too
                     // quickly after stop).
+                    mProcessingThread.interrupt();
                     mProcessingThread.join();
                 } catch (InterruptedException e) {
                     Log.d(TAG, "Frame processing thread interrupted on release.");
