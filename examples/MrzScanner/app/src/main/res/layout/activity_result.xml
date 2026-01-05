@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	xmlns:app="http://schemas.android.com/apk/res-auto"
+	xmlns:tools="http://schemas.android.com/tools"
+	android:layout_width="match_parent"
+	android:layout_height="match_parent"
+	android:background="@color/dy_black_3B"
+	tools:context=".ResultActivity">
+
+	<RelativeLayout
+		android:id="@+id/rl_title"
+		android:layout_width="match_parent"
+		android:layout_height="48dp"
+		android:background="@color/dy_black_2B">
+
+		<ImageView
+			android:id="@+id/iv_back"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_centerVertical="true"
+			android:layout_marginStart="16dp"
+			android:background="@color/transparent"
+			android:src="@drawable/ic_arrow_left" />
+
+		<TextView
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_centerVertical="true"
+			android:layout_toEndOf="@id/iv_back"
+			android:text="Back"
+			android:textColor="@color/white"
+			android:textSize="17sp" />
+
+		<TextView
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_centerInParent="true"
+			android:layout_gravity="center_horizontal"
+			android:text="Result"
+			android:textColor="@color/white"
+			android:textSize="20sp"
+			android:textStyle="bold" />
+
+	</RelativeLayout>
+
+	<ScrollView
+		android:layout_below="@id/rl_title"
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content">
+
+		<LinearLayout
+			android:id="@+id/ll_content"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:orientation="vertical"
+			android:padding="20dp">
+		</LinearLayout>
+	</ScrollView>
+</RelativeLayout>
