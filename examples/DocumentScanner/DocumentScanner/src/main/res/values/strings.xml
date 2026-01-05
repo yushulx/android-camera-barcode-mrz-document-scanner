@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">DocumentScanner</string>
+    <string name="app_name">Doc Scanner</string>
     <string name="scan_a_document">Scan a Document</string>
     <string name="document_scanner">Document Scanner</string>
     <string name="btn_capture">Capture</string>
@@ -21,4 +21,22 @@
     <string name="powered_by_dynamsoft">Powered by Dynamsoft</string>
     <string name="ok">OK</string>
     <string name="normalize_error_tip">The selected area is close to a triangle, please change it to a quadrilateral.</string>
+    
+    <!-- New strings for modern UI -->
+    <string name="app_subtitle">Scan &amp; Digitize Documents</string>
+    <string name="choose_scanner">Choose Your Scanner</string>
+    <string name="dynamsoft_scanner">Dynamsoft Scanner</string>
+    <string name="dynamsoft_desc">Professional document scanning with advanced boundary detection, deskewing, and image enhancement.</string>
+    <string name="google_mlkit_scanner">Google ML Kit Scanner</string>
+    <string name="google_mlkit_desc">Fast and efficient document scanning powered by Google\'s machine learning technology.</string>
+    <string name="tap_to_scan">Tap to scan</string>
+    <string name="google_result_title">ML Kit Scan Result</string>
+    <string name="scan_successful">Document scanned successfully!</string>
+    <string name="scan_failed">Scan failed. Please try again.</string>
+    <string name="scan_cancelled">Scan cancelled.</string>
+    <string name="pages_scanned">%d page(s) scanned</string>
+    <string name="view_pdf">View PDF</string>
+    <string name="save_images">Save Images</string>
+    <string name="done">Done</string>
+    <string name="no_pages">No pages scanned</string>
 </resources>

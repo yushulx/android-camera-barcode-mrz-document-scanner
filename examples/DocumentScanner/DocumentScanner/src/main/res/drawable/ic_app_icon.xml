@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    
+    <!-- Background circle with gradient effect -->
+    <path
+        android:pathData="M54,54m-50,0a50,50 0,1 1,100 0a50,50 0,1 1,-100 0"
+        android:fillColor="#1565C0"/>
+    
+    <!-- Inner circle for depth -->
+    <path
+        android:pathData="M54,54m-42,0a42,42 0,1 1,84 0a42,42 0,1 1,-84 0"
+        android:fillColor="#1E88E5"/>
+    
+    <!-- Document shape - main paper -->
+    <path
+        android:pathData="M32,28L68,28A4,4 0,0 1,72 32L72,76A4,4 0,0 1,68 80L32,80A4,4 0,0 1,28 76L28,32A4,4 0,0 1,32 28z"
+        android:fillColor="#FFFFFF"/>
+    
+    <!-- Document fold corner -->
+    <path
+        android:pathData="M60,28L72,40L60,40z"
+        android:fillColor="#BBDEFB"/>
+    
+    <!-- Scanner line effect -->
+    <path
+        android:pathData="M32,54L68,54"
+        android:strokeWidth="3"
+        android:strokeColor="#FE8E14"/>
+    
+    <!-- Scan corner markers - top left -->
+    <path
+        android:pathData="M32,36L32,32L36,32"
+        android:strokeWidth="3"
+        android:strokeColor="#1565C0"
+        android:strokeLineCap="round"/>
+    
+    <!-- Scan corner markers - top right -->
+    <path
+        android:pathData="M64,32L68,32L68,36"
+        android:strokeWidth="3"
+        android:strokeColor="#1565C0"
+        android:strokeLineCap="round"/>
+    
+    <!-- Scan corner markers - bottom left -->
+    <path
+        android:pathData="M32,72L32,76L36,76"
+        android:strokeWidth="3"
+        android:strokeColor="#1565C0"
+        android:strokeLineCap="round"/>
+    
+    <!-- Scan corner markers - bottom right -->
+    <path
+        android:pathData="M64,76L68,76L68,72"
+        android:strokeWidth="3"
+        android:strokeColor="#1565C0"
+        android:strokeLineCap="round"/>
+    
+    <!-- Document lines -->
+    <path
+        android:pathData="M38,44L56,44"
+        android:strokeWidth="2"
+        android:strokeColor="#90CAF9"/>
+    <path
+        android:pathData="M38,50L62,50"
+        android:strokeWidth="2"
+        android:strokeColor="#90CAF9"/>
+    <path
+        android:pathData="M38,62L58,62"
+        android:strokeWidth="2"
+        android:strokeColor="#90CAF9"/>
+    <path
+        android:pathData="M38,68L54,68"
+        android:strokeWidth="2"
+        android:strokeColor="#90CAF9"/>
+</vector>

@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="48dp"
+    android:height="48dp"
+    android:viewportWidth="48"
+    android:viewportHeight="48">
+    
+    <!-- Google G logo representation -->
+    <path
+        android:pathData="M24,4C12.95,4 4,12.95 4,24s8.95,20 20,20s20,-8.95 20,-20S35.05,4 24,4z"
+        android:fillColor="#FFFFFF"/>
+    
+    <!-- Blue part -->
+    <path
+        android:pathData="M43.6,24.5c0,-1.57 -0.13,-3.08 -0.38,-4.55H24v8.51h11.01c-0.46,2.47 -1.83,4.58 -3.9,6.01v5.01h6.31c3.69,-3.4 5.82,-8.42 5.82,-14.98z"
+        android:fillColor="#4285F4"/>
+    
+    <!-- Green part -->
+    <path
+        android:pathData="M24,44c5.28,0 9.71,-1.75 12.95,-4.75l-6.31,-5.01c-1.75,1.18 -4,1.88 -6.64,1.88c-5.1,0 -9.43,-3.44 -10.97,-8.08H6.51v5.17C9.73,39.63 16.36,44 24,44z"
+        android:fillColor="#34A853"/>
+    
+    <!-- Yellow part -->
+    <path
+        android:pathData="M13.03,28.04c-0.4,-1.18 -0.62,-2.44 -0.62,-3.74s0.23,-2.56 0.62,-3.74v-5.17H6.51C5.24,18.09 4.5,20.96 4.5,24s0.74,5.91 2.01,8.61l6.52,-5.07z"
+        android:fillColor="#FBBC05"/>
+    
+    <!-- Red part -->
+    <path
+        android:pathData="M24,11.88c2.88,0 5.47,0.99 7.5,2.94l5.62,-5.62C33.68,5.89 29.25,4 24,4C16.36,4 9.73,8.37 6.51,14.79l6.52,5.17C14.57,15.32 18.9,11.88 24,11.88z"
+        android:fillColor="#EA4335"/>
+</vector>

@@ -14,8 +14,15 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        findViewById(R.id.btn_start_capturing).setOnClickListener(v->{
+        // Dynamsoft Scanner Card
+        findViewById(R.id.card_dynamsoft).setOnClickListener(v -> {
             Intent intent = new Intent(this, DocumentScannerActivity.class);
+            startActivity(intent);
+        });
+
+        // Google ML Kit Scanner Card
+        findViewById(R.id.card_google_mlkit).setOnClickListener(v -> {
+            Intent intent = new Intent(this, GoogleDocScannerActivity.class);
             startActivity(intent);
         });
     }
