@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item
+        android:id="@+id/back_to_edit"
+        android:icon="@drawable/edit"
+        android:title="@string/back_to_edit" />
+
+    <item
+        android:id="@+id/switch_colour_mode"
+        android:icon="@drawable/colour_mode"
+        android:title="@string/switch_colour_mode" />
+
+    <item
+        android:id="@+id/export"
+        android:icon="@drawable/export"
+        android:title="@string/export" />
+
+</menu>

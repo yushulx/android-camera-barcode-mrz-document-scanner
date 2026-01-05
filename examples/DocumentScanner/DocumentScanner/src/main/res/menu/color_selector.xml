@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <group android:checkableBehavior="single">
+        <!--The default colorMode is colour.-->
+        <item android:id="@+id/item_colour"
+            android:checked="true"
+            android:title="@string/colour" />
+        <item android:id="@+id/item_grayscale"
+            android:title="@string/grayscale" />
+        <item android:id="@+id/item_binary"
+            android:title="@string/binary" />
+    </group>
+</menu>

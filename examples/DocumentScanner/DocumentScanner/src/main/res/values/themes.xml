@@ -1,0 +1,26 @@
+<resources>
+    <style name="Base.Theme.HomePage" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="colorPrimary">@color/dy_orange</item>
+        <item name="colorOnPrimary">@color/white</item>
+        <item name="android:statusBarColor">@color/dy_black_34</item>
+        <item name="android:windowBackground">@color/dy_black_34</item>
+        <item name="textAllCaps">false</item>
+    </style>
+
+    <style name="Base.Theme.DocumentScanner" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="colorPrimary">@color/black</item>
+        <item name="colorOnPrimary">@color/white</item>
+        <item name="android:statusBarColor">@color/dy_black_2B</item>
+        <item name="android:windowBackground">@color/dy_black_2B</item>
+        <item name="actionBarItemBackground">@color/dy_black_2B</item>
+        <item name="snackbarButtonStyle">@style/CustomSnackBarButtonStyle</item>
+        <item name="textAllCaps">false</item>
+    </style>
+
+    <style name="CustomSnackBarButtonStyle" parent="Widget.Material3.Button.TextButton.Snackbar">
+        <item name="android:textColor">@color/dy_orange</item>
+    </style>
+
+    <style name="Theme.DocumentScanner" parent="Base.Theme.DocumentScanner" />
+    <style name="Theme.HomePage" parent="Base.Theme.HomePage" />
+</resources>

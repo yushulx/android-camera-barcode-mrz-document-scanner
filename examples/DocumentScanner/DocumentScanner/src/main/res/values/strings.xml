@@ -1,0 +1,24 @@
+<resources>
+    <string name="app_name">DocumentScanner</string>
+    <string name="scan_a_document">Scan a Document</string>
+    <string name="document_scanner">Document Scanner</string>
+    <string name="btn_capture">Capture</string>
+    <string name="scan_page_title">Boundary Detecting</string>
+    <string name="result_page_title">Result</string>
+    <string name="editor_page_title">Editing</string>
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="back_to_edit">Back to Edit</string>
+    <string name="switch_colour_mode">Switch colour Mode</string>
+    <string name="export">Export</string>
+
+    <string name="save_to_album_tip">Successfully saved to your album!</string>
+    <string name="confirm">Confirm</string>
+    <string name="grayscale">GrayScale</string>
+    <string name="colour">Colour</string>
+    <string name="binary">Binary</string>
+    <string name="description">Dynamsoft Document normalizer detects the document boundaries from the mobile camera and normalize the document pages with deskewing and other image processing algorithms.</string>
+    <string name="powered_by_dynamsoft">Powered by Dynamsoft</string>
+    <string name="ok">OK</string>
+    <string name="normalize_error_tip">The selected area is close to a triangle, please change it to a quadrilateral.</string>
+</resources>
