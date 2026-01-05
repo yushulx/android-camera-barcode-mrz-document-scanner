@@ -169,7 +169,7 @@ public class ScanResultActivity extends AppCompatActivity {
 
     private void initDynamsoft() {
         // Initialize Dynamsoft License
-        MrzUtils.initLicense();
+        MrzParser.initLicense();
 
         mRouter = new CaptureVisionRouter();
     }
@@ -243,13 +243,11 @@ public class ScanResultActivity extends AppCompatActivity {
                     }
 
                     // Then recognize text
-                    showLoading("Recognizing MRZ...");
                     recognizeText(inputImage);
                 })
                 .addOnFailureListener(e -> {
                     Log.e(TAG, "Face detection failed", e);
                     // Continue with text recognition even if face detection fails
-                    showLoading("Recognizing MRZ...");
                     recognizeText(inputImage);
                 });
     }
@@ -433,7 +431,7 @@ public class ScanResultActivity extends AppCompatActivity {
     }
 
     private void displayDynamsoftResult(ParsedResultItem item, RecognizedTextLinesResult textResult) {
-        HashMap<String, String> data = MrzUtils.parseDynamsoftResult(item);
+        Map<String, String> data = MrzParser.parse(item);
         displayParsedData(data);
 
         // Display MRZ raw text
@@ -477,7 +475,7 @@ public class ScanResultActivity extends AppCompatActivity {
         }
     }
 
-    private void displayParsedData(HashMap<String, String> data) {
+    private void displayParsedData(Map<String, String> data) {
         cardDocumentInfo.setVisibility(View.VISIBLE); // Ensure visibility
         
         tvDocumentType.setText(data.getOrDefault("Document Type", "—"));

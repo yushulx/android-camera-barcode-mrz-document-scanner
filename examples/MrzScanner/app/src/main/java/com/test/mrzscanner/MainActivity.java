@@ -82,7 +82,7 @@ public class MainActivity extends AppCompatActivity {
         PermissionUtil.requestCameraPermission(this);
 
         // Initialize Dynamsoft License
-        MrzUtils.initLicense();
+        MrzParser.initLicense();
 
         // Initialize Camera
         mCamera = new CameraEnhancer(mCameraView, this);
@@ -186,7 +186,7 @@ public class MainActivity extends AppCompatActivity {
                 }
             });
         } else {
-            HashMap<String, String> labelMap = MrzUtils.parseDynamsoftResult(result.getItems()[0]);
+            HashMap<String, String> labelMap = (HashMap<String, String>) MrzParser.parse(result.getItems()[0]);
 
             if (!labelMap.isEmpty()) {
                 succeed = true;

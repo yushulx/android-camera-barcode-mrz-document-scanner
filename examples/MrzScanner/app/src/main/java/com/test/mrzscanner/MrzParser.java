@@ -17,6 +17,115 @@ import java.util.regex.Pattern;
  */
 public class MrzParser {
 
+    private static final String TAG = "MrzParser";
+    private static final String LICENSE_KEY = "DLS2eyJoYW5kc2hha2VDb2RlIjoiMjAwMDAxLTE2NDk4Mjk3OTI2MzUiLCJvcmdhbml6YXRpb25JRCI6IjIwMDAwMSIsInNlc3Npb25QYXNzd29yZCI6IndTcGR6Vm05WDJrcEQ5YUoifQ==";
+
+    public static void initLicense() {
+        com.dynamsoft.license.LicenseManager.initLicense(LICENSE_KEY, (isSuccess, error) -> {
+            if (!isSuccess) {
+                android.util.Log.e(TAG, "License initialization failed: " + error.getMessage());
+            }
+        });
+    }
+
+    public static Map<String, String> parse(com.dynamsoft.dcp.ParsedResultItem item) {
+        HashMap<String, String> entry = item.getParsedFields();
+        HashMap<String, String> properties = new HashMap<>();
+
+        // Determine document type
+        String codeType = item.getCodeType();
+        String docType = "PASSPORT";
+        if (codeType.contains("TD1") || codeType.contains("ID")) {
+            docType = "ID";
+        } else if (codeType.contains("VISA")) {
+            docType = "VISA";
+        }
+
+        // Extract fields
+        String number = getFirstNonNull(entry, "passportNumber", "documentNumber", "idNumber");
+        String firstName = getFirstNonNull(entry, "secondaryIdentifier", "givenNames");
+        String lastName = getFirstNonNull(entry, "primaryIdentifier", "lastName");
+        String nationality = entry.get("nationality") != null ? entry.get("nationality") : "Unknown";
+        String issuingState = entry.get("issuingState") != null ? entry.get("issuingState") : "Unknown";
+        String sex = entry.get("sex") != null ? entry.get("sex") : "Unknown";
+
+        // Format Name
+        String fullName = lastName;
+        if (firstName != null && !firstName.isEmpty()) {
+            if (fullName != null && !fullName.isEmpty()) fullName += ", ";
+            fullName += firstName;
+        }
+        if (fullName == null || fullName.isEmpty()) fullName = "—";
+
+        // Calculate age
+        int age = -1;
+        try {
+            String birthYearStr = entry.get("birthYear");
+            String birthMonthStr = entry.get("birthMonth");
+            String birthDayStr = entry.get("birthDay");
+
+            if (birthYearStr != null && birthMonthStr != null && birthDayStr != null) {
+                int year = Integer.parseInt(birthYearStr);
+                int month = Integer.parseInt(birthMonthStr);
+                int day = Integer.parseInt(birthDayStr);
+                age = calculateAge(year, month, day);
+            }
+        } catch (Exception e) {
+            android.util.Log.e(TAG, "Error calculating age", e);
+        }
+
+        // Format Dates
+        String birthDate = formatDate(entry.get("birthYear"), entry.get("birthMonth"), entry.get("birthDay"));
+        String expiryDate = formatDate(entry.get("expiryYear"), entry.get("expiryMonth"), entry.get("expiryDay"));
+
+        properties.put("Document Type", docType);
+        properties.put("Name", fullName);
+        properties.put("Sex", formatSex(sex));
+        properties.put("Age", age >= 0 ? String.valueOf(age) : "—");
+        properties.put("Document Number", number.isEmpty() ? "—" : number);
+        properties.put("Issuing State", issuingState);
+        properties.put("Nationality", nationality);
+        properties.put("Date of Birth(YYYY-MM-DD)", birthDate.isEmpty() ? "—" : birthDate);
+        properties.put("Date of Expiry(YYYY-MM-DD)", expiryDate.isEmpty() ? "—" : expiryDate);
+
+        return properties;
+    }
+
+    private static String getFirstNonNull(Map<String, String> map, String... keys) {
+        for (String key : keys) {
+            String value = map.get(key);
+            if (value != null && !value.isEmpty()) {
+                return value;
+            }
+        }
+        return "";
+    }
+
+    private static String formatSex(String sex) {
+        if (sex == null || sex.isEmpty()) return "—";
+        switch (sex.toUpperCase().charAt(0)) {
+            case 'M': return "MALE";
+            case 'F': return "FEMALE";
+            default: return sex;
+        }
+    }
+
+    private static String formatDate(String year, String month, String day) {
+        if (year == null || month == null || day == null) return "";
+        return year + "-" + month + "-" + day;
+    }
+
+    private static int calculateAge(int birthYear, int birthMonth, int birthDay) {
+        Calendar dob = Calendar.getInstance();
+        dob.set(birthYear, birthMonth - 1, birthDay);
+        Calendar today = Calendar.getInstance();
+        int age = today.get(Calendar.YEAR) - dob.get(Calendar.YEAR);
+        if (today.get(Calendar.DAY_OF_YEAR) < dob.get(Calendar.DAY_OF_YEAR)) {
+            age--;
+        }
+        return age;
+    }
+
     public static class MrzData {
         public String documentType = "";
         public String documentNumber = "";
