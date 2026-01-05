@@ -4,6 +4,8 @@ This project demonstrates and compares two powerful document scanning solutions 
 
 The app provides a modern UI to launch either scanner, allowing you to evaluate their performance, accuracy, and user experience side-by-side.
 
+https://github.com/user-attachments/assets/0e1fba71-238c-48ca-8df3-8a719d95ae14
+
 ## Features
 
 ### Dynamsoft Document Scanner
