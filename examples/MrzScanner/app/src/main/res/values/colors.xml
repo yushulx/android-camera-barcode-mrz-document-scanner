@@ -1,18 +1,77 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-	<color name="purple_200">#FFBB86FC</color>
-	<color name="purple_500">#FF6200EE</color>
-	<color name="purple_700">#FF3700B3</color>
-	<color name="teal_200">#FF03DAC5</color>
-	<color name="teal_700">#FF018786</color>
-	<color name="black">#FF000000</color>
-	<color name="white">#FFFFFFFF</color>
-	<color name="dy_black_34">#FF323234</color>
-	<color name="dy_black_3B">#FF3B3B3B</color>
-	<color name="dy_black_2B">#FF2B2B2B</color>
-	<color name="dy_light_grey">#FFFFFFFF</color>
-	<color name="dy_dark_grey">#FF999999</color>
-	<color name="dy_orange">#FFFE8E14</color>
-	<color name="dy_grey_AA">#FFAAAAAA</color>
-	<color name="red00">#FFFF0000</color>
+    <!-- Primary Brand Colors - Modern Blue Theme -->
+    <color name="primary">#1E88E5</color>
+    <color name="primary_dark">#1565C0</color>
+    <color name="primary_light">#42A5F5</color>
+    <color name="accent">#00BCD4</color>
+
+    <!-- Secondary Colors -->
+    <color name="secondary">#26A69A</color>
+    <color name="secondary_dark">#00897B</color>
+
+    <!-- Background Colors -->
+    <color name="background_primary">#FAFAFA</color>
+    <color name="background_secondary">#FFFFFF</color>
+    <color name="background_card">#FFFFFF</color>
+    <color name="background_dark">#121212</color>
+    <color name="surface">#FFFFFF</color>
+
+    <!-- Text Colors -->
+    <color name="text_primary">#212121</color>
+    <color name="text_secondary">#757575</color>
+    <color name="text_hint">#9E9E9E</color>
+    <color name="text_on_primary">#FFFFFF</color>
+    <color name="text_on_dark">#FFFFFF</color>
+
+    <!-- Status Colors -->
+    <color name="success">#4CAF50</color>
+    <color name="warning">#FF9800</color>
+    <color name="error">#F44336</color>
+    <color name="info">#2196F3</color>
+
+    <!-- UI Element Colors -->
+    <color name="divider">#E0E0E0</color>
+    <color name="ripple">#1E88E5</color>
+    <color name="icon_tint">#757575</color>
+    <color name="icon_active">#1E88E5</color>
+
+    <!-- Card and Shadow -->
+    <color name="card_background">#FFFFFF</color>
+    <color name="card_stroke">#E8E8E8</color>
+
+    <!-- Gradient Colors -->
+    <color name="gradient_start">#1E88E5</color>
+    <color name="gradient_end">#1565C0</color>
+
+    <!-- Scanner Overlay -->
+    <color name="scanner_overlay">#99000000</color>
+    <color name="scanner_frame">#FFFFFF</color>
+    <color name="scanner_line">#4CAF50</color>
+
+    <!-- Result Screen -->
+    <color name="result_header_bg">#1E88E5</color>
+    <color name="result_field_label">#757575</color>
+    <color name="result_field_value">#212121</color>
+
+    <!-- Legacy colors for compatibility -->
+    <color name="purple_200">#FFBB86FC</color>
+    <color name="purple_500">#FF6200EE</color>
+    <color name="purple_700">#FF3700B3</color>
+    <color name="teal_200">#FF03DAC5</color>
+    <color name="teal_700">#FF018786</color>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+    <color name="transparent">#00000000</color>
+    <color name="dy_black_34">#FF323234</color>
+    <color name="dy_black_3B">#FF3B3B3B</color>
+    <color name="dy_black_2B">#FF2B2B2B</color>
+    <color name="dy_light_grey">#FFFFFFFF</color>
+    <color name="dy_dark_grey">#FF999999</color>
+    <color name="dy_orange">#FFFE8E14</color>
+    <color name="dy_grey_AA">#FFAAAAAA</color>
+    <color name="red00">#FFFF0000</color>
+
+    <!-- Launcher Icon Background -->
+    <color name="ic_launcher_background">#1E88E5</color>
 </resources>

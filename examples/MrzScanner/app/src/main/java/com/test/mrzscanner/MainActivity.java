@@ -1,10 +1,10 @@
 package com.test.mrzscanner;
 
 import android.app.AlertDialog;
-import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.view.View;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.dynamsoft.core.basic_structures.CompletionListener;
@@ -20,6 +20,8 @@ import com.dynamsoft.dcp.ParsedResultItem;
 import com.dynamsoft.dlr.RecognizedTextLinesResult;
 import com.dynamsoft.dlr.TextLineResultItem;
 import com.dynamsoft.license.LicenseManager;
+import com.google.android.material.progressindicator.CircularProgressIndicator;
+import com.google.android.material.switchmaterial.SwitchMaterial;
 
 import java.util.Calendar;
 import java.util.HashMap;
@@ -28,230 +30,207 @@ import java.util.Locale;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
+/**
+ * Live Camera Scanning Activity
+ * Uses Dynamsoft SDK for real-time MRZ scanning and parsing.
+ */
 public class MainActivity extends AppCompatActivity {
-	private CameraEnhancer mCamera;
-	private CameraView mCameraView;
-	private final CaptureVisionRouter mRouter = new CaptureVisionRouter();
-	private String mText;
-	private AlertDialog mAlertDialog;
-	private boolean succeed = false;
-	private boolean mBeepStatus;
-	private TextView mTextResult;
-	private int mBirthYear;
+    private static final String TAG = "MainActivity";
 
-	@Override
-	protected void onCreate(Bundle savedInstanceState) {
-		super.onCreate(savedInstanceState);
-		setContentView(R.layout.activity_scan);
-		PermissionUtil.requestCameraPermission(this);
-		LicenseManager.initLicense("DLS2eyJoYW5kc2hha2VDb2RlIjoiMjAwMDAxLTE2NDk4Mjk3OTI2MzUiLCJvcmdhbml6YXRpb25JRCI6IjIwMDAwMSIsInNlc3Npb25QYXNzd29yZCI6IndTcGR6Vm05WDJrcEQ5YUoifQ==",
-				(isSuccess, error) -> {
-					if (!isSuccess) {
-						runOnUiThread(() -> {
-							((TextView)findViewById(R.id.tv_message))
-									.setText("License initialization failed: "+error.getMessage());
-						});
-						error.printStackTrace();
-					}
-				});
-		mCameraView = findViewById(R.id.dce_camera_view);
-		mTextResult = findViewById(R.id.tv_result);
-		mCamera = new CameraEnhancer(mCameraView, this);
+    private CameraEnhancer mCamera;
+    private CameraView mCameraView;
+    private final CaptureVisionRouter mRouter = new CaptureVisionRouter();
+    private String mText = "";
+    private AlertDialog mAlertDialog;
+    private boolean succeed = false;
+    private int mBirthYear;
 
-		try {
-			mRouter.setInput(mCamera);
-		} catch (CaptureVisionRouterException e) {
-			throw new RuntimeException(e);
-		}
+    // UI Elements
+    private ImageView btnBack;
+    // private SwitchMaterial switchDynamsoft; // Removed
+    private TextView tvMessage;
+    private TextView tvResult;
+    private TextView tvStatus;
+    private TextView tvInstruction;
+    private CircularProgressIndicator progressIndicator;
 
-		mRouter.addResultReceiver(new CapturedResultReceiver() {
-			@Override
-			// Implement this method to receive RecognizedTextLinesResult.
-			public void onRecognizedTextLinesReceived(@NonNull RecognizedTextLinesResult result) {
-				onLabelTextReceived(result);
-			}
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_scan);
 
-			@Override
-			public void onParsedResultsReceived(@NonNull ParsedResult result) {
-				if (!succeed) {
-					onParsedResultReceived(result);
-				}
-			}
-		});
-	}
+        initViews();
+        setupClickListeners();
+        initializeScanner();
+    }
 
-	@Override
-	protected void onResume() {
-		super.onResume();
-		mCamera.open();
-		mRouter.startCapturing("ReadPassportAndId", new CompletionListener() {
-			@Override
-			public void onSuccess() {
-			}
+    private void initViews() {
+        mCameraView = findViewById(R.id.dce_camera_view);
+        btnBack = findViewById(R.id.btn_back);
+        tvMessage = findViewById(R.id.tv_message);
+        tvResult = findViewById(R.id.tv_result);
+        tvStatus = findViewById(R.id.tv_status);
+        tvInstruction = findViewById(R.id.tv_instruction);
+        progressIndicator = findViewById(R.id.progress_indicator);
+    }
 
-			@Override
-			public void onFailure(int errorCode, String errorString) {
-				runOnUiThread(() -> showDialog("Error", String.format(Locale.getDefault(),
-						"ErrorCode: %d %nErrorMessage: %s", errorCode, errorString)));
-			}
-		});
-	}
+    private void setupClickListeners() {
+        btnBack.setOnClickListener(v -> finish());
+    }
 
-	@Override
-	protected void onPause() {
-		super.onPause();
-		succeed = false;
-		mCamera.close();
-		mRouter.stopCapturing();
-	}
+    private void initializeScanner() {
+        PermissionUtil.requestCameraPermission(this);
 
-	@Override
-	protected void onStop() {
-		mCameraView.getDrawingLayer(DrawingLayer.DLR_LAYER_ID).clearDrawingItems();
-		super.onStop();
-	}
+        // Initialize Dynamsoft License
+        MrzUtils.initLicense();
 
-	private void onLabelTextReceived(RecognizedTextLinesResult result) {
-		if (result.getItems() == null) {
-			return;
-		}
-		TextLineResultItem[] results = result.getItems();
-		StringBuilder resultBuilder = new StringBuilder();
-		if (results != null) {
-			for (TextLineResultItem item : results) {
-				resultBuilder.append(item.getText()).append("\n\n");
-			}
-		}
-		mText = resultBuilder.toString();
-	}
+        // Initialize Camera
+        mCamera = new CameraEnhancer(mCameraView, this);
 
-	private void onParsedResultReceived(ParsedResult result) {
-		if (result.getItems() == null) {
-			return;
-		}
-		if (result.getItems().length == 0) {
-			runOnUiThread(() -> {
-				if (!mText.isEmpty()) {
-					String errorMsg = "error: Failed to parse the content. The MRZ text is " + mText;
-					mTextResult.setText(errorMsg);
-				}
-			});
-		} else {
-			HashMap<String, String> labelMap = assembleMap(result.getItems()[0]);
-			if (!labelMap.isEmpty()) {
-				succeed = true;
-				Intent intent = new Intent(this, ResultActivity.class);
-				intent.putExtra("labelMap", labelMap);
-				startActivity(intent);
-				runOnUiThread(() -> {
-					mTextResult.setText("");
-				});
+        try {
+            mRouter.setInput(mCamera);
+        } catch (CaptureVisionRouterException e) {
+            throw new RuntimeException(e);
+        }
 
-			} else {
-				runOnUiThread(() -> {
-					if (!mText.isEmpty()) {
-						String errorMsg = "error: Failed to parse the content. The MRZ text is " + mText;
-						mTextResult.setText(errorMsg);
-					}
-				});
-			}
+        // Set up result receiver
+        mRouter.addResultReceiver(new CapturedResultReceiver() {
+            @Override
+            public void onRecognizedTextLinesReceived(@NonNull RecognizedTextLinesResult result) {
+                onLabelTextReceived(result);
+            }
 
-		}
-	}
+            @Override
+            public void onParsedResultsReceived(@NonNull ParsedResult result) {
+                if (!succeed) {
+                    onParsedResultReceived(result);
+                }
+            }
+        });
+    }
 
-	private HashMap<String, String> assembleMap(ParsedResultItem item) {
-		HashMap<String, String> entry = item.getParsedFields();
-		String mDocumentType = "";
-		if (item.getCodeType().equals("MRTD_TD1_ID") || item.getCodeType().equals("MRTD_TD2_ID") || item.getCodeType().equals("MRTD_TD2_FRENCH_ID"))
-		{
-			mDocumentType = "ID";
-		}else if(item.getCodeType().equals("MRTD_TD2_VISA") || item.getCodeType().equals("MRTD_TD3_VISA"))
-		{
-			mDocumentType = "VISA";
-		}else
-		{
-			mDocumentType = "PASSPORT";
-		}
+    @Override
+    protected void onResume() {
+        super.onResume();
+        succeed = false;
+        mText = "";
+        mCamera.open();
+        startCapturing();
+    }
 
-		String number = entry.get("passportNumber") == null ? entry.get("documentNumber") == null
-				? entry.get("idNumber") == null ? "" : entry.get("idNumber") : entry.get("documentNumber") : entry.get("passportNumber");
+    private void startCapturing() {
+        updateStatus("Scanning for MRZ...");
 
-		String mFirstName = entry.get("secondaryIdentifier") == null ? entry.get("givenNames") == null ? "" : ", " + entry.get("givenNames") : ", " + entry.get("secondaryIdentifier");
+        mRouter.startCapturing("ReadPassportAndId", new CompletionListener() {
+            @Override
+            public void onSuccess() {
+                runOnUiThread(() -> updateStatus("Ready - Position MRZ in frame"));
+            }
 
-		String mLastName = entry.get("primaryIdentifier") == null ? entry.get("lastName") == null ? "" : entry.get("lastName") : entry.get("primaryIdentifier");
+            @Override
+            public void onFailure(int errorCode, String errorString) {
+                runOnUiThread(() -> showDialog("Error", String.format(Locale.getDefault(),
+                        "ErrorCode: %d %nErrorMessage: %s", errorCode, errorString)));
+            }
+        });
+    }
 
-		String mName = mLastName + mFirstName;
+    @Override
+    protected void onPause() {
+        super.onPause();
+        succeed = false;
+        mCamera.close();
+        mRouter.stopCapturing();
+    }
 
-		String mNationality = entry.get("nationality") == null ? "France" : entry.get("nationality");
+    @Override
+    protected void onStop() {
+        mCameraView.getDrawingLayer(DrawingLayer.DLR_LAYER_ID).clearDrawingItems();
+        super.onStop();
+    }
 
-		int age = -1;
-		int expiryYear = 0;
-		try {
-			int year = Integer.parseInt(entry.get("birthYear"));
-			int month = Integer.parseInt(entry.get("birthMonth"));
-			int day = Integer.parseInt(entry.get("birthDay"));
-			expiryYear = Integer.parseInt(entry.get("expiryYear")) + 2000;
-			age = calculateAge(year, month, day);
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		HashMap<String, String> properties = new HashMap<>(9);
-		properties.put("Document Type", mDocumentType);
-		properties.put("Name", mName);
-		properties.put("Sex", entry.get("sex"));
-		properties.put("Age", age == -1 ? "Unknown" : age + "");
-		properties.put("Document Number", number);
-		properties.put("Issuing State", entry.get("issuingState"));
-		properties.put("Nationality", mNationality);
-		properties.put("Date of Birth(YYYY-MM-DD)", mBirthYear + "-" +
-				entry.get("birthMonth") + "-" + entry.get("birthDay"));
-		properties.put("Date of Expiry(YYYY-MM-DD)", expiryYear + "-" +
-				entry.get("expiryMonth") + "-" + entry.get("expiryDay"));
-		return properties;
-	}
+    private void onLabelTextReceived(RecognizedTextLinesResult result) {
+        if (result.getItems() == null) {
+            return;
+        }
 
-	private int calculateAge(int year, int month, int day) {
-		Calendar calendar = Calendar.getInstance();
-		int cYear = calendar.get(Calendar.YEAR);
-		int cMonth = calendar.get(Calendar.MONTH) + 1;
-		int cDay = calendar.get(Calendar.DAY_OF_MONTH);
-		mBirthYear = 1900 + year;
-		int diffYear = cYear - mBirthYear;
-		int diffMonth = cMonth - month;
-		int diffDay = cDay - day;
-		int age = minusYear(diffYear, diffMonth, diffDay);
-		if (age > 100) {
-			mBirthYear = 2000 + year;
-			diffYear = cYear - mBirthYear;
-			age = minusYear(diffYear, diffMonth, diffDay);
-		} else if (age < 0) {
-			age = 0;
-		}
-		return age;
-	}
+        TextLineResultItem[] results = result.getItems();
+        StringBuilder resultBuilder = new StringBuilder();
 
-	private int minusYear(int diffYear, int diffMonth, int diffDay) {
-		int age = Math.max(diffYear, 0);
-		if (diffMonth < 0) {
-			age = age - 1;
+        if (results != null && results.length > 0) {
+            for (TextLineResultItem item : results) {
+                resultBuilder.append(item.getText()).append("\n");
+            }
+            mText = resultBuilder.toString();
 
-		} else if (diffMonth == 0) {
-			if (diffDay < 0) {
-				age = age - 1;
-			}
-		}
-		return age;
-	}
+            // Show recognized text in preview
+            runOnUiThread(() -> {
+                if (!mText.isEmpty()) {
+                    tvResult.setText(mText.trim());
+                    tvResult.setVisibility(View.VISIBLE);
+                    updateStatus("MRZ detected - Parsing...");
+                }
+            });
+        }
+    }
 
-	private void showDialog(String title, String message) {
-		if (mAlertDialog == null) {
-			mAlertDialog = new AlertDialog.Builder(this)
-					.setCancelable(true)
-					.setPositiveButton("OK", null)
-					.create();
-		}
-		mAlertDialog.setTitle(title);
-		mAlertDialog.setMessage(message);
-		mAlertDialog.show();
-	}
+    private void onParsedResultReceived(ParsedResult result) {
+        if (result.getItems() == null) {
+            return;
+        }
+
+        if (result.getItems().length == 0) {
+            runOnUiThread(() -> {
+                if (!mText.isEmpty()) {
+                    showError("Failed to parse MRZ. Please adjust position.");
+                }
+            });
+        } else {
+            HashMap<String, String> labelMap = MrzUtils.parseDynamsoftResult(result.getItems()[0]);
+
+            if (!labelMap.isEmpty()) {
+                succeed = true;
+                runOnUiThread(() -> {
+                    updateStatus("MRZ parsed successfully!");
+                    progressIndicator.setVisibility(View.GONE);
+                });
+
+                // Navigate to result screen
+                Intent intent = new Intent(this, ScanResultActivity.class);
+                intent.putExtra(ScanResultActivity.EXTRA_LABEL_MAP, labelMap);
+                startActivity(intent);
+            } else {
+                runOnUiThread(() -> {
+                    if (!mText.isEmpty()) {
+                        showError("Failed to parse MRZ content.");
+                    }
+                });
+            }
+        }
+    }
+
+    private void updateStatus(String status) {
+        if (tvStatus != null) {
+            tvStatus.setText(status);
+        }
+    }
+
+    private void showError(String message) {
+        if (tvMessage != null) {
+            tvMessage.setText(message);
+            tvMessage.setVisibility(View.VISIBLE);
+        }
+    }
+
+    private void showDialog(String title, String message) {
+        if (mAlertDialog == null) {
+            mAlertDialog = new AlertDialog.Builder(this)
+                    .setCancelable(true)
+                    .setPositiveButton("OK", null)
+                    .create();
+        }
+        mAlertDialog.setTitle(title);
+        mAlertDialog.setMessage(message);
+        mAlertDialog.show();
+    }
 }

@@ -1,30 +1,141 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-	android:layout_width="match_parent"
-	android:layout_height="match_parent">
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/black">
 
+    <!-- Camera View -->
+    <com.dynamsoft.dce.CameraView
+        android:id="@+id/dce_camera_view"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"/>
 
-	<com.dynamsoft.dce.CameraView
-		android:id="@+id/dce_camera_view"
-		android:layout_width="match_parent"
-		android:layout_height="match_parent" />
+    <!-- Top Toolbar -->
+    <LinearLayout
+        android:id="@+id/toolbar_container"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:background="#80000000"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:padding="16dp">
 
-	<TextView
-		android:layout_above="@+id/tv_result"
-		android:id="@+id/tv_message"
-		android:layout_marginHorizontal="24dp"
-		android:layout_centerHorizontal="true"
-		android:layout_marginBottom="80dp"
-		android:textColor="@color/red00"
-		android:textSize="16sp"
-		android:layout_width="wrap_content"
-		android:layout_height="wrap_content"/>
+        <ImageView
+            android:id="@+id/btn_back"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:padding="8dp"
+            android:src="@drawable/ic_back"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            app:tint="@color/white"/>
 
-	<TextView
-		android:layout_alignParentBottom="true"
-		android:layout_centerHorizontal="true"
-		android:layout_marginBottom="70dp"
-		android:id="@+id/tv_result"
-		android:layout_width="wrap_content"
-		android:layout_height="wrap_content" />
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginStart="16dp"
+            android:text="Scan MRZ"
+            android:textColor="@color/white"
+            android:textSize="20sp"
+            android:textStyle="bold"/>
+
+    </LinearLayout>
+
+    <!-- Scanning Guide Frame -->
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_below="@id/toolbar_container"
+        android:layout_above="@id/bottom_container">
+
+        <!-- Passport Frame Guide -->
+        <View
+            android:id="@+id/scan_frame"
+            android:layout_width="320dp"
+            android:layout_height="200dp"
+            android:layout_gravity="center"
+            android:background="@drawable/passport_frame"/>
+
+        <!-- Instruction Text -->
+        <TextView
+            android:id="@+id/tv_instruction"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal|top"
+            android:layout_marginTop="40dp"
+            android:background="#80000000"
+            android:paddingHorizontal="20dp"
+            android:paddingVertical="10dp"
+            android:text="Position the MRZ zone within the frame"
+            android:textColor="@color/white"
+            android:textSize="14sp"/>
+
+    </FrameLayout>
+
+    <!-- Bottom Container -->
+    <LinearLayout
+        android:id="@+id/bottom_container"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:background="#CC000000"
+        android:orientation="vertical"
+        android:padding="20dp">
+
+        <!-- Error/Status Message -->
+        <TextView
+            android:id="@+id/tv_message"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="12dp"
+            android:gravity="center"
+            android:textColor="@color/error"
+            android:textSize="14sp"
+            android:visibility="gone"/>
+
+        <!-- Recognized Text Preview -->
+        <TextView
+            android:id="@+id/tv_result"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="#40FFFFFF"
+            android:fontFamily="monospace"
+            android:gravity="center"
+            android:padding="12dp"
+            android:textColor="@color/white"
+            android:textSize="12sp"
+            android:visibility="gone"/>
+
+        <!-- Status Indicator -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:gravity="center"
+            android:orientation="horizontal">
+
+            <com.google.android.material.progressindicator.CircularProgressIndicator
+                android:id="@+id/progress_indicator"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:indeterminate="true"
+                app:indicatorColor="@color/primary"
+                app:indicatorSize="24dp"
+                app:trackThickness="3dp"/>
+
+            <TextView
+                android:id="@+id/tv_status"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="12dp"
+                android:text="Scanning for MRZ..."
+                android:textColor="@color/white"
+                android:textSize="14sp"/>
+
+        </LinearLayout>
+
+    </LinearLayout>
+
 </RelativeLayout>
