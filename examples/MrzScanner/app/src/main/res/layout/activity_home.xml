@@ -37,7 +37,7 @@
                 <ImageView
                     android:layout_width="80dp"
                     android:layout_height="80dp"
-                    android:src="@drawable/ic_passport"
+                    android:src="@mipmap/ic_app_icon"
                     android:padding="16dp"
                     android:background="@drawable/bg_avatar_circle"
                     app:tint="@color/primary"/>

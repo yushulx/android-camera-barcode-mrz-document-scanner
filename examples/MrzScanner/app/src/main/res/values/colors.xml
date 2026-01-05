@@ -73,5 +73,5 @@
     <color name="red00">#FFFF0000</color>
 
     <!-- Launcher Icon Background -->
-    <color name="ic_launcher_background">#263238</color>
+    <color name="ic_launcher_background">#455A64</color>
 </resources>
