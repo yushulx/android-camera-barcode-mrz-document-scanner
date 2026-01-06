@@ -38,4 +38,4 @@ https://github.com/user-attachments/assets/da6d63c4-8221-42ad-87bb-40db94360043
     - Select **"Live Scan"** to scan MRZ codes in real-time using the camera.
 
 ## Blog
-[How to Recognize Passport MRZ on Android Mobile Apps](https://www.dynamsoft.com/codepool/android-ocr-recognition-passport-mrz.html)
+[How to Build an Android MRZ Scanner with Dynamsoft MRZ SDK](https://www.dynamsoft.com/codepool/android-mrz-scanner-app-development.html)
