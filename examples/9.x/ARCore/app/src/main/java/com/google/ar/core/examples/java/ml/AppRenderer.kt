@@ -91,9 +91,9 @@ class AppRenderer(val activity: MainActivity) : DefaultLifecycleObserver, Sample
   // Key = unique position ID, Value = Pair(content, anchor pose)
   val scannedPositions = Collections.synchronizedList(mutableListOf<Triple<String, Float, Float>>())
   // Minimum distance (in pixels) between barcodes to consider them as different instances
-  val MIN_POSITION_DISTANCE = 100f
+  val MIN_POSITION_DISTANCE = 10f
   // Minimum distance (in meters) between anchors to avoid overlapping markers
-  val MIN_ANCHOR_DISTANCE = 0.05f
+  val MIN_ANCHOR_DISTANCE = 0.01f
   // Track plane detection status
   var planeDetected = false
   var capturePicture = false
