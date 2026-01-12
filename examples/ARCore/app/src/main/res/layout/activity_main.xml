@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="utf-8"?><!--
+ Copyright 2021 Google LLC
+
+ Licensed under the Apache License, Version 2.0 (the "License");
+ you may not use this file except in compliance with the License.
+ You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.
+-->
+
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/coordinatorLayout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+  <android.opengl.GLSurfaceView
+      android:id="@+id/surfaceview"
+      android:layout_width="fill_parent"
+      android:layout_height="fill_parent" />
+
+  <!-- Loading overlay shown during AR initialization -->
+  <FrameLayout
+      android:id="@+id/loadingOverlay"
+      android:layout_width="match_parent"
+      android:layout_height="match_parent"
+      android:background="#FF000000"
+      android:visibility="visible">
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:orientation="vertical"
+        android:gravity="center">
+
+      <ProgressBar
+          android:layout_width="64dp"
+          android:layout_height="64dp"
+          android:indeterminateTint="#FFFFFF" />
+
+      <TextView
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content"
+          android:layout_marginTop="16dp"
+          android:text="Initializing AR..."
+          android:textColor="#FFFFFF"
+          android:textSize="18sp" />
+
+    </LinearLayout>
+
+  </FrameLayout>
+
+  <LinearLayout
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:layout_marginBottom="80dp"
+      android:layout_gravity="bottom|center_horizontal"
+      app:layout_dodgeInsetEdges="bottom">
+
+    <androidx.appcompat.widget.AppCompatButton
+        android:id="@+id/scanButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:paddingHorizontal="40dp"
+        android:text="@string/scan_available" />
+
+    <androidx.appcompat.widget.AppCompatButton
+        android:id="@+id/clearButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:paddingHorizontal="40dp"
+        android:text="@string/clear" />
+
+    <androidx.appcompat.widget.AppCompatButton
+        android:id="@+id/saveButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:paddingHorizontal="40dp"
+        android:text="Save" />
+
+  </LinearLayout>
+
+<!--  <androidx.appcompat.widget.SwitchCompat-->
+<!--      android:id="@+id/useCloudMlSwitch"-->
+<!--      android:layout_width="wrap_content"-->
+<!--      android:layout_height="wrap_content"-->
+<!--      android:layout_gravity="top|end"-->
+<!--      android:padding="16dp"-->
+<!--      android:background="#55FFFFFF"-->
+<!--      android:text="@string/use_cloud_ml" />-->
+
+
+
+  <androidx.appcompat.widget.AppCompatButton
+      android:id="@+id/historyButton"
+      android:layout_gravity="top|end"
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:paddingHorizontal="10dp"
+      android:text="@string/history" />
+
+  <!-- Plane detection status guide -->
+  <TextView
+      android:id="@+id/planeStatusText"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:layout_gravity="top"
+      android:layout_marginTop="48dp"
+      android:background="#B3FFA500"
+      android:gravity="center"
+      android:padding="12dp"
+      android:text="🔍 Move device slowly to detect surface..."
+      android:textColor="#FFFFFF"
+      android:textSize="14sp"
+      android:textStyle="bold" />
+
+</androidx.coordinatorlayout.widget.CoordinatorLayout>
