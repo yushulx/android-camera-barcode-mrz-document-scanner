@@ -1,2 +1,0 @@
-rootProject.name = "ARCore MLKit"
-include ':app'
