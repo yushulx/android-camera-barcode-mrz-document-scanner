@@ -85,7 +85,17 @@ class AppRenderer(val activity: MainActivity) : DefaultLifecycleObserver, Sample
 
   var router: CaptureVisionRouter? = null
 
+  // History stores unique barcode entries: key = unique ID, value = "[format] content"
   val history = Collections.synchronizedMap(HashMap<String, String>())
+  // Track scanned barcode positions to allow same content at different locations
+  // Key = unique position ID, Value = Pair(content, anchor pose)
+  val scannedPositions = Collections.synchronizedList(mutableListOf<Triple<String, Float, Float>>())
+  // Minimum distance (in pixels) between barcodes to consider them as different instances
+  val MIN_POSITION_DISTANCE = 100f
+  // Minimum distance (in meters) between anchors to avoid overlapping markers
+  val MIN_ANCHOR_DISTANCE = 0.05f
+  // Track plane detection status
+  var planeDetected = false
   var capturePicture = false
   var firstFrameRendered = false
 
@@ -103,6 +113,10 @@ class AppRenderer(val activity: MainActivity) : DefaultLifecycleObserver, Sample
 
     this.view = view
 
+    // Initially disable scan button until plane is detected
+    view.scanButton.isEnabled = false
+    view.updatePlaneStatus(false)
+
     view.scanButton.setOnClickListener {
       // frame.acquireCameraImage is dependent on an ARCore Frame, which is only available in onDrawFrame.
       // Use a boolean and check its state in onDrawFrame to interact with the camera image.
@@ -117,11 +131,13 @@ class AppRenderer(val activity: MainActivity) : DefaultLifecycleObserver, Sample
       // Create an AlertDialog builder
       val builder = AlertDialog.Builder(activity)
 
-      // Set the dialog title and items
+      // Set the dialog title and items (each entry shows "[FORMAT] content")
       builder.setTitle("Barcode History: ${results.size}")
         .setItems(results) { _, which ->
           // 'which' contains the index of the selected item
-          Toast.makeText(activity, "You chose ${results[which]}", Toast.LENGTH_SHORT).show()
+          // Extract just the content part for the toast (remove format prefix)
+          val selectedItem = results[which]
+          Toast.makeText(activity, "You chose: $selectedItem", Toast.LENGTH_SHORT).show()
         }
 
       // Create and show the dialog
@@ -157,7 +173,9 @@ class AppRenderer(val activity: MainActivity) : DefaultLifecycleObserver, Sample
     view.resetButton.setOnClickListener {
       arLabeledAnchors.clear()
       history.clear()
+      scannedPositions.clear()
       view.resetButton.isEnabled = false
+      // Note: We don't reset planeDetected since planes are still tracked
       hideSnackbar()
     }
 
@@ -223,6 +241,23 @@ class AppRenderer(val activity: MainActivity) : DefaultLifecycleObserver, Sample
       pointCloudRender.drawPointCloud(render, pointCloud, viewProjectionMatrix)
     }
 
+    // Check for plane detection and update UI
+    val planes = session.getAllTrackables(Plane::class.java)
+    val hasTrackedPlane = planes.any { it.trackingState == TrackingState.TRACKING }
+    if (hasTrackedPlane && !planeDetected) {
+      planeDetected = true
+      view.post {
+        view.scanButton.isEnabled = true
+        view.updatePlaneStatus(true)
+      }
+    } else if (!hasTrackedPlane && planeDetected) {
+      planeDetected = false
+      view.post {
+        view.scanButton.isEnabled = false
+        view.updatePlaneStatus(false)
+      }
+    }
+
     // Frame.acquireCameraImage must be used on the GL thread.
     // Check if the button was pressed last frame to start processing the camera image.
     if (scanButtonWasPressed) {
@@ -264,6 +299,7 @@ class AppRenderer(val activity: MainActivity) : DefaultLifecycleObserver, Sample
                 val centerX = (x1 + x2 + x3 + x4) / 4
                 val centerY = (y1 + y2 + y3 + y4) / 4
                 val content = item.text
+                val format = item.formatString
                 val label = "●"
 
                 // Calculate barcode size from corner points
@@ -279,7 +315,7 @@ class AppRenderer(val activity: MainActivity) : DefaultLifecycleObserver, Sample
                 // Scale factor: smaller marker relative to barcode (about 30% of barcode size)
                 val markerSize = normalizedSize * 0.15f
 
-                val detectedObjectResult = DetectedObjectResult(confidence.toFloat(), label, centerX.toInt() to centerY.toInt(), content, markerSize)
+                val detectedObjectResult = DetectedObjectResult(confidence.toFloat(), label, centerX.toInt() to centerY.toInt(), content, format, markerSize)
                 tmp.add(detectedObjectResult)
               }
               objectResults = tmp
@@ -295,21 +331,54 @@ class AppRenderer(val activity: MainActivity) : DefaultLifecycleObserver, Sample
     val objects = objectResults
     if (objects != null) {
       var hasDuplicate = false
+      var hasAnchorCollision = false
       objectResults = null
 //      Log.i(TAG, "$currentAnalyzer got objects: $objects")
       val anchors = objects.mapNotNull { obj ->
         val (atX, atY) = obj.centerCoordinate
-        val anchor = createAnchor(atX.toFloat(), atY.toFloat(), frame) ?: return@mapNotNull null
-        Log.i(TAG, "Created anchor ${anchor.pose} from hit test")
-
-        if (!history.containsKey(obj.content)) {
-          history[obj.content] = obj.content
-          ARLabeledAnchor(anchor, obj.label, obj.size)
+        
+        // Check if this barcode position is too close to an already scanned one (2D image space)
+        val isDuplicatePosition = scannedPositions.any { (content, x, y) ->
+          if (content != obj.content) return@any false
+          val distance = kotlin.math.sqrt(
+            ((atX - x) * (atX - x) + (atY - y) * (atY - y)).toDouble()
+          ).toFloat()
+          distance < MIN_POSITION_DISTANCE
         }
-        else {
+        
+        if (isDuplicatePosition) {
           hasDuplicate = true
           return@mapNotNull null
         }
+        
+        val anchor = createAnchor(atX.toFloat(), atY.toFloat(), frame) ?: return@mapNotNull null
+        
+        // Check for 3D anchor collision - prevent overlapping markers
+        val newAnchorPose = anchor.pose
+        val isTooCloseToExistingAnchor = arLabeledAnchors.any { existingAnchor ->
+          if (existingAnchor.anchor.trackingState != TrackingState.TRACKING) return@any false
+          val existingPose = existingAnchor.anchor.pose
+          val distance = calculatePoseDistance(newAnchorPose, existingPose)
+          distance < MIN_ANCHOR_DISTANCE
+        }
+        
+        if (isTooCloseToExistingAnchor) {
+          hasAnchorCollision = true
+          anchor.detach() // Clean up the anchor we just created
+          return@mapNotNull null
+        }
+        
+        Log.i(TAG, "Created anchor ${anchor.pose} from hit test")
+
+        // Record this position as scanned
+        scannedPositions.add(Triple(obj.content, atX.toFloat(), atY.toFloat()))
+        
+        // Add to history with format and content
+        val historyKey = "${obj.format}_${obj.content}_${scannedPositions.size}"
+        val historyValue = "[${obj.format}] ${obj.content}"
+        history[historyKey] = historyValue
+        
+        ARLabeledAnchor(anchor, obj.label, obj.size)
       }
       arLabeledAnchors.addAll(anchors)
       view.post {
@@ -321,6 +390,10 @@ class AppRenderer(val activity: MainActivity) : DefaultLifecycleObserver, Sample
 //              "For better classification performance, see the README to configure a custom model.")
           objects.isEmpty() ->
             showSnackbar("No barcode found")
+          anchors.isEmpty() && hasAnchorCollision ->
+            showSnackbar("Barcodes already scanned at these positions")
+          anchors.size != objects.size && hasAnchorCollision ->
+            showSnackbar("Some barcodes were skipped (already scanned at those positions)")
           anchors.size != objects.size && !hasDuplicate ->
             showSnackbar("Objects were classified, but could not be attached to an anchor. " +
               "Try moving your device around to obtain a better understanding of the environment.")
@@ -455,6 +528,14 @@ class AppRenderer(val activity: MainActivity) : DefaultLifecycleObserver, Sample
         showSnackbar("Failed to save image: ${e.message}")
       }
     }
+  }
+
+  /** Calculate the 3D distance between two poses in meters */
+  private fun calculatePoseDistance(pose1: Pose, pose2: Pose): Float {
+    val dx = pose1.tx() - pose2.tx()
+    val dy = pose1.ty() - pose2.ty()
+    val dz = pose1.tz() - pose2.tz()
+    return kotlin.math.sqrt((dx * dx + dy * dy + dz * dz).toDouble()).toFloat()
   }
 }
 

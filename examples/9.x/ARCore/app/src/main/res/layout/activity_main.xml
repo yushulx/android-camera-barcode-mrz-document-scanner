@@ -106,5 +106,19 @@
       android:paddingHorizontal="10dp"
       android:text="@string/history" />
 
+  <!-- Plane detection status guide -->
+  <TextView
+      android:id="@+id/planeStatusText"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:layout_gravity="top"
+      android:layout_marginTop="48dp"
+      android:background="#B3FFA500"
+      android:gravity="center"
+      android:padding="12dp"
+      android:text="🔍 Move device slowly to detect surface..."
+      android:textColor="#FFFFFF"
+      android:textSize="14sp"
+      android:textStyle="bold" />
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

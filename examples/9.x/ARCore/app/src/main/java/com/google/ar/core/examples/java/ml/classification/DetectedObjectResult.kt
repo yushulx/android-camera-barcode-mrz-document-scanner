@@ -21,11 +21,15 @@ package com.google.ar.core.examples.java.ml.classification
  * @property confidence The model's reported confidence for this inference result (normalized over `[0, 1]`).
  * @property label The model's reported label for this result.
  * @property centerCoordinate A point on the image that best describes the object's location.
+ * @property content The decoded barcode content/text.
+ * @property format The barcode format type (e.g., QR_CODE, CODE_128, etc.).
+ * @property size Size in meters for AR rendering.
  */
 data class DetectedObjectResult(
   val confidence: Float,
   val label: String,
   val centerCoordinate: Pair<Int, Int>,
   val content: String,
+  val format: String = "",
   val size: Float = 0.05f // Size in meters for AR rendering
 )

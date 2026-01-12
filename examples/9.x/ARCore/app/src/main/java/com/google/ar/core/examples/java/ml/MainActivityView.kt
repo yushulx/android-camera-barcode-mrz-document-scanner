@@ -38,6 +38,7 @@ class MainActivityView(val activity: MainActivity, renderer: AppRenderer) : Defa
   val resetButton = root.findViewById<AppCompatButton>(R.id.clearButton)
   val saveButton = root.findViewById<AppCompatButton>(R.id.saveButton)
   val loadingOverlay = root.findViewById<android.widget.FrameLayout>(R.id.loadingOverlay)
+  val planeStatusText = root.findViewById<android.widget.TextView>(R.id.planeStatusText)
 
   var historyButton = root.findViewById<AppCompatButton>(R.id.historyButton)
   val snackbarHelper = SnackbarHelper().apply {
@@ -47,6 +48,16 @@ class MainActivityView(val activity: MainActivity, renderer: AppRenderer) : Defa
 
   fun hideLoading() {
     loadingOverlay.visibility = android.view.View.GONE
+  }
+
+  fun updatePlaneStatus(planeDetected: Boolean) {
+    if (planeDetected) {
+      planeStatusText.text = "✅ Surface detected - Ready to scan"
+      planeStatusText.setBackgroundColor(android.graphics.Color.argb(180, 0, 128, 0))
+    } else {
+      planeStatusText.text = "🔍 Move device slowly to detect surface..."
+      planeStatusText.setBackgroundColor(android.graphics.Color.argb(180, 255, 165, 0))
+    }
   }
 
   override fun onResume(owner: LifecycleOwner) {
