@@ -2,7 +2,7 @@
 
 A spatial barcode scanner that combines [Google ARCore](https://developers.google.com/ar) with [Dynamsoft Capture Vision SDK](https://www.dynamsoft.com/capture-vision/docs/core/introduction/) to detect and track multiple barcodes in 3D space. This project demonstrates advanced AR capabilities including plane detection guidance, position-based duplicate filtering, and 3D anchor collision detection.
 
-https://github.com/yushulx/android-arcore-barcode-qr-detection/assets/2202306/be665855-4720-4896-a838-f9105cd5f9c2
+https://github.com/user-attachments/assets/03342d5c-f145-4b4a-bd0c-f106c3180fe4
 
 ## Key Features
 
