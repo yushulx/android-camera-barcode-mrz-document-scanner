@@ -25,6 +25,38 @@
       android:layout_width="fill_parent"
       android:layout_height="fill_parent" />
 
+  <!-- Loading overlay shown during AR initialization -->
+  <FrameLayout
+      android:id="@+id/loadingOverlay"
+      android:layout_width="match_parent"
+      android:layout_height="match_parent"
+      android:background="#FF000000"
+      android:visibility="visible">
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:orientation="vertical"
+        android:gravity="center">
+
+      <ProgressBar
+          android:layout_width="64dp"
+          android:layout_height="64dp"
+          android:indeterminateTint="#FFFFFF" />
+
+      <TextView
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content"
+          android:layout_marginTop="16dp"
+          android:text="Initializing AR..."
+          android:textColor="#FFFFFF"
+          android:textSize="18sp" />
+
+    </LinearLayout>
+
+  </FrameLayout>
+
   <LinearLayout
       android:layout_width="wrap_content"
       android:layout_height="wrap_content"
@@ -36,15 +68,22 @@
         android:id="@+id/scanButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:paddingHorizontal="60dp"
+        android:paddingHorizontal="40dp"
         android:text="@string/scan_available" />
 
     <androidx.appcompat.widget.AppCompatButton
         android:id="@+id/clearButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:paddingHorizontal="60dp"
+        android:paddingHorizontal="40dp"
         android:text="@string/clear" />
+
+    <androidx.appcompat.widget.AppCompatButton
+        android:id="@+id/saveButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:paddingHorizontal="40dp"
+        android:text="Save" />
 
   </LinearLayout>
 

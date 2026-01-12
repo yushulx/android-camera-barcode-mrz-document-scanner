@@ -46,6 +46,14 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.launch
 import java.util.*
+import android.content.ContentValues
+import android.graphics.Bitmap
+import android.opengl.GLES20
+import android.os.Build
+import android.os.Environment
+import android.provider.MediaStore
+import java.nio.ByteBuffer
+import java.nio.ByteOrder
 
 
 /**
@@ -76,7 +84,10 @@ class AppRenderer(val activity: MainActivity) : DefaultLifecycleObserver, Sample
   var currentAnalyzer: ObjectDetector = gcpAnalyzer
 
   var router: CaptureVisionRouter? = null
+
   val history = Collections.synchronizedMap(HashMap<String, String>())
+  var capturePicture = false
+  var firstFrameRendered = false
 
   override fun onResume(owner: LifecycleOwner) {
     displayRotationHelper.onResume()
@@ -149,6 +160,11 @@ class AppRenderer(val activity: MainActivity) : DefaultLifecycleObserver, Sample
       view.resetButton.isEnabled = false
       hideSnackbar()
     }
+
+    view.saveButton.setOnClickListener {
+      capturePicture = true
+      Toast.makeText(activity, "Capturing...", Toast.LENGTH_SHORT).show()
+    }
   }
 
   override fun onSurfaceCreated(render: SampleRender) {
@@ -184,6 +200,12 @@ class AppRenderer(val activity: MainActivity) : DefaultLifecycleObserver, Sample
 
     backgroundRenderer.updateDisplayGeometry(frame)
     backgroundRenderer.drawBackground(render)
+
+    // Hide loading overlay after first successful frame
+    if (!firstFrameRendered) {
+      firstFrameRendered = true
+      view.post { view.hideLoading() }
+    }
 
     // Get camera and projection matrices.
     val camera = frame.camera
@@ -242,9 +264,22 @@ class AppRenderer(val activity: MainActivity) : DefaultLifecycleObserver, Sample
                 val centerX = (x1 + x2 + x3 + x4) / 4
                 val centerY = (y1 + y2 + y3 + y4) / 4
                 val content = item.text
-                val label = "✓"
+                val label = "●"
 
-                val detectedObjectResult = DetectedObjectResult(confidence.toFloat(), label, centerX.toInt() to centerY.toInt(), content)
+                // Calculate barcode size from corner points
+                // Use the diagonal of the bounding box as a measure
+                val width = kotlin.math.sqrt(((x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1)).toDouble()).toFloat()
+                val height = kotlin.math.sqrt(((x4 - x1) * (x4 - x1) + (y4 - y1) * (y4 - y1)).toDouble()).toFloat()
+                val barcodePixelSize = kotlin.math.min(width, height)
+                
+                // Convert pixel size to approximate meters (assuming typical phone camera FOV)
+                // A rough estimate: if barcode is ~10% of image width and ~0.5m away, it's about 5cm
+                val imageWidth = cameraImage.width.toFloat()
+                val normalizedSize = barcodePixelSize / imageWidth
+                // Scale factor: smaller marker relative to barcode (about 30% of barcode size)
+                val markerSize = normalizedSize * 0.15f
+
+                val detectedObjectResult = DetectedObjectResult(confidence.toFloat(), label, centerX.toInt() to centerY.toInt(), content, markerSize)
                 tmp.add(detectedObjectResult)
               }
               objectResults = tmp
@@ -269,7 +304,7 @@ class AppRenderer(val activity: MainActivity) : DefaultLifecycleObserver, Sample
 
         if (!history.containsKey(obj.content)) {
           history[obj.content] = obj.content
-          ARLabeledAnchor(anchor, obj.label)
+          ARLabeledAnchor(anchor, obj.label, obj.size)
         }
         else {
           hasDuplicate = true
@@ -302,8 +337,14 @@ class AppRenderer(val activity: MainActivity) : DefaultLifecycleObserver, Sample
         viewProjectionMatrix,
         anchor.pose,
         camera.pose,
-        arDetectedObject.label
+        arDetectedObject.label,
+        arDetectedObject.size
       )
+    }
+
+    if (capturePicture) {
+      capturePicture = false
+      saveBitmapFromGLSurface(render)
     }
   }
 
@@ -343,9 +384,78 @@ class AppRenderer(val activity: MainActivity) : DefaultLifecycleObserver, Sample
 
     // Conduct a hit test using the VIEW coordinates
     val hits = frame.hitTest(convertFloatsOut[0], convertFloatsOut[1])
-    val result = hits.getOrNull(0) ?: return null
-    return result.trackable.createAnchor(result.hitPose)
+    
+    // Prioritize Plane hits for stability
+    val planeHit = hits.find { it.trackable is Plane }
+    if (planeHit != null) {
+      return planeHit.trackable.createAnchor(planeHit.hitPose)
+    }
+
+    // Secondary choice: Point
+    val pointHit = hits.find { it.trackable is Point }
+    if (pointHit != null) {
+      return pointHit.trackable.createAnchor(pointHit.hitPose)
+    }
+
+    // Fallback: Create anchor at fixed distance (e.g. 0.5m) relative to camera
+    // This allows placement even if no plane is detected yet.
+    val cameraPose = frame.camera.pose
+    // Place 50cm in front of camera
+    val newPose = cameraPose.compose(Pose.makeTranslation(0f, 0f, -0.5f))
+    return activity.arCoreSessionHelper.sessionCache?.createAnchor(newPose)
+  }
+
+  private fun saveBitmapFromGLSurface(render: SampleRender) {
+    val width = view.surfaceView.width
+    val height = view.surfaceView.height
+    val buffer = ByteBuffer.allocateDirect(width * height * 4)
+    buffer.order(ByteOrder.nativeOrder())
+    GLES20.glReadPixels(0, 0, width, height, GLES20.GL_RGBA, GLES20.GL_UNSIGNED_BYTE, buffer)
+
+    launch(Dispatchers.IO) {
+      val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+      buffer.rewind()
+      bitmap.copyPixelsFromBuffer(buffer)
+      
+      // Flip vertical because GL is bottom-left origin
+      val matrix = android.graphics.Matrix()
+      matrix.preScale(1.0f, -1.0f)
+      val flippedBitmap = Bitmap.createBitmap(bitmap, 0, 0, width, height, matrix, false)
+
+      saveBitmapToGallery(flippedBitmap)
+    }
+  }
+
+  private fun saveBitmapToGallery(bitmap: Bitmap) {
+    val filename = "AR_Scan_${System.currentTimeMillis()}.jpg"
+    var fos: java.io.OutputStream? = null
+    var uri: android.net.Uri? = null
+    val contentValues = ContentValues().apply {
+      put(MediaStore.MediaColumns.DISPLAY_NAME, filename)
+      put(MediaStore.MediaColumns.MIME_TYPE, "image/jpeg")
+      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+        put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_PICTURES)
+      }
+    }
+
+    val resolver = activity.contentResolver
+    try {
+      uri = resolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues)
+      if (uri != null) {
+        fos = resolver.openOutputStream(uri)
+        bitmap.compress(Bitmap.CompressFormat.JPEG, 100, fos!!)
+        fos?.close()
+        launch(Dispatchers.Main) {
+           Toast.makeText(activity, "Saved to Gallery: $filename", Toast.LENGTH_SHORT).show()
+        }
+      }
+    } catch (e: Exception) {
+      Log.e(TAG, "Failed to save image", e)
+      launch(Dispatchers.Main) {
+        showSnackbar("Failed to save image: ${e.message}")
+      }
+    }
   }
 }
 
-data class ARLabeledAnchor(val anchor: Anchor, val label: String)
+data class ARLabeledAnchor(val anchor: Anchor, val label: String, val size: Float = 0.05f)

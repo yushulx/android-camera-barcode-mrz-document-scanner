@@ -26,5 +26,6 @@ data class DetectedObjectResult(
   val confidence: Float,
   val label: String,
   val centerCoordinate: Pair<Int, Int>,
-  val content: String
+  val content: String,
+  val size: Float = 0.05f // Size in meters for AR rendering
 )

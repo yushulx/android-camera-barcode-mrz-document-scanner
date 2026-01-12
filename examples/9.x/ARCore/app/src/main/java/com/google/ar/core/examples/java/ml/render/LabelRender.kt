@@ -100,13 +100,15 @@ class LabelRender {
 
   /**
    * Draws a label quad with text [label] at [pose]. The label will rotate to face [cameraPose] around the Y-axis.
+   * [size] controls the scale of the label in world units.
    */
   fun draw(
     render: SampleRender,
     viewProjectionMatrix: FloatArray,
     pose: Pose,
     cameraPose: Pose,
-    label: String
+    label: String,
+    size: Float = 0.05f
   ) {
     labelOrigin[0] = pose.tx()
     labelOrigin[1] = pose.ty()
@@ -115,6 +117,7 @@ class LabelRender {
       .setMat4("u_ViewProjection", viewProjectionMatrix)
       .setVec3("u_LabelOrigin", labelOrigin)
       .setVec3("u_CameraPos", cameraPose.translation)
+      .setFloat("u_Scale", size)
       .setTexture("uTexture", cache.get(render, label))
     render.draw(mesh, shader)
   }

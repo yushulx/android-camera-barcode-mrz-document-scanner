@@ -36,11 +36,17 @@ class MainActivityView(val activity: MainActivity, renderer: AppRenderer) : Defa
 //  val useCloudMlSwitch = root.findViewById<SwitchCompat>(R.id.useCloudMlSwitch)
   val scanButton = root.findViewById<AppCompatButton>(R.id.scanButton)
   val resetButton = root.findViewById<AppCompatButton>(R.id.clearButton)
+  val saveButton = root.findViewById<AppCompatButton>(R.id.saveButton)
+  val loadingOverlay = root.findViewById<android.widget.FrameLayout>(R.id.loadingOverlay)
 
   var historyButton = root.findViewById<AppCompatButton>(R.id.historyButton)
   val snackbarHelper = SnackbarHelper().apply {
     setParentView(root.findViewById(R.id.coordinatorLayout))
     setMaxLines(6)
+  }
+
+  fun hideLoading() {
+    loadingOverlay.visibility = android.view.View.GONE
   }
 
   override fun onResume(owner: LifecycleOwner) {

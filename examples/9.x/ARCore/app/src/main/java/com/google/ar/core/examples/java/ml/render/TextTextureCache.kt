@@ -96,9 +96,36 @@ class TextTextureCache {
       eraseColor(0)
 
       Canvas(this).apply {
-        drawText(string, w / 2f, h / 2f, strokePaint)
-
-        drawText(string, w / 2f, h / 2f, textPaint)
+        // Draw filled circle with stroke for better visibility
+        val circlePaint = Paint().apply {
+          setARGB(0xff, 0x4C, 0xAF, 0x50) // Green fill
+          style = Paint.Style.FILL
+          isAntiAlias = true
+        }
+        val strokePaint = Paint().apply {
+          setARGB(0xff, 0x2E, 0x7D, 0x32) // Darker green stroke
+          style = Paint.Style.STROKE
+          strokeWidth = 8f
+          isAntiAlias = true
+        }
+        val radius = w / 4f
+        drawCircle(w / 2f, h / 2f, radius, circlePaint)
+        drawCircle(w / 2f, h / 2f, radius, strokePaint)
+        
+        // Draw checkmark inside the circle
+        val checkPaint = Paint().apply {
+          setARGB(0xff, 0xff, 0xff, 0xff)
+          style = Paint.Style.STROKE
+          strokeWidth = 8f
+          strokeCap = Paint.Cap.ROUND
+          strokeJoin = Paint.Join.ROUND
+          isAntiAlias = true
+        }
+        val path = android.graphics.Path()
+        path.moveTo(w / 2f - 25f, h / 2f)
+        path.lineTo(w / 2f - 5f, h / 2f + 20f)
+        path.lineTo(w / 2f + 30f, h / 2f - 20f)
+        drawPath(path, checkPaint)
       }
     }
   }
