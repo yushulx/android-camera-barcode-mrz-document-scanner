@@ -57,14 +57,7 @@
 <!--      android:background="#55FFFFFF"-->
 <!--      android:text="@string/use_cloud_ml" />-->
 
-  <androidx.appcompat.widget.SwitchCompat
-      android:id="@+id/switch_focus_mode"
-      android:layout_width="wrap_content"
-      android:layout_height="wrap_content"
-      android:layout_alignParentEnd="true"
-      android:checked="false"
-      android:text="@string/switch_focus_mode"
-      android:textColor="#ffffff" />
+
 
   <androidx.appcompat.widget.AppCompatButton
       android:id="@+id/historyButton"

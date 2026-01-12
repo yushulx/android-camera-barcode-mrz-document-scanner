@@ -20,7 +20,7 @@ import android.os.Bundle
 import android.util.Log
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import com.dynamsoft.dbr.BarcodeReader
+import com.dynamsoft.license.LicenseManager
 import com.google.ar.core.CameraConfig
 import com.google.ar.core.CameraConfigFilter
 import com.google.ar.core.Config
@@ -32,8 +32,6 @@ import com.google.ar.core.exceptions.UnavailableDeviceNotCompatibleException
 import com.google.ar.core.exceptions.UnavailableSdkTooOldException
 import com.google.ar.core.exceptions.UnavailableUserDeclinedInstallationException
 
-import com.dynamsoft.dbr.DBRLicenseVerificationListener;
-
 class MainActivity : AppCompatActivity() {
   val TAG = "MainActivity"
   lateinit var arCoreSessionHelper: ARCoreSessionLifecycleHelper
@@ -44,10 +42,10 @@ class MainActivity : AppCompatActivity() {
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
 
-    BarcodeReader.initLicense("LICENSE-KEY") { isSuccessful, e ->
+    LicenseManager.initLicense("DLS2eyJoYW5kc2hha2VDb2RlIjoiMjAwMDAxLTE2NDk4Mjk3OTI2MzUiLCJvcmdhbml6YXRpb25JRCI6IjIwMDAwMSIsInNlc3Npb25QYXNzd29yZCI6IndTcGR6Vm05WDJrcEQ5YUoifQ==", this) { isSuccessful, e ->
       runOnUiThread {
         if (!isSuccessful) {
-          e.printStackTrace()
+          e?.printStackTrace()
           Log.e(TAG, "Failed to verify the license: $e")
         }
       }
@@ -73,7 +71,7 @@ class MainActivity : AppCompatActivity() {
       session.configure(
         session.config.apply {
           // To get the best image of the object in question, enable autofocus.
-          // focusMode = Config.FocusMode.AUTO
+          focusMode = Config.FocusMode.AUTO
           if (session.isDepthModeSupported(Config.DepthMode.AUTOMATIC)) {
             depthMode = Config.DepthMode.AUTOMATIC
           }

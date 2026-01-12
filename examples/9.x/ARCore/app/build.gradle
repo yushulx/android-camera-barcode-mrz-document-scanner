@@ -4,13 +4,13 @@ plugins {
 }
 
 android {
-    compileSdkVersion 30
-    buildToolsVersion "30.0.3"
+    namespace 'com.google.ar.core.examples.java.ml'
+    compileSdk 34
 
     defaultConfig {
         applicationId "com.google.ar.core.examples.java.ml"
-        minSdkVersion 24
-        targetSdkVersion 30
+        minSdk 24
+        targetSdk 34
         versionCode 1
         versionName "1.0"
     }
@@ -22,11 +22,11 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
+        sourceCompatibility JavaVersion.VERSION_11
+        targetCompatibility JavaVersion.VERSION_11
     }
     kotlinOptions {
-        jvmTarget = '1.8'
+        jvmTarget = '11'
     }
     packagingOptions {
         exclude 'META-INF/DEPENDENCIES'
@@ -64,5 +64,5 @@ dependencies {
     // https://github.com/javagl/Obj
     implementation 'de.javagl:obj:0.2.1'
 
-    implementation 'com.dynamsoft:dynamsoftbarcodereader:9.6.40'
+    implementation 'com.dynamsoft:barcodereaderbundle:11.2.3000'
 }

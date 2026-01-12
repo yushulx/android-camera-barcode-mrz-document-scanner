@@ -15,11 +15,11 @@
  limitations under the License.
 -->
 
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.google.ar.core.examples.java.ml">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
   <uses-permission android:name="android.permission.CAMERA" />
 
+  <uses-feature android:name="android.hardware.camera" android:required="true" />
   <!-- Limits app visibility in the Google Play Store to ARCore supported devices
        (https://developers.google.com/ar/devices). -->
   <uses-feature android:name="android.hardware.camera.ar" />
@@ -33,6 +33,7 @@
       android:theme="@style/Theme.Design.Light.NoActionBar">
     <activity
         android:name="com.google.ar.core.examples.java.ml.MainActivity"
+        android:exported="true"
         android:screenOrientation="fullSensor"
         android:configChanges="orientation|screenSize|screenLayout|keyboardHidden">
       <intent-filter>

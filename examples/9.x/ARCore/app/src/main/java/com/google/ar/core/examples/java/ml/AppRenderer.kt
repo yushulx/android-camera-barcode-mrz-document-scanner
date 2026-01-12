@@ -23,10 +23,12 @@ import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
-import com.dynamsoft.dbr.BarcodeReader
-import com.dynamsoft.dbr.BarcodeReaderException
-import com.dynamsoft.dbr.EnumImagePixelFormat
-import com.dynamsoft.dbr.Point
+import com.dynamsoft.cvr.CaptureVisionRouter
+import com.dynamsoft.core.basic_structures.ImageData
+import com.dynamsoft.core.basic_structures.EnumImagePixelFormat
+import com.dynamsoft.cvr.EnumPresetTemplate
+import com.dynamsoft.dbr.DecodedBarcodesResult
+import com.dynamsoft.dbr.BarcodeResultItem
 import com.google.ar.core.*
 import com.google.ar.core.examples.java.common.helpers.DisplayRotationHelper
 import com.google.ar.core.examples.java.common.samplerender.SampleRender
@@ -73,7 +75,7 @@ class AppRenderer(val activity: MainActivity) : DefaultLifecycleObserver, Sample
 
   var currentAnalyzer: ObjectDetector = gcpAnalyzer
 
-  var reader: BarcodeReader? = null
+  var router: CaptureVisionRouter? = null
   val history = Collections.synchronizedMap(HashMap<String, String>())
 
   override fun onResume(owner: LifecycleOwner) {
@@ -85,15 +87,8 @@ class AppRenderer(val activity: MainActivity) : DefaultLifecycleObserver, Sample
   }
 
   fun bindView(view: MainActivityView) {
-    try {
-      // Create an instance of Dynamsoft Barcode Reader.
-      reader = BarcodeReader()
-      val settings = reader!!.runtimeSettings
-      settings.expectedBarcodesCount = 999
-      reader!!.updateRuntimeSettings(settings)
-    } catch (e: BarcodeReaderException) {
-      e.printStackTrace()
-    }
+    // Create an instance of Dynamsoft Capture Vision Router.
+    router = CaptureVisionRouter(activity)
 
     this.view = view
 
@@ -119,6 +114,14 @@ class AppRenderer(val activity: MainActivity) : DefaultLifecycleObserver, Sample
         }
 
       // Create and show the dialog
+      builder.setPositiveButton("Share") { _, _ ->
+        val shareIntent = android.content.Intent().apply {
+          action = android.content.Intent.ACTION_SEND
+          putExtra(android.content.Intent.EXTRA_TEXT, results.joinToString("\n"))
+          type = "text/plain"
+        }
+        activity.startActivity(android.content.Intent.createChooser(shareIntent, "Share Barcodes"))
+      }
       val alertDialog = builder.create()
       val backgroundColor = Color.argb(150, 255, 255, 255)  // 178 is approximately 70% of 255
       alertDialog.window?.setBackgroundDrawable(ColorDrawable(backgroundColor))
@@ -129,12 +132,7 @@ class AppRenderer(val activity: MainActivity) : DefaultLifecycleObserver, Sample
 //      currentAnalyzer = if (isChecked) gcpAnalyzer else mlKitAnalyzer
 //    }
 
-    view.focusModeSwitch.setOnCheckedChangeListener { _, isChecked ->
-      val session = activity.arCoreSessionHelper.sessionCache ?: return@setOnCheckedChangeListener
-      val config = session.config
-      config.focusMode = if (isChecked) Config.FocusMode.AUTO else Config.FocusMode.FIXED
-      session.configure(config)
-    }
+
 
     // val gcpConfigured = gcpAnalyzer.credentials != null
     // view.useCloudMlSwitch.isChecked = gcpConfigured
@@ -165,6 +163,7 @@ class AppRenderer(val activity: MainActivity) : DefaultLifecycleObserver, Sample
     displayRotationHelper.onSurfaceChanged(width, height)
   }
 
+  @Volatile
   var objectResults: List<DetectedObjectResult>? = null
 
   override fun onDrawFrame(render: SampleRender) {
@@ -213,31 +212,43 @@ class AppRenderer(val activity: MainActivity) : DefaultLifecycleObserver, Sample
         val cameraId = session.cameraConfig.cameraId
         val imageRotation = displayRotationHelper.getCameraSensorToDisplayRotation(cameraId)
 //          objectResults = currentAnalyzer.analyze(cameraImage, imageRotation)
-        if (reader != null) {
+        if (router != null) {
           var bytes = ByteArray(cameraImage.planes[0].buffer.remaining())
           cameraImage.planes[0].buffer.get(bytes)
 
-          var results = reader!!.decodeBuffer(bytes, cameraImage.width, cameraImage.height, cameraImage.planes[0].rowStride, EnumImagePixelFormat.IPF_NV21)
+          val imageData = ImageData()
+          imageData.bytes = bytes
+          imageData.width = cameraImage.width
+          imageData.height = cameraImage.height
+          imageData.stride = cameraImage.planes[0].rowStride
+          imageData.format = EnumImagePixelFormat.IPF_GRAYSCALED
+
+          val capturedResult = router!!.capture(imageData, EnumPresetTemplate.PT_READ_BARCODES)
+          val decodedBarcodesResult = capturedResult.decodedBarcodesResult
+
           objectResults = emptyList()
-          if (results != null && results.isNotEmpty()) {
-            val tmp: MutableList<DetectedObjectResult> = mutableListOf()
-            for (result in results) {
-              var points = result.localizationResult.resultPoints
-              var confidence = 100
+          if (decodedBarcodesResult != null) {
+            val items = decodedBarcodesResult.items
+            if (items != null && items.isNotEmpty()) {
+              val tmp: MutableList<DetectedObjectResult> = mutableListOf()
+              for (item in items) {
+                val points = item.location.points
+                var confidence = 100
 
-              val (x1, y1) = points[0].x to points[0].y
-              val (x2, y2) = points[1].x to points[1].y
-              val (x3, y3) = points[2].x to points[2].y
-              val (x4, y4) = points[3].x to points[3].y
-              val centerX = (x1 + x2 + x3 + x4) / 4
-              val centerY = (y1 + y2 + y3 + y4) / 4
-              val content = result.barcodeText
-              val label = "✓"
+                val (x1, y1) = points[0].x to points[0].y
+                val (x2, y2) = points[1].x to points[1].y
+                val (x3, y3) = points[2].x to points[2].y
+                val (x4, y4) = points[3].x to points[3].y
+                val centerX = (x1 + x2 + x3 + x4) / 4
+                val centerY = (y1 + y2 + y3 + y4) / 4
+                val content = item.text
+                val label = "✓"
 
-              val detectedObjectResult = DetectedObjectResult(confidence.toFloat(), label, centerX.toInt() to centerY.toInt(), content)
-              tmp.add(detectedObjectResult)
+                val detectedObjectResult = DetectedObjectResult(confidence.toFloat(), label, centerX.toInt() to centerY.toInt(), content)
+                tmp.add(detectedObjectResult)
+              }
+              objectResults = tmp
             }
-            objectResults = tmp
           }
         }
 
