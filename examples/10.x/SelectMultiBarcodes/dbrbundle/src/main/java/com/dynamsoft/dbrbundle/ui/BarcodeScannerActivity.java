@@ -184,14 +184,13 @@ public class BarcodeScannerActivity extends AppCompatActivity {
 			}
 		});
 
+
+
 		// Start capturing. If success, you will receive results in the CapturedResultReceiver.
 		mRouter.startCapturing(templateName, new CompletionListener() {
 			@Override
 			public void onSuccess() {
-				initTorchButton();
-				initAutoZoom();
-				initToggleButton();
-				initCaptureButton();
+
 			}
 
 			@Override
@@ -202,6 +201,11 @@ public class BarcodeScannerActivity extends AppCompatActivity {
 				});
 			}
 		});
+
+		initTorchButton();
+		initAutoZoom();
+		initToggleButton();
+		initCaptureButton();
 	}
 
 	@Override
@@ -234,27 +238,19 @@ public class BarcodeScannerActivity extends AppCompatActivity {
 				mCameraView.setScanLaserVisible(false);
 				btnToggle.setVisibility(View.GONE);
 				btnTorch.setVisibility(View.GONE);
+				drawSymbols(result);
 			});
 
-			drawSymbols(result);
+
 		}
 	}
 
 	private void openCamera() {
-		try {
-			// Open the camera.
-			mCamera.open();
-		} catch (CameraEnhancerException e) {
-			e.printStackTrace();
-		}
+		mCamera.open();
 	}
 
 	private void closeCamera() {
-		try {
-			mCamera.close();
-		} catch (CameraEnhancerException e) {
-			e.printStackTrace();
-		}
+		mCamera.close();
 	}
 
 	private void setScanRegion() {
@@ -308,29 +304,17 @@ public class BarcodeScannerActivity extends AppCompatActivity {
 
 
 	private void turnOnTorch() {
-		try {
-			mCamera.turnOnTorch();
-			btnTorch.setBackground(ContextCompat.getDrawable(this, R.drawable.icon_flash_on));
-		} catch (CameraEnhancerException e) {
-			e.printStackTrace();
-		}
+		mCamera.turnOnTorch();
+		btnTorch.setBackground(ContextCompat.getDrawable(this, R.drawable.icon_flash_on));
 		btnToggle.setOnClickListener(v -> {
-			try {
-				useBackCamera = !useBackCamera;
-				mCamera.selectCamera(useBackCamera ? EnumCameraPosition.CP_BACK : EnumCameraPosition.CP_FRONT);
-			} catch (CameraEnhancerException e) {
-				e.printStackTrace();
-			}
+			useBackCamera = !useBackCamera;
+			mCamera.selectCamera(useBackCamera ? EnumCameraPosition.CP_BACK : EnumCameraPosition.CP_FRONT);
 		});
 	}
 
 	private void turnOffTorch() {
-		try {
-			mCamera.turnOffTorch();
-			btnTorch.setBackground(ContextCompat.getDrawable(this, R.drawable.icon_flash_off));
-		} catch (CameraEnhancerException e) {
-			e.printStackTrace();
-		}
+		mCamera.turnOffTorch();
+		btnTorch.setBackground(ContextCompat.getDrawable(this, R.drawable.icon_flash_off));
 	}
 
 	private void initToggleButton() {
@@ -339,19 +323,15 @@ public class BarcodeScannerActivity extends AppCompatActivity {
 			resetToggleButton(0);
 		}
 		btnToggle.setOnClickListener(v -> {
-			try {
-				useBackCamera = !useBackCamera;
-				mCamera.selectCamera(useBackCamera ? EnumCameraPosition.CP_BACK : EnumCameraPosition.CP_FRONT);
-				if (configuration.isTorchButtonVisible()) {
-					btnTorch.setVisibility(useBackCamera ? View.VISIBLE : View.GONE);
-					resetToggleButton(useBackCamera ? dpToPx(50) : 0);
-					if (!useBackCamera) {
-						isTorchOn = false;
-						turnOffTorch();
-					}
+			useBackCamera = !useBackCamera;
+			mCamera.selectCamera(useBackCamera ? EnumCameraPosition.CP_BACK : EnumCameraPosition.CP_FRONT);
+			if (configuration.isTorchButtonVisible()) {
+				btnTorch.setVisibility(useBackCamera ? View.VISIBLE : View.GONE);
+				resetToggleButton(useBackCamera ? dpToPx(50) : 0);
+				if (!useBackCamera) {
+					isTorchOn = false;
+					turnOffTorch();
 				}
-			} catch (CameraEnhancerException e) {
-				e.printStackTrace();
 			}
 		});
 	}
@@ -412,7 +392,7 @@ public class BarcodeScannerActivity extends AppCompatActivity {
 	private void addDrawingItemListener() {
 		mTouchView.setOnTouchListener((v, e) -> {
 			if (e.getAction() == MotionEvent.ACTION_DOWN) {
-				ArrayList<DrawingItem> items = mCameraView.getDrawingLayer(DrawingLayer.DBR_LAYER_ID).getDrawingItems();
+				List<DrawingItem> items = mCameraView.getDrawingLayer(DrawingLayer.DBR_LAYER_ID).getDrawingItems();
 				if (items.size() > 1) {
 					for (int index = 0; index < items.size(); index++) {
 						DrawingItem item = items.get(index);
@@ -421,10 +401,11 @@ public class BarcodeScannerActivity extends AppCompatActivity {
 						float touchX = e.getX();
 						float touchY = e.getY();
 						Point point = mCamera.convertPointToViewCoordinates(new Point(centerX, centerY));
-						float density = getResources().getDisplayMetrics().density;
-						if (isPointInCircle(touchX, touchY, point.x / density, point.y / density, 70)) {
+						if (isPointInCircle(touchX, touchY, point.x, point.y, 70)) {
+
 							items.remove(item);
-							mapResultItem.remove(index);
+							int originalIndex = Integer.parseInt(item.getNote("index").getContent());
+							mapResultItem.remove(originalIndex);
 							mCameraView.getDrawingLayer(DrawingLayer.DBR_LAYER_ID).setDrawingItems(items);
 							break;
 						}
