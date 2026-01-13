@@ -18,7 +18,8 @@ public class MainActivity extends AppCompatActivity {
     private ActivityResultLauncher<BarcodeScannerConfig> launcher;
     private BarcodeScannerConfig config = new BarcodeScannerConfig();
     private TextView textView;
-    private final String LICENSE_KEY = "LICENSE-KEY";
+    private final String LICENSE_KEY = "DLS2eyJoYW5kc2hha2VDb2RlIjoiMjAwMDAxLTE2NDk4Mjk3OTI2MzUiLCJvcmdhbml6YXRpb25JRCI6IjIwMDAwMSIsInNlc3Npb25QYXNzd29yZCI6IndTcGR6Vm05WDJrcEQ5YUoifQ==";
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -33,7 +34,8 @@ public class MainActivity extends AppCompatActivity {
         config.setLicense(LICENSE_KEY);
 
         launcher = registerForActivityResult(new BarcodeScannerActivity.ResultContract(), result -> {
-            if (result.getResultStatus() == BarcodeScanResult.EnumResultStatus.RS_FINISHED && result.getBarcodes() != null) {
+            if (result.getResultStatus() == BarcodeScanResult.EnumResultStatus.RS_FINISHED
+                    && result.getBarcodes() != null) {
                 textView.setText("");
                 for (int i = 0; i < result.getBarcodes().length; i++) {
                     BarcodeResultItem barcode = result.getBarcodes()[i];
@@ -43,7 +45,7 @@ public class MainActivity extends AppCompatActivity {
 
                     textView.append(content);
                 }
-            } else if(result.getResultStatus() == BarcodeScanResult.EnumResultStatus.RS_CANCELED ){
+            } else if (result.getResultStatus() == BarcodeScanResult.EnumResultStatus.RS_CANCELED) {
                 textView.setText("Scan canceled.");
             }
             if (result.getErrorString() != null && !result.getErrorString().isEmpty()) {
