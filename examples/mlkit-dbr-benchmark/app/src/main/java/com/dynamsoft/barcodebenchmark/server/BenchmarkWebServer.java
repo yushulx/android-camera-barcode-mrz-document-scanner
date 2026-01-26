@@ -395,7 +395,7 @@ public class BenchmarkWebServer extends NanoHTTPD {
                 "            <div class=\"file-type-selector\">\n" +
                 "                <label>\n" +
                 "                    <input type=\"radio\" name=\"fileType\" value=\"image\" checked>\n" +
-                "                    <span class=\"radio-btn\">📷 Image</span>\n" +
+                "                    <span class=\"radio-btn\">📷 Images</span>\n" +
                 "                </label>\n" +
                 "                <label>\n" +
                 "                    <input type=\"radio\" name=\"fileType\" value=\"video\">\n" +
@@ -406,55 +406,40 @@ public class BenchmarkWebServer extends NanoHTTPD {
                 "            <div class=\"drop-zone\" id=\"dropZone\">\n" +
                 "                <div class=\"drop-zone-content\">\n" +
                 "                    <span class=\"drop-icon\">📁</span>\n" +
-                "                    <p>Drag & drop your file here</p>\n" +
+                "                    <p>Drag & drop files or folders here</p>\n" +
+                "                    <p class=\"hint\">Supports multiple images or a folder</p>\n" +
                 "                    <p class=\"or\">or</p>\n" +
                 "                    <button class=\"browse-btn\" id=\"browseBtn\">Browse Files</button>\n" +
                 "                </div>\n" +
-                "                <input type=\"file\" id=\"fileInput\" accept=\"image/*,video/*\" hidden>\n" +
+                "                <input type=\"file\" id=\"fileInput\" accept=\"image/*,video/*\" multiple hidden>\n" +
                 "            </div>\n" +
                 "\n" +
-                "            <div class=\"file-preview\" id=\"filePreview\" style=\"display: none;\">\n" +
-                "                <div class=\"preview-content\">\n" +
-                "                    <img id=\"previewImage\" style=\"display: none;\">\n" +
-                "                    <video id=\"previewVideo\" controls style=\"display: none;\"></video>\n" +
+                "            <div class=\"file-list\" id=\"fileList\" style=\"display: none;\">\n" +
+                "                <div class=\"file-list-header\">\n" +
+                "                    <span id=\"fileCount\">0 files selected</span>\n" +
+                "                    <button class=\"clear-btn\" id=\"clearBtn\">Clear All</button>\n" +
                 "                </div>\n" +
-                "                <div class=\"file-info\">\n" +
-                "                    <span id=\"fileName\"></span>\n" +
-                "                    <button class=\"remove-btn\" id=\"removeBtn\">✕</button>\n" +
-                "                </div>\n" +
+                "                <div class=\"file-items\" id=\"fileItems\"></div>\n" +
                 "            </div>\n" +
                 "\n" +
                 "            <button class=\"benchmark-btn\" id=\"benchmarkBtn\" disabled>Run Benchmark</button>\n" +
                 "        </div>\n" +
                 "\n" +
-                "        <div class=\"loading\" id=\"loading\" style=\"display: none;\">\n" +
-                "            <div class=\"spinner\"></div>\n" +
-                "            <p>Processing... Please wait</p>\n" +
+                "        <div class=\"progress-section\" id=\"progressSection\" style=\"display: none;\">\n" +
+                "            <div class=\"progress-header\">\n" +
+                "                <span id=\"progressText\">Processing...</span>\n" +
+                "                <span id=\"progressCount\">0/0</span>\n" +
+                "            </div>\n" +
+                "            <div class=\"progress-bar\">\n" +
+                "                <div class=\"progress-fill\" id=\"progressFill\"></div>\n" +
+                "            </div>\n" +
+                "            <div class=\"current-file\" id=\"currentFile\"></div>\n" +
                 "        </div>\n" +
                 "\n" +
                 "        <div class=\"results\" id=\"results\" style=\"display: none;\">\n" +
-                "            <h2>Benchmark Results</h2>\n" +
-                "            <div class=\"result-summary\" id=\"resultSummary\"></div>\n" +
-                "\n" +
-                "            <div class=\"comparison\">\n" +
-                "                <div class=\"sdk-result dynamsoft\">\n" +
-                "                    <div class=\"sdk-header\">\n" +
-                "                        <span class=\"sdk-icon\">🔵</span>\n" +
-                "                        <h3>Dynamsoft</h3>\n" +
-                "                    </div>\n" +
-                "                    <div class=\"sdk-stats\" id=\"dynamsoftStats\"></div>\n" +
-                "                    <div class=\"barcode-list\" id=\"dynamsoftBarcodes\"></div>\n" +
-                "                </div>\n" +
-                "\n" +
-                "                <div class=\"sdk-result mlkit\">\n" +
-                "                    <div class=\"sdk-header\">\n" +
-                "                        <span class=\"sdk-icon\">🟢</span>\n" +
-                "                        <h3>Google MLkit</h3>\n" +
-                "                    </div>\n" +
-                "                    <div class=\"sdk-stats\" id=\"mlkitStats\"></div>\n" +
-                "                    <div class=\"barcode-list\" id=\"mlkitBarcodes\"></div>\n" +
-                "                </div>\n" +
-                "            </div>\n" +
+                "            <h2>Batch Benchmark Results</h2>\n" +
+                "            <div class=\"batch-summary\" id=\"batchSummary\"></div>\n" +
+                "            <div class=\"batch-results\" id=\"batchResults\"></div>\n" +
                 "        </div>\n" +
                 "\n" +
                 "        <footer>\n" +
@@ -481,7 +466,7 @@ public class BenchmarkWebServer extends NanoHTTPD {
                 "}\n" +
                 "\n" +
                 ".container {\n" +
-                "    max-width: 900px;\n" +
+                "    max-width: 1000px;\n" +
                 "    margin: 0 auto;\n" +
                 "    padding: 40px 20px;\n" +
                 "}\n" +
@@ -518,13 +503,8 @@ public class BenchmarkWebServer extends NanoHTTPD {
                 "    margin-bottom: 25px;\n" +
                 "}\n" +
                 "\n" +
-                ".file-type-selector label {\n" +
-                "    cursor: pointer;\n" +
-                "}\n" +
-                "\n" +
-                ".file-type-selector input {\n" +
-                "    display: none;\n" +
-                "}\n" +
+                ".file-type-selector label { cursor: pointer; }\n" +
+                ".file-type-selector input { display: none; }\n" +
                 "\n" +
                 ".radio-btn {\n" +
                 "    display: inline-block;\n" +
@@ -554,21 +534,10 @@ public class BenchmarkWebServer extends NanoHTTPD {
                 "    background: rgba(79,172,254,0.1);\n" +
                 "}\n" +
                 "\n" +
-                ".drop-icon {\n" +
-                "    font-size: 3rem;\n" +
-                "    display: block;\n" +
-                "    margin-bottom: 15px;\n" +
-                "}\n" +
-                "\n" +
-                ".drop-zone p {\n" +
-                "    color: #888;\n" +
-                "    margin-bottom: 10px;\n" +
-                "}\n" +
-                "\n" +
-                ".or {\n" +
-                "    color: #555;\n" +
-                "    font-size: 0.9rem;\n" +
-                "}\n" +
+                ".drop-icon { font-size: 3rem; display: block; margin-bottom: 15px; }\n" +
+                ".drop-zone p { color: #888; margin-bottom: 10px; }\n" +
+                ".hint { font-size: 0.85rem !important; color: #666 !important; }\n" +
+                ".or { color: #555; font-size: 0.9rem; }\n" +
                 "\n" +
                 ".browse-btn {\n" +
                 "    background: linear-gradient(90deg, #4facfe, #00f2fe);\n" +
@@ -582,41 +551,55 @@ public class BenchmarkWebServer extends NanoHTTPD {
                 "    transition: transform 0.2s;\n" +
                 "}\n" +
                 "\n" +
-                ".browse-btn:hover {\n" +
-                "    transform: scale(1.05);\n" +
-                "}\n" +
+                ".browse-btn:hover { transform: scale(1.05); }\n" +
                 "\n" +
-                ".file-preview {\n" +
+                ".file-list {\n" +
                 "    margin-top: 20px;\n" +
                 "    background: rgba(0,0,0,0.3);\n" +
                 "    border-radius: 10px;\n" +
                 "    overflow: hidden;\n" +
                 "}\n" +
                 "\n" +
-                ".preview-content img, .preview-content video {\n" +
-                "    max-width: 100%;\n" +
-                "    max-height: 300px;\n" +
-                "    display: block;\n" +
-                "    margin: 0 auto;\n" +
-                "}\n" +
-                "\n" +
-                ".file-info {\n" +
+                ".file-list-header {\n" +
                 "    display: flex;\n" +
                 "    justify-content: space-between;\n" +
                 "    align-items: center;\n" +
                 "    padding: 15px;\n" +
                 "    background: rgba(0,0,0,0.2);\n" +
+                "    border-bottom: 1px solid rgba(255,255,255,0.1);\n" +
                 "}\n" +
                 "\n" +
-                ".remove-btn {\n" +
+                ".clear-btn {\n" +
                 "    background: #ff4757;\n" +
                 "    border: none;\n" +
-                "    width: 30px;\n" +
-                "    height: 30px;\n" +
-                "    border-radius: 50%;\n" +
+                "    padding: 8px 16px;\n" +
+                "    border-radius: 5px;\n" +
                 "    color: white;\n" +
                 "    cursor: pointer;\n" +
+                "    font-size: 0.85rem;\n" +
                 "}\n" +
+                "\n" +
+                ".file-items {\n" +
+                "    max-height: 200px;\n" +
+                "    overflow-y: auto;\n" +
+                "    padding: 10px;\n" +
+                "}\n" +
+                "\n" +
+                ".file-item {\n" +
+                "    display: flex;\n" +
+                "    align-items: center;\n" +
+                "    gap: 10px;\n" +
+                "    padding: 8px 12px;\n" +
+                "    background: rgba(255,255,255,0.05);\n" +
+                "    border-radius: 6px;\n" +
+                "    margin-bottom: 6px;\n" +
+                "    font-size: 0.9rem;\n" +
+                "}\n" +
+                "\n" +
+                ".file-item-icon { font-size: 1.2rem; }\n" +
+                ".file-item-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }\n" +
+                ".file-item-size { color: #888; font-size: 0.8rem; }\n" +
+                ".file-item-status { font-size: 1rem; }\n" +
                 "\n" +
                 ".benchmark-btn {\n" +
                 "    width: 100%;\n" +
@@ -632,33 +615,40 @@ public class BenchmarkWebServer extends NanoHTTPD {
                 "    transition: all 0.3s;\n" +
                 "}\n" +
                 "\n" +
-                ".benchmark-btn:disabled {\n" +
-                "    opacity: 0.5;\n" +
-                "    cursor: not-allowed;\n" +
+                ".benchmark-btn:disabled { opacity: 0.5; cursor: not-allowed; }\n" +
+                ".benchmark-btn:not(:disabled):hover { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(240,147,251,0.3); }\n" +
+                "\n" +
+                ".progress-section {\n" +
+                "    background: rgba(255,255,255,0.05);\n" +
+                "    border-radius: 15px;\n" +
+                "    padding: 25px;\n" +
+                "    margin-bottom: 30px;\n" +
                 "}\n" +
                 "\n" +
-                ".benchmark-btn:not(:disabled):hover {\n" +
-                "    transform: translateY(-2px);\n" +
-                "    box-shadow: 0 10px 30px rgba(240,147,251,0.3);\n" +
+                ".progress-header {\n" +
+                "    display: flex;\n" +
+                "    justify-content: space-between;\n" +
+                "    margin-bottom: 15px;\n" +
                 "}\n" +
                 "\n" +
-                ".loading {\n" +
-                "    text-align: center;\n" +
-                "    padding: 50px;\n" +
+                ".progress-bar {\n" +
+                "    height: 8px;\n" +
+                "    background: rgba(255,255,255,0.1);\n" +
+                "    border-radius: 4px;\n" +
+                "    overflow: hidden;\n" +
                 "}\n" +
                 "\n" +
-                ".spinner {\n" +
-                "    width: 50px;\n" +
-                "    height: 50px;\n" +
-                "    border: 4px solid rgba(255,255,255,0.2);\n" +
-                "    border-top-color: #4facfe;\n" +
-                "    border-radius: 50%;\n" +
-                "    animation: spin 1s linear infinite;\n" +
-                "    margin: 0 auto 20px;\n" +
+                ".progress-fill {\n" +
+                "    height: 100%;\n" +
+                "    background: linear-gradient(90deg, #4facfe, #00f2fe);\n" +
+                "    width: 0%;\n" +
+                "    transition: width 0.3s;\n" +
                 "}\n" +
                 "\n" +
-                "@keyframes spin {\n" +
-                "    to { transform: rotate(360deg); }\n" +
+                ".current-file {\n" +
+                "    margin-top: 10px;\n" +
+                "    font-size: 0.9rem;\n" +
+                "    color: #888;\n" +
                 "}\n" +
                 "\n" +
                 ".results {\n" +
@@ -667,18 +657,57 @@ public class BenchmarkWebServer extends NanoHTTPD {
                 "    padding: 30px;\n" +
                 "}\n" +
                 "\n" +
-                ".results h2 {\n" +
-                "    text-align: center;\n" +
+                ".results h2 { text-align: center; margin-bottom: 25px; }\n" +
+                "\n" +
+                ".batch-summary {\n" +
+                "    display: grid;\n" +
+                "    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));\n" +
+                "    gap: 15px;\n" +
                 "    margin-bottom: 25px;\n" +
                 "}\n" +
                 "\n" +
-                ".result-summary {\n" +
+                ".summary-card {\n" +
                 "    background: rgba(0,0,0,0.2);\n" +
                 "    padding: 20px;\n" +
                 "    border-radius: 10px;\n" +
-                "    margin-bottom: 25px;\n" +
                 "    text-align: center;\n" +
                 "}\n" +
+                "\n" +
+                ".summary-card .value { font-size: 2rem; font-weight: 700; }\n" +
+                ".summary-card .label { font-size: 0.85rem; color: #888; margin-top: 5px; }\n" +
+                ".summary-card.dynamsoft .value { color: #2196F3; }\n" +
+                ".summary-card.mlkit .value { color: #4CAF50; }\n" +
+                "\n" +
+                ".batch-results { }\n" +
+                "\n" +
+                ".result-item {\n" +
+                "    background: rgba(0,0,0,0.2);\n" +
+                "    border-radius: 12px;\n" +
+                "    margin-bottom: 15px;\n" +
+                "    overflow: hidden;\n" +
+                "}\n" +
+                "\n" +
+                ".result-item-header {\n" +
+                "    display: flex;\n" +
+                "    justify-content: space-between;\n" +
+                "    align-items: center;\n" +
+                "    padding: 15px 20px;\n" +
+                "    background: rgba(255,255,255,0.05);\n" +
+                "    cursor: pointer;\n" +
+                "}\n" +
+                "\n" +
+                ".result-item-header:hover { background: rgba(255,255,255,0.08); }\n" +
+                ".result-item-name { font-weight: 600; }\n" +
+                ".result-item-stats { display: flex; gap: 20px; font-size: 0.9rem; }\n" +
+                ".result-item-stats .dynamsoft { color: #2196F3; }\n" +
+                ".result-item-stats .mlkit { color: #4CAF50; }\n" +
+                "\n" +
+                ".result-item-details {\n" +
+                "    display: none;\n" +
+                "    padding: 20px;\n" +
+                "}\n" +
+                "\n" +
+                ".result-item.expanded .result-item-details { display: block; }\n" +
                 "\n" +
                 ".comparison {\n" +
                 "    display: grid;\n" +
@@ -686,115 +715,66 @@ public class BenchmarkWebServer extends NanoHTTPD {
                 "    gap: 20px;\n" +
                 "}\n" +
                 "\n" +
-                "@media (max-width: 700px) {\n" +
-                "    .comparison {\n" +
-                "        grid-template-columns: 1fr;\n" +
-                "    }\n" +
-                "}\n" +
+                "@media (max-width: 700px) { .comparison { grid-template-columns: 1fr; } }\n" +
                 "\n" +
                 ".sdk-result {\n" +
                 "    background: rgba(0,0,0,0.2);\n" +
-                "    border-radius: 15px;\n" +
-                "    padding: 20px;\n" +
-                "}\n" +
-                "\n" +
-                ".sdk-result.dynamsoft {\n" +
-                "    border-top: 3px solid #2196F3;\n" +
-                "}\n" +
-                "\n" +
-                ".sdk-result.mlkit {\n" +
-                "    border-top: 3px solid #4CAF50;\n" +
-                "}\n" +
-                "\n" +
-                ".sdk-header {\n" +
-                "    display: flex;\n" +
-                "    align-items: center;\n" +
-                "    gap: 10px;\n" +
-                "    margin-bottom: 15px;\n" +
-                "}\n" +
-                "\n" +
-                ".sdk-icon {\n" +
-                "    font-size: 1.5rem;\n" +
-                "}\n" +
-                "\n" +
-                ".sdk-stats {\n" +
-                "    background: rgba(255,255,255,0.05);\n" +
-                "    padding: 15px;\n" +
                 "    border-radius: 10px;\n" +
-                "    margin-bottom: 15px;\n" +
+                "    padding: 15px;\n" +
                 "}\n" +
                 "\n" +
-                ".stat-item {\n" +
-                "    display: flex;\n" +
-                "    justify-content: space-between;\n" +
-                "    margin-bottom: 8px;\n" +
-                "}\n" +
+                ".sdk-result.dynamsoft { border-top: 3px solid #2196F3; }\n" +
+                ".sdk-result.mlkit { border-top: 3px solid #4CAF50; }\n" +
                 "\n" +
-                ".stat-label {\n" +
-                "    color: #888;\n" +
-                "}\n" +
+                ".sdk-header { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }\n" +
+                ".sdk-icon { font-size: 1.2rem; }\n" +
+                ".sdk-header h4 { font-size: 0.95rem; }\n" +
                 "\n" +
-                ".stat-value {\n" +
-                "    font-weight: 600;\n" +
-                "}\n" +
+                ".sdk-stats { font-size: 0.85rem; margin-bottom: 10px; }\n" +
+                ".stat-item { display: flex; justify-content: space-between; margin-bottom: 4px; }\n" +
+                ".stat-label { color: #888; }\n" +
+                ".stat-value { font-weight: 600; }\n" +
                 "\n" +
-                ".barcode-list {\n" +
-                "    max-height: 300px;\n" +
-                "    overflow-y: auto;\n" +
-                "}\n" +
+                ".barcode-list { max-height: 150px; overflow-y: auto; }\n" +
                 "\n" +
                 ".barcode-item {\n" +
                 "    background: rgba(255,255,255,0.05);\n" +
-                "    padding: 12px;\n" +
-                "    border-radius: 8px;\n" +
-                "    margin-bottom: 8px;\n" +
-                "}\n" +
-                "\n" +
-                ".barcode-format {\n" +
+                "    padding: 8px;\n" +
+                "    border-radius: 6px;\n" +
+                "    margin-bottom: 6px;\n" +
                 "    font-size: 0.8rem;\n" +
-                "    color: #4facfe;\n" +
-                "    margin-bottom: 5px;\n" +
                 "}\n" +
                 "\n" +
-                ".barcode-text {\n" +
-                "    font-family: monospace;\n" +
-                "    font-size: 0.9rem;\n" +
-                "    word-break: break-all;\n" +
-                "}\n" +
+                ".barcode-format { color: #4facfe; margin-bottom: 3px; }\n" +
+                ".barcode-text { font-family: monospace; word-break: break-all; }\n" +
                 "\n" +
-                "footer {\n" +
-                "    text-align: center;\n" +
-                "    margin-top: 40px;\n" +
-                "    color: #555;\n" +
-                "    font-size: 0.9rem;\n" +
-                "}";
+                "footer { text-align: center; margin-top: 40px; color: #555; font-size: 0.9rem; }\n" +
+                "\n" +
+                ".expand-icon { transition: transform 0.3s; }\n" +
+                ".result-item.expanded .expand-icon { transform: rotate(180deg); }";
     }
 
     private String getAppJs() {
         return "const dropZone = document.getElementById('dropZone');\n" +
                 "const fileInput = document.getElementById('fileInput');\n" +
                 "const browseBtn = document.getElementById('browseBtn');\n" +
-                "const filePreview = document.getElementById('filePreview');\n" +
-                "const previewImage = document.getElementById('previewImage');\n" +
-                "const previewVideo = document.getElementById('previewVideo');\n" +
-                "const fileName = document.getElementById('fileName');\n" +
-                "const removeBtn = document.getElementById('removeBtn');\n" +
+                "const fileList = document.getElementById('fileList');\n" +
+                "const fileItems = document.getElementById('fileItems');\n" +
+                "const fileCount = document.getElementById('fileCount');\n" +
+                "const clearBtn = document.getElementById('clearBtn');\n" +
                 "const benchmarkBtn = document.getElementById('benchmarkBtn');\n" +
-                "const loading = document.getElementById('loading');\n" +
+                "const progressSection = document.getElementById('progressSection');\n" +
+                "const progressFill = document.getElementById('progressFill');\n" +
+                "const progressText = document.getElementById('progressText');\n" +
+                "const currentFile = document.getElementById('currentFile');\n" +
                 "const results = document.getElementById('results');\n" +
+                "const batchSummary = document.getElementById('batchSummary');\n" +
+                "const batchResults = document.getElementById('batchResults');\n" +
                 "\n" +
-                "let selectedFile = null;\n" +
+                "let selectedFiles = [];\n" +
+                "let benchmarkResults = [];\n" +
                 "\n" +
-                "// File type selection\n" +
-                "document.querySelectorAll('input[name=\"fileType\"]').forEach(radio => {\n" +
-                "    radio.addEventListener('change', (e) => {\n" +
-                "        const isVideo = e.target.value === 'video';\n" +
-                "        fileInput.accept = isVideo ? 'video/*' : 'image/*';\n" +
-                "        resetPreview();\n" +
-                "    });\n" +
-                "});\n" +
-                "\n" +
-                "// Drag and drop\n" +
+                "// Drag and drop with folder support\n" +
                 "dropZone.addEventListener('dragover', (e) => {\n" +
                 "    e.preventDefault();\n" +
                 "    dropZone.classList.add('dragover');\n" +
@@ -804,12 +784,94 @@ public class BenchmarkWebServer extends NanoHTTPD {
                 "    dropZone.classList.remove('dragover');\n" +
                 "});\n" +
                 "\n" +
-                "dropZone.addEventListener('drop', (e) => {\n" +
+                "dropZone.addEventListener('drop', async (e) => {\n" +
                 "    e.preventDefault();\n" +
                 "    dropZone.classList.remove('dragover');\n" +
-                "    const files = e.dataTransfer.files;\n" +
-                "    if (files.length) handleFile(files[0]);\n" +
+                "    const items = e.dataTransfer.items;\n" +
+                "    const files = [];\n" +
+                "    \n" +
+                "    // Process items for folder support\n" +
+                "    const promises = [];\n" +
+                "    for (let i = 0; i < items.length; i++) {\n" +
+                "        const item = items[i];\n" +
+                "        if (item.webkitGetAsEntry) {\n" +
+                "            const entry = item.webkitGetAsEntry();\n" +
+                "            if (entry) {\n" +
+                "                promises.push(traverseEntry(entry));\n" +
+                "            }\n" +
+                "        } else if (item.getAsFile) {\n" +
+                "            const file = item.getAsFile();\n" +
+                "            if (file && isValidFile(file)) files.push(file);\n" +
+                "        }\n" +
+                "    }\n" +
+                "    \n" +
+                "    const nestedFiles = await Promise.all(promises);\n" +
+                "    nestedFiles.flat().forEach(f => { if (isValidFile(f)) files.push(f); });\n" +
+                "    \n" +
+                "    addFiles(files);\n" +
                 "});\n" +
+                "\n" +
+                "async function traverseEntry(entry) {\n" +
+                "    if (entry.isFile) {\n" +
+                "        return new Promise(resolve => {\n" +
+                "            entry.file(file => resolve([file]), () => resolve([]));\n" +
+                "        });\n" +
+                "    } else if (entry.isDirectory) {\n" +
+                "        const reader = entry.createReader();\n" +
+                "        return new Promise(resolve => {\n" +
+                "            reader.readEntries(async entries => {\n" +
+                "                const files = [];\n" +
+                "                for (const e of entries) {\n" +
+                "                    const subFiles = await traverseEntry(e);\n" +
+                "                    files.push(...subFiles);\n" +
+                "                }\n" +
+                "                resolve(files);\n" +
+                "            }, () => resolve([]));\n" +
+                "        });\n" +
+                "    }\n" +
+                "    return [];\n" +
+                "}\n" +
+                "\n" +
+                "function isValidFile(file) {\n" +
+                "    return file.type.startsWith('image/') || file.type.startsWith('video/');\n" +
+                "}\n" +
+                "\n" +
+                "function formatSize(bytes) {\n" +
+                "    if (bytes < 1024) return bytes + ' B';\n" +
+                "    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';\n" +
+                "    return (bytes / (1024 * 1024)).toFixed(1) + ' MB';\n" +
+                "}\n" +
+                "\n" +
+                "function addFiles(files) {\n" +
+                "    files.forEach(file => {\n" +
+                "        // Avoid duplicates\n" +
+                "        if (!selectedFiles.find(f => f.name === file.name && f.size === file.size)) {\n" +
+                "            selectedFiles.push(file);\n" +
+                "        }\n" +
+                "    });\n" +
+                "    updateFileList();\n" +
+                "}\n" +
+                "\n" +
+                "function updateFileList() {\n" +
+                "    if (selectedFiles.length === 0) {\n" +
+                "        fileList.style.display = 'none';\n" +
+                "        benchmarkBtn.disabled = true;\n" +
+                "        return;\n" +
+                "    }\n" +
+                "    \n" +
+                "    fileList.style.display = 'block';\n" +
+                "    benchmarkBtn.disabled = false;\n" +
+                "    fileCount.textContent = selectedFiles.length + ' file(s) selected';\n" +
+                "    \n" +
+                "    fileItems.innerHTML = selectedFiles.map((file, idx) => `\n" +
+                "        <div class=\"file-item\" data-idx=\"${idx}\">\n" +
+                "            <span class=\"file-item-icon\">${file.type.startsWith('video/') ? '🎬' : '🖼️'}</span>\n" +
+                "            <span class=\"file-item-name\">${file.name}</span>\n" +
+                "            <span class=\"file-item-size\">${formatSize(file.size)}</span>\n" +
+                "            <span class=\"file-item-status\" id=\"status-${idx}\"></span>\n" +
+                "        </div>\n" +
+                "    `).join('');\n" +
+                "}\n" +
                 "\n" +
                 "dropZone.addEventListener('click', () => fileInput.click());\n" +
                 "browseBtn.addEventListener('click', (e) => {\n" +
@@ -818,103 +880,124 @@ public class BenchmarkWebServer extends NanoHTTPD {
                 "});\n" +
                 "\n" +
                 "fileInput.addEventListener('change', (e) => {\n" +
-                "    if (e.target.files.length) handleFile(e.target.files[0]);\n" +
+                "    addFiles(Array.from(e.target.files));\n" +
+                "    fileInput.value = '';\n" +
                 "});\n" +
                 "\n" +
-                "removeBtn.addEventListener('click', resetPreview);\n" +
-                "\n" +
-                "function handleFile(file) {\n" +
-                "    selectedFile = file;\n" +
-                "    fileName.textContent = file.name;\n" +
-                "    \n" +
-                "    const isVideo = file.type.startsWith('video/');\n" +
-                "    const url = URL.createObjectURL(file);\n" +
-                "    \n" +
-                "    if (isVideo) {\n" +
-                "        previewVideo.src = url;\n" +
-                "        previewVideo.style.display = 'block';\n" +
-                "        previewImage.style.display = 'none';\n" +
-                "        document.querySelector('input[value=\"video\"]').checked = true;\n" +
-                "    } else {\n" +
-                "        previewImage.src = url;\n" +
-                "        previewImage.style.display = 'block';\n" +
-                "        previewVideo.style.display = 'none';\n" +
-                "        document.querySelector('input[value=\"image\"]').checked = true;\n" +
-                "    }\n" +
-                "    \n" +
-                "    dropZone.style.display = 'none';\n" +
-                "    filePreview.style.display = 'block';\n" +
-                "    benchmarkBtn.disabled = false;\n" +
+                "clearBtn.addEventListener('click', () => {\n" +
+                "    selectedFiles = [];\n" +
+                "    updateFileList();\n" +
                 "    results.style.display = 'none';\n" +
-                "}\n" +
-                "\n" +
-                "function resetPreview() {\n" +
-                "    selectedFile = null;\n" +
-                "    fileInput.value = '';\n" +
-                "    previewImage.src = '';\n" +
-                "    previewVideo.src = '';\n" +
-                "    dropZone.style.display = 'block';\n" +
-                "    filePreview.style.display = 'none';\n" +
-                "    benchmarkBtn.disabled = true;\n" +
-                "}\n" +
+                "    progressSection.style.display = 'none';\n" +
+                "});\n" +
                 "\n" +
                 "benchmarkBtn.addEventListener('click', async () => {\n" +
-                "    if (!selectedFile) return;\n" +
+                "    if (selectedFiles.length === 0) return;\n" +
                 "    \n" +
-                "    loading.style.display = 'block';\n" +
+                "    progressSection.style.display = 'block';\n" +
                 "    results.style.display = 'none';\n" +
                 "    benchmarkBtn.disabled = true;\n" +
+                "    benchmarkResults = [];\n" +
                 "    \n" +
-                "    const formData = new FormData();\n" +
-                "    formData.append('file', selectedFile);\n" +
-                "    formData.append('fileType', selectedFile.type.startsWith('video/') ? 'video' : 'image');\n" +
-                "    \n" +
-                "    try {\n" +
-                "        const response = await fetch('/api/benchmark', {\n" +
-                "            method: 'POST',\n" +
-                "            body: formData\n" +
-                "        });\n" +
+                "    for (let i = 0; i < selectedFiles.length; i++) {\n" +
+                "        const file = selectedFiles[i];\n" +
+                "        const progress = Math.round(((i) / selectedFiles.length) * 100);\n" +
+                "        progressFill.style.width = progress + '%';\n" +
+                "        progressText.textContent = `${i + 1} / ${selectedFiles.length}`;\n" +
+                "        currentFile.textContent = `Processing: ${file.name}`;\n" +
                 "        \n" +
-                "        const data = await response.json();\n" +
-                "        displayResults(data);\n" +
-                "    } catch (error) {\n" +
-                "        alert('Error: ' + error.message);\n" +
-                "    } finally {\n" +
-                "        loading.style.display = 'none';\n" +
-                "        benchmarkBtn.disabled = false;\n" +
+                "        // Update status icon\n" +
+                "        const statusEl = document.getElementById('status-' + i);\n" +
+                "        if (statusEl) statusEl.textContent = '⏳';\n" +
+                "        \n" +
+                "        try {\n" +
+                "            const formData = new FormData();\n" +
+                "            formData.append('file', file);\n" +
+                "            formData.append('fileType', file.type.startsWith('video/') ? 'video' : 'image');\n" +
+                "            \n" +
+                "            const response = await fetch('/api/benchmark', {\n" +
+                "                method: 'POST',\n" +
+                "                body: formData\n" +
+                "            });\n" +
+                "            \n" +
+                "            const data = await response.json();\n" +
+                "            data.fileName = file.name;\n" +
+                "            benchmarkResults.push(data);\n" +
+                "            if (statusEl) statusEl.textContent = '✅';\n" +
+                "        } catch (error) {\n" +
+                "            benchmarkResults.push({ fileName: file.name, error: error.message });\n" +
+                "            if (statusEl) statusEl.textContent = '❌';\n" +
+                "        }\n" +
                 "    }\n" +
+                "    \n" +
+                "    progressFill.style.width = '100%';\n" +
+                "    progressText.textContent = 'Complete!';\n" +
+                "    currentFile.textContent = '';\n" +
+                "    benchmarkBtn.disabled = false;\n" +
+                "    \n" +
+                "    displayBatchResults();\n" +
                 "});\n" +
                 "\n" +
-                "function displayResults(data) {\n" +
+                "function displayBatchResults() {\n" +
                 "    results.style.display = 'block';\n" +
                 "    \n" +
-                "    // Summary\n" +
-                "    const summary = document.getElementById('resultSummary');\n" +
-                "    if (data.type === 'video') {\n" +
-                "        summary.innerHTML = `<p>📹 Video: ${data.framesExtracted} frames extracted (${data.durationMs}ms duration)</p>`;\n" +
-                "    } else {\n" +
-                "        summary.innerHTML = `<p>🖼️ Image: ${data.width} × ${data.height} pixels</p>`;\n" +
-                "    }\n" +
+                "    // Calculate totals\n" +
+                "    let totalDynamsoftBarcodes = 0, totalMlkitBarcodes = 0;\n" +
+                "    let totalDynamsoftTime = 0, totalMlkitTime = 0;\n" +
+                "    let successCount = 0;\n" +
                 "    \n" +
-                "    // Dynamsoft stats\n" +
-                "    const dynamsoftStats = document.getElementById('dynamsoftStats');\n" +
-                "    dynamsoftStats.innerHTML = `\n" +
-                "        <div class=\"stat-item\"><span class=\"stat-label\">Time:</span><span class=\"stat-value\">${data.dynamsoft.timeMs}ms</span></div>\n" +
-                "        <div class=\"stat-item\"><span class=\"stat-label\">Barcodes:</span><span class=\"stat-value\">${data.dynamsoft.count}</span></div>\n" +
-                "        ${data.dynamsoft.framesProcessed ? `<div class=\"stat-item\"><span class=\"stat-label\">Frames:</span><span class=\"stat-value\">${data.dynamsoft.framesProcessed}</span></div>` : ''}\n" +
+                "    benchmarkResults.forEach(r => {\n" +
+                "        if (!r.error) {\n" +
+                "            successCount++;\n" +
+                "            totalDynamsoftBarcodes += r.dynamsoft?.count || 0;\n" +
+                "            totalMlkitBarcodes += r.mlkit?.count || 0;\n" +
+                "            totalDynamsoftTime += r.dynamsoft?.timeMs || 0;\n" +
+                "            totalMlkitTime += r.mlkit?.timeMs || 0;\n" +
+                "        }\n" +
+                "    });\n" +
+                "    \n" +
+                "    batchSummary.innerHTML = `\n" +
+                "        <div class=\"summary-card\"><div class=\"value\">${benchmarkResults.length}</div><div class=\"label\">Files Processed</div></div>\n" +
+                "        <div class=\"summary-card dynamsoft\"><div class=\"value\">${totalDynamsoftBarcodes}</div><div class=\"label\">Dynamsoft Total</div></div>\n" +
+                "        <div class=\"summary-card mlkit\"><div class=\"value\">${totalMlkitBarcodes}</div><div class=\"label\">MLkit Total</div></div>\n" +
+                "        <div class=\"summary-card dynamsoft\"><div class=\"value\">${totalDynamsoftTime}ms</div><div class=\"label\">Dynamsoft Time</div></div>\n" +
+                "        <div class=\"summary-card mlkit\"><div class=\"value\">${totalMlkitTime}ms</div><div class=\"label\">MLkit Time</div></div>\n" +
                 "    `;\n" +
                 "    \n" +
-                "    // MLkit stats\n" +
-                "    const mlkitStats = document.getElementById('mlkitStats');\n" +
-                "    mlkitStats.innerHTML = `\n" +
-                "        <div class=\"stat-item\"><span class=\"stat-label\">Time:</span><span class=\"stat-value\">${data.mlkit.timeMs}ms</span></div>\n" +
-                "        <div class=\"stat-item\"><span class=\"stat-label\">Barcodes:</span><span class=\"stat-value\">${data.mlkit.count}</span></div>\n" +
-                "        ${data.mlkit.framesProcessed ? `<div class=\"stat-item\"><span class=\"stat-label\">Frames:</span><span class=\"stat-value\">${data.mlkit.framesProcessed}</span></div>` : ''}\n" +
-                "    `;\n" +
-                "    \n" +
-                "    // Barcode lists\n" +
-                "    document.getElementById('dynamsoftBarcodes').innerHTML = renderBarcodeList(data.dynamsoft.barcodes);\n" +
-                "    document.getElementById('mlkitBarcodes').innerHTML = renderBarcodeList(data.mlkit.barcodes);\n" +
+                "    batchResults.innerHTML = benchmarkResults.map((r, idx) => {\n" +
+                "        if (r.error) {\n" +
+                "            return `<div class=\"result-item\"><div class=\"result-item-header\"><span class=\"result-item-name\">❌ ${r.fileName}</span><span>Error: ${r.error}</span></div></div>`;\n" +
+                "        }\n" +
+                "        return `\n" +
+                "            <div class=\"result-item\" id=\"result-${idx}\">\n" +
+                "                <div class=\"result-item-header\" onclick=\"toggleResult(${idx})\">\n" +
+                "                    <span class=\"result-item-name\">${r.type === 'video' ? '🎬' : '🖼️'} ${r.fileName}</span>\n" +
+                "                    <div class=\"result-item-stats\">\n" +
+                "                        <span class=\"dynamsoft\">DBR: ${r.dynamsoft?.count || 0} (${r.dynamsoft?.timeMs || 0}ms)</span>\n" +
+                "                        <span class=\"mlkit\">MLkit: ${r.mlkit?.count || 0} (${r.mlkit?.timeMs || 0}ms)</span>\n" +
+                "                        <span class=\"expand-icon\">▼</span>\n" +
+                "                    </div>\n" +
+                "                </div>\n" +
+                "                <div class=\"result-item-details\">\n" +
+                "                    <div class=\"comparison\">\n" +
+                "                        <div class=\"sdk-result dynamsoft\">\n" +
+                "                            <div class=\"sdk-header\"><span class=\"sdk-icon\">🔷</span><h4>Dynamsoft Barcode Reader</h4></div>\n" +
+                "                            <div class=\"barcode-list\">${renderBarcodeList(r.dynamsoft?.barcodes)}</div>\n" +
+                "                        </div>\n" +
+                "                        <div class=\"sdk-result mlkit\">\n" +
+                "                            <div class=\"sdk-header\"><span class=\"sdk-icon\">🟢</span><h4>Google MLkit</h4></div>\n" +
+                "                            <div class=\"barcode-list\">${renderBarcodeList(r.mlkit?.barcodes)}</div>\n" +
+                "                        </div>\n" +
+                "                    </div>\n" +
+                "                </div>\n" +
+                "            </div>\n" +
+                "        `;\n" +
+                "    }).join('');\n" +
+                "}\n" +
+                "\n" +
+                "function toggleResult(idx) {\n" +
+                "    const el = document.getElementById('result-' + idx);\n" +
+                "    if (el) el.classList.toggle('expanded');\n" +
                 "}\n" +
                 "\n" +
                 "function renderBarcodeList(barcodes) {\n" +
@@ -922,9 +1005,9 @@ public class BenchmarkWebServer extends NanoHTTPD {
                 "        return '<p style=\"color: #888; text-align: center;\">No barcodes detected</p>';\n" +
                 "    }\n" +
                 "    return barcodes.map(bc => `\n" +
-                "        <div class=\"barcode-item\">\n" +
-                "            <div class=\"barcode-format\">${bc.format}${bc.frame ? ` (Frame ${bc.frame})` : ''}</div>\n" +
-                "            <div class=\"barcode-text\">${bc.text || '(empty)'}</div>\n" +
+                "        <div class=\\\"barcode-item\\\">\n" +
+                "            <div class=\\\"barcode-format\\\">${bc.format}${bc.frame ? ` (Frame ${bc.frame})` : ''}</div>\n" +
+                "            <div class=\\\"barcode-text\\\">${bc.text || '(empty)'}</div>\n" +
                 "        </div>\n" +
                 "    `).join('');\n" +
                 "}";
