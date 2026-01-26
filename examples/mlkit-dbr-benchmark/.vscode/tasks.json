@@ -1,0 +1,18 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "installDebug",
+			"type": "shell",
+			"command": "./gradlew.bat",
+			"args": [
+				"installDebug"
+			],
+			"isBackground": false,
+			"problemMatcher": [
+				"$gradle"
+			],
+			"group": "build"
+		}
+	]
+}

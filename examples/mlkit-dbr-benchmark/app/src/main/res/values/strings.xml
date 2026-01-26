@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Barcode Benchmark</string>
+    <string name="dynamsoft_scanner_fragment_label">Dynamsoft Scanner</string>
+    <string name="google_scanner_fragment_label">MLkit Scanner</string>
+    <string name="benchmark_result_fragment_label">Benchmark Results</string>
+    <string name="image_benchmark_fragment_label">Image Benchmark</string>
+    <string name="video_benchmark_fragment_label">Video Benchmark</string>
+
+    <string name="ok">OK</string>
+    <string name="permission_camera_rationale">Access to the camera is needed for detection</string>
+    <string name="no_camera_permission">This application cannot run because it does not have the camera permission. The application will now exit.</string>
+    <string name="low_storage_error">Barcode scanner dependencies cannot be downloaded due to low device storage</string>
+    <string name="title_activity_main">Barcode Benchmark</string>
+    
+    <string name="select_input_source">Select Input Source</string>
+    <string name="input_image">Image File</string>
+    <string name="input_video">Video File</string>
+    <string name="input_camera">Live Camera</string>
+    
+    <string name="scanning_engines">Camera Scanning Engines</string>
+    <string name="dynamsoft_desc">Commercial-grade barcode SDK</string>
+    <string name="mlkit_desc">Google ML Kit Vision API</string>
+    
+    <string name="benchmark_in_progress">Running benchmark…</string>
+    <string name="processing_image">Processing image…</string>
+    <string name="processing_video">Processing video frames…</string>
+    
+    <string name="time_cost">Time Cost</string>
+    <string name="barcodes_found">Barcodes Found</string>
+    <string name="frames_processed">Frames Processed</string>
+    <string name="total_barcodes">Total Barcodes</string>
+    <string name="avg_time_per_frame">Avg Time/Frame</string>
+    
+    <string name="select_image">Select Image</string>
+    <string name="select_video">Select Video</string>
+    <string name="run_benchmark">Run Benchmark</string>
+    <string name="export_results">Export Results</string>
+    
+    <string name="no_barcode_found">No barcodes found</string>
+    <string name="error_loading_file">Error loading file</string>
+    <string name="error_processing">Error during processing</string>
+    
+    <string name="storage_permission_required">Storage permission is required to access files</string>
+</resources>

@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/HomeFragment">
+
+    <!-- Home Fragment - Main entry point -->
+    <fragment
+        android:id="@+id/HomeFragment"
+        android:name="com.dynamsoft.barcodebenchmark.fragments.HomeFragment"
+        android:label="Barcode Benchmark"
+        tools:layout="@layout/fragment_home">
+        <action
+            android:id="@+id/action_home_to_imageBenchmark"
+            app:destination="@id/ImageBenchmarkFragment" />
+        <action
+            android:id="@+id/action_home_to_videoBenchmark"
+            app:destination="@id/VideoBenchmarkFragment" />
+        <action
+            android:id="@+id/action_home_to_dynamsoftScanner"
+            app:destination="@id/DynamsoftScannerFragment" />
+        <action
+            android:id="@+id/action_home_to_mlkitScanner"
+            app:destination="@id/MLkitScannerFragment" />
+    </fragment>
+
+    <!-- Image Benchmark Fragment -->
+    <fragment
+        android:id="@+id/ImageBenchmarkFragment"
+        android:name="com.dynamsoft.barcodebenchmark.fragments.ImageBenchmarkFragment"
+        android:label="Image Benchmark"
+        tools:layout="@layout/fragment_image_benchmark">
+        <action
+            android:id="@+id/action_imageBenchmark_to_result"
+            app:destination="@id/BenchmarkResultFragment" />
+    </fragment>
+
+    <!-- Video Benchmark Fragment -->
+    <fragment
+        android:id="@+id/VideoBenchmarkFragment"
+        android:name="com.dynamsoft.barcodebenchmark.fragments.VideoBenchmarkFragment"
+        android:label="Video Benchmark"
+        tools:layout="@layout/fragment_video_benchmark">
+        <action
+            android:id="@+id/action_videoBenchmark_to_result"
+            app:destination="@id/BenchmarkResultFragment" />
+    </fragment>
+
+    <!-- Benchmark Result Fragment -->
+    <fragment
+        android:id="@+id/BenchmarkResultFragment"
+        android:name="com.dynamsoft.barcodebenchmark.fragments.BenchmarkResultFragment"
+        android:label="Benchmark Results"
+        tools:layout="@layout/fragment_benchmark_result">
+        <action
+            android:id="@+id/action_result_to_home"
+            app:destination="@id/HomeFragment"
+            app:popUpTo="@id/HomeFragment"
+            app:popUpToInclusive="true" />
+    </fragment>
+
+    <!-- Dynamsoft Scanner Fragment -->
+    <fragment
+        android:id="@+id/DynamsoftScannerFragment"
+        android:name="com.dynamsoft.barcodebenchmark.fragments.DynamsoftScannerFragment"
+        android:label="Dynamsoft Scanner"
+        tools:layout="@layout/fragment_dynamsoft_scanner" />
+
+    <!-- MLkit Scanner Fragment -->
+    <fragment
+        android:id="@+id/MLkitScannerFragment"
+        android:name="com.dynamsoft.barcodebenchmark.fragments.MLkitScannerFragment"
+        android:label="MLkit Scanner"
+        tools:layout="@layout/fragment_mlkit_scanner" />
+
+</navigation>
