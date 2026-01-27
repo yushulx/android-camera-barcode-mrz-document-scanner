@@ -17,6 +17,7 @@ import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.fragment.NavHostFragment;
 
+import com.dynamsoft.barcodebenchmark.BenchmarkConfig;
 import com.dynamsoft.barcodebenchmark.MainViewModel;
 import com.dynamsoft.barcodebenchmark.R;
 
@@ -53,31 +54,39 @@ public class BenchmarkResultFragment extends Fragment {
         sourceInfo += viewModel.sourceFileUri != null ? viewModel.sourceFileUri : "Unknown";
         tvSourceInfo.setText(sourceInfo);
 
-        // Time results
+        // Time results card
+        View timeCard = view.findViewById(R.id.card_time_comparison);
         TextView tvDynamsoftTime = view.findViewById(R.id.tv_dynamsoft_time);
         TextView tvMlkitTime = view.findViewById(R.id.tv_mlkit_time);
         ProgressBar progressDynamsoftTime = view.findViewById(R.id.progress_dynamsoft_time);
         ProgressBar progressMlkitTime = view.findViewById(R.id.progress_mlkit_time);
 
-        long dynamsoftTime = viewModel.dynamsoftResult != null ? viewModel.dynamsoftResult.totalTimeMs : 0;
-        long mlkitTime = viewModel.mlkitResult != null ? viewModel.mlkitResult.totalTimeMs : 0;
-        
-        if (viewModel.benchmarkMode.equals("video") && viewModel.dynamsoftResult != null && viewModel.mlkitResult != null) {
-            // Show average time for video
-            double dynamsoftAvg = viewModel.dynamsoftResult.getAvgTimePerFrame();
-            double mlkitAvg = viewModel.mlkitResult.getAvgTimePerFrame();
-            tvDynamsoftTime.setText(String.format("%.1f ms/frame (total: %d ms)", dynamsoftAvg, dynamsoftTime));
-            tvMlkitTime.setText(String.format("%.1f ms/frame (total: %d ms)", mlkitAvg, mlkitTime));
-        } else {
-            tvDynamsoftTime.setText(dynamsoftTime + " ms");
-            tvMlkitTime.setText(mlkitTime + " ms");
-        }
+        if (BenchmarkConfig.SHOW_BENCHMARK_TIME) {
+            timeCard.setVisibility(View.VISIBLE);
+            
+            long dynamsoftTime = viewModel.dynamsoftResult != null ? viewModel.dynamsoftResult.totalTimeMs : 0;
+            long mlkitTime = viewModel.mlkitResult != null ? viewModel.mlkitResult.totalTimeMs : 0;
+            
+            if (viewModel.benchmarkMode.equals("video") && viewModel.dynamsoftResult != null && viewModel.mlkitResult != null) {
+                // Show average time for video
+                double dynamsoftAvg = viewModel.dynamsoftResult.getAvgTimePerFrame();
+                double mlkitAvg = viewModel.mlkitResult.getAvgTimePerFrame();
+                tvDynamsoftTime.setText(String.format("%.1f ms/frame (total: %d ms)", dynamsoftAvg, dynamsoftTime));
+                tvMlkitTime.setText(String.format("%.1f ms/frame (total: %d ms)", mlkitAvg, mlkitTime));
+            } else {
+                tvDynamsoftTime.setText(dynamsoftTime + " ms");
+                tvMlkitTime.setText(mlkitTime + " ms");
+            }
 
-        // Calculate progress bar values (winner gets 100%, loser gets proportional)
-        long maxTime = Math.max(dynamsoftTime, mlkitTime);
-        if (maxTime > 0) {
-            progressDynamsoftTime.setProgress((int) (dynamsoftTime * 100 / maxTime));
-            progressMlkitTime.setProgress((int) (mlkitTime * 100 / maxTime));
+            // Calculate progress bar values (winner gets 100%, loser gets proportional)
+            long maxTime = Math.max(dynamsoftTime, mlkitTime);
+            if (maxTime > 0) {
+                progressDynamsoftTime.setProgress((int) (dynamsoftTime * 100 / maxTime));
+                progressMlkitTime.setProgress((int) (mlkitTime * 100 / maxTime));
+            }
+        } else {
+            // Hide entire time card when benchmark time is disabled
+            timeCard.setVisibility(View.GONE);
         }
 
         // Detection count

@@ -6,6 +6,7 @@ import android.graphics.BitmapFactory;
 import android.media.MediaMetadataRetriever;
 import android.util.Log;
 
+import com.dynamsoft.barcodebenchmark.BenchmarkConfig;
 import com.dynamsoft.cvr.CaptureVisionRouter;
 import com.dynamsoft.cvr.CapturedResult;
 import com.dynamsoft.cvr.EnumPresetTemplate;
@@ -53,6 +54,9 @@ public class BenchmarkWebServer extends NanoHTTPD {
     private void initializeScanners() {
         try {
             cvRouter = new CaptureVisionRouter(context);
+            if (BenchmarkConfig.USE_CUSTOM_TEMPLATE) {
+                cvRouter.initSettings(BenchmarkConfig.DYNAMSOFT_TEMPLATE_JSON);
+            }
         } catch (Exception e) {
             Log.e(TAG, "Failed to initialize Dynamsoft CVR", e);
         }
@@ -206,7 +210,9 @@ public class BenchmarkWebServer extends NanoHTTPD {
         CapturedResult capturedResult = cvRouter.capture(bitmap, EnumPresetTemplate.PT_READ_BARCODES);
         long endTime = System.currentTimeMillis();
 
-        result.put("timeMs", endTime - startTime);
+        if (BenchmarkConfig.SHOW_BENCHMARK_TIME) {
+            result.put("timeMs", endTime - startTime);
+        }
 
         if (capturedResult != null) {
             DecodedBarcodesResult barcodesResult = capturedResult.getDecodedBarcodesResult();
@@ -242,7 +248,9 @@ public class BenchmarkWebServer extends NanoHTTPD {
         List<Barcode> detected = Tasks.await(mlkitScanner.process(image));
         long endTime = System.currentTimeMillis();
 
-        result.put("timeMs", endTime - startTime);
+        if (BenchmarkConfig.SHOW_BENCHMARK_TIME) {
+            result.put("timeMs", endTime - startTime);
+        }
 
         if (detected != null) {
             for (Barcode barcode : detected) {
@@ -298,7 +306,9 @@ public class BenchmarkWebServer extends NanoHTTPD {
             }
         }
 
-        result.put("timeMs", totalTime);
+        if (BenchmarkConfig.SHOW_BENCHMARK_TIME) {
+            result.put("timeMs", totalTime);
+        }
         result.put("barcodes", barcodes);
         result.put("count", barcodes.length());
         result.put("framesProcessed", frames.size());
@@ -343,7 +353,9 @@ public class BenchmarkWebServer extends NanoHTTPD {
             }
         }
 
-        result.put("timeMs", totalTime);
+        if (BenchmarkConfig.SHOW_BENCHMARK_TIME) {
+            result.put("timeMs", totalTime);
+        }
         result.put("barcodes", barcodes);
         result.put("count", barcodes.length());
         result.put("framesProcessed", frames.size());

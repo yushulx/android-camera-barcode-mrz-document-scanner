@@ -20,6 +20,7 @@ import com.dynamsoft.dbr.DecodedBarcodesResult;
 import com.dynamsoft.dce.CameraEnhancer;
 import com.dynamsoft.dce.CameraEnhancerException;
 import com.dynamsoft.dce.EnumResolution;
+import com.dynamsoft.barcodebenchmark.BenchmarkConfig;
 import com.dynamsoft.barcodebenchmark.MainViewModel;
 import com.dynamsoft.barcodebenchmark.R;
 import com.dynamsoft.barcodebenchmark.databinding.FragmentDynamsoftScannerBinding;
@@ -65,15 +66,18 @@ public class DynamsoftScannerFragment extends Fragment {
         lastScanTime = System.currentTimeMillis();
         updateStats();
         
-        mCamera.open();
-        try {
-            android.util.Size size = mCamera.getResolution();
-            if (size != null) {
-                binding.tvResolution.setText("Resolution: " + size.getWidth() + "x" + size.getHeight());
+        // Add small delay to ensure camera is properly initialized before opening
+        binding.cameraView.postDelayed(() -> {
+            try {
+                mCamera.open();
+                android.util.Size size = mCamera.getResolution();
+                if (size != null) {
+                    binding.tvResolution.setText("Resolution: " + size.getWidth() + "x" + size.getHeight());
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
             }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        }, 100);
         
         mRouter.startCapturing(EnumPresetTemplate.PT_READ_BARCODES, new CompletionListener() {
             @Override
@@ -103,6 +107,13 @@ public class DynamsoftScannerFragment extends Fragment {
 
     private void initCaptureVisionRouter() {
         mRouter = new CaptureVisionRouter(requireContext());
+        if (BenchmarkConfig.USE_CUSTOM_TEMPLATE) {
+            try {
+                mRouter.initSettings(BenchmarkConfig.DYNAMSOFT_TEMPLATE_JSON);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
         mRouter.addResultReceiver(new CapturedResultReceiver() {
             @Override
             public void onDecodedBarcodesReceived(DecodedBarcodesResult result) {

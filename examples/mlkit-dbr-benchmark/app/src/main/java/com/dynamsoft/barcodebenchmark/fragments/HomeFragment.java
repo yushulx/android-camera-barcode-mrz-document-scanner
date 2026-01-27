@@ -140,7 +140,10 @@ public class HomeFragment extends Fragment {
             webServer = null;
         }
         serverStatusPanel.setVisibility(View.GONE);
-        Toast.makeText(requireContext(), "Web server stopped", Toast.LENGTH_SHORT).show();
+        // Only show toast when user manually toggles the switch
+        if (switchServer.isPressed()) {
+            Toast.makeText(requireContext(), "Web server stopped", Toast.LENGTH_SHORT).show();
+        }
         Log.i(TAG, "Web server stopped");
     }
 
@@ -181,6 +184,18 @@ public class HomeFragment extends Fragment {
     @Override
     public void onDestroyView() {
         super.onDestroyView();
-        stopWebServer();
+        // Don't stop the server when navigating away, only when fragment is permanently destroyed
+        // The server will be stopped when the app is closed or when user manually toggles it off
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        // Stop server when fragment is permanently destroyed (app closing)
+        if (webServer != null) {
+            webServer.stop();
+            webServer.cleanup();
+            webServer = null;
+        }
     }
 }

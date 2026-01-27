@@ -22,6 +22,7 @@ import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.Navigation;
 
+import com.dynamsoft.barcodebenchmark.BenchmarkConfig;
 import com.dynamsoft.barcodebenchmark.FileUtil;
 import com.dynamsoft.barcodebenchmark.MainViewModel;
 import com.dynamsoft.barcodebenchmark.R;
@@ -90,6 +91,13 @@ public class ImageBenchmarkFragment extends Fragment {
 
         // Initialize Dynamsoft CVR
         cvRouter = new CaptureVisionRouter(requireContext());
+        if (BenchmarkConfig.USE_CUSTOM_TEMPLATE) {
+            try {
+                cvRouter.initSettings(BenchmarkConfig.DYNAMSOFT_TEMPLATE_JSON);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
 
         // Initialize MLkit scanner
         BarcodeScannerOptions options = new BarcodeScannerOptions.Builder()
