@@ -83,6 +83,9 @@ public class BenchmarkWebServer extends NanoHTTPD {
                 return newFixedLengthResponse(Response.Status.OK, "application/javascript", getAppJs());
             } else if (uri.equals("/api/benchmark") && method == Method.POST) {
                 return handleBenchmarkRequest(session);
+            } else if (uri.equals("/api/config")) {
+                return newFixedLengthResponse(Response.Status.OK, "application/json",
+                    "{\"showBenchmarkTime\":" + BenchmarkConfig.SHOW_BENCHMARK_TIME + "}");
             } else if (uri.equals("/api/status")) {
                 return newFixedLengthResponse(Response.Status.OK, "application/json", 
                     "{\"status\":\"running\",\"dynamsoft\":" + (cvRouter != null) + ",\"mlkit\":" + (mlkitScanner != null) + "}");
@@ -201,7 +204,9 @@ public class BenchmarkWebServer extends NanoHTTPD {
 
         if (cvRouter == null) {
             result.put("error", "Dynamsoft not initialized");
-            result.put("timeMs", 0);
+            if (BenchmarkConfig.SHOW_BENCHMARK_TIME) {
+                result.put("timeMs", 0);
+            }
             result.put("barcodes", barcodes);
             return result;
         }
@@ -237,7 +242,9 @@ public class BenchmarkWebServer extends NanoHTTPD {
 
         if (mlkitScanner == null) {
             result.put("error", "MLkit not initialized");
-            result.put("timeMs", 0);
+            if (BenchmarkConfig.SHOW_BENCHMARK_TIME) {
+                result.put("timeMs", 0);
+            }
             result.put("barcodes", barcodes);
             return result;
         }
@@ -274,7 +281,9 @@ public class BenchmarkWebServer extends NanoHTTPD {
 
         if (cvRouter == null) {
             result.put("error", "Dynamsoft not initialized");
-            result.put("timeMs", 0);
+            if (BenchmarkConfig.SHOW_BENCHMARK_TIME) {
+                result.put("timeMs", 0);
+            }
             result.put("barcodes", barcodes);
             result.put("framesProcessed", 0);
             return result;
@@ -323,7 +332,9 @@ public class BenchmarkWebServer extends NanoHTTPD {
 
         if (mlkitScanner == null) {
             result.put("error", "MLkit not initialized");
-            result.put("timeMs", 0);
+            if (BenchmarkConfig.SHOW_BENCHMARK_TIME) {
+                result.put("timeMs", 0);
+            }
             result.put("barcodes", barcodes);
             result.put("framesProcessed", 0);
             return result;
@@ -785,6 +796,10 @@ public class BenchmarkWebServer extends NanoHTTPD {
                 "\n" +
                 "let selectedFiles = [];\n" +
                 "let benchmarkResults = [];\n" +
+                "let showBenchmarkTime = true;\n" +
+                "\n" +
+                "// Fetch config on load\n" +
+                "fetch('/api/config').then(r => r.json()).then(cfg => { showBenchmarkTime = cfg.showBenchmarkTime; }).catch(() => {});\n" +
                 "\n" +
                 "// Drag and drop with folder support\n" +
                 "dropZone.addEventListener('dragover', (e) => {\n" +
@@ -969,28 +984,28 @@ public class BenchmarkWebServer extends NanoHTTPD {
                 "    });\n" +
                 "    \n" +
                 "    batchSummary.innerHTML = `\n" +
-                "        <div class=\"summary-card\"><div class=\"value\">${benchmarkResults.length}</div><div class=\"label\">Files Processed</div></div>\n" +
-                "        <div class=\"summary-card dynamsoft\"><div class=\"value\">${totalDynamsoftBarcodes}</div><div class=\"label\">Dynamsoft Total</div></div>\n" +
-                "        <div class=\"summary-card mlkit\"><div class=\"value\">${totalMlkitBarcodes}</div><div class=\"label\">MLkit Total</div></div>\n" +
-                "        <div class=\"summary-card dynamsoft\"><div class=\"value\">${totalDynamsoftTime}ms</div><div class=\"label\">Dynamsoft Time</div></div>\n" +
-                "        <div class=\"summary-card mlkit\"><div class=\"value\">${totalMlkitTime}ms</div><div class=\"label\">MLkit Time</div></div>\n" +
+                "        <div class=\\\"summary-card\\\"><div class=\\\"value\\\">${benchmarkResults.length}</div><div class=\\\"label\\\">Files Processed</div></div>\n" +
+                "        <div class=\\\"summary-card dynamsoft\\\"><div class=\\\"value\\\">${totalDynamsoftBarcodes}</div><div class=\\\"label\\\">Dynamsoft Total</div></div>\n" +
+                "        <div class=\\\"summary-card mlkit\\\"><div class=\\\"value\\\">${totalMlkitBarcodes}</div><div class=\\\"label\\\">MLkit Total</div></div>\n" +
+                "        ${showBenchmarkTime ? `<div class=\\\"summary-card dynamsoft\\\"><div class=\\\"value\\\">${totalDynamsoftTime}ms</div><div class=\\\"label\\\">Dynamsoft Time</div></div>` : ''}\n" +
+                "        ${showBenchmarkTime ? `<div class=\\\"summary-card mlkit\\\"><div class=\\\"value\\\">${totalMlkitTime}ms</div><div class=\\\"label\\\">MLkit Time</div></div>` : ''}\n" +
                 "    `;\n" +
                 "    \n" +
                 "    batchResults.innerHTML = benchmarkResults.map((r, idx) => {\n" +
                 "        if (r.error) {\n" +
-                "            return `<div class=\"result-item\"><div class=\"result-item-header\"><span class=\"result-item-name\">❌ ${r.fileName}</span><span>Error: ${r.error}</span></div></div>`;\n" +
+                "            return `<div class=\\\"result-item\\\"><div class=\\\"result-item-header\\\"><span class=\\\"result-item-name\\\">❌ ${r.fileName}</span><span>Error: ${r.error}</span></div></div>`;\n" +
                 "        }\n" +
                 "        return `\n" +
-                "            <div class=\"result-item\" id=\"result-${idx}\">\n" +
-                "                <div class=\"result-item-header\" onclick=\"toggleResult(${idx})\">\n" +
-                "                    <span class=\"result-item-name\">${r.type === 'video' ? '🎬' : '🖼️'} ${r.fileName}</span>\n" +
-                "                    <div class=\"result-item-stats\">\n" +
-                "                        <span class=\"dynamsoft\">DBR: ${r.dynamsoft?.count || 0} (${r.dynamsoft?.timeMs || 0}ms)</span>\n" +
-                "                        <span class=\"mlkit\">MLkit: ${r.mlkit?.count || 0} (${r.mlkit?.timeMs || 0}ms)</span>\n" +
-                "                        <span class=\"expand-icon\">▼</span>\n" +
+                "            <div class=\\\"result-item\\\" id=\\\"result-${idx}\\\">\n" +
+                "                <div class=\\\"result-item-header\\\" onclick=\\\"toggleResult(${idx})\\\">\n" +
+                "                    <span class=\\\"result-item-name\\\">${r.type === 'video' ? '🎬' : '🖼️'} ${r.fileName}</span>\n" +
+                "                    <div class=\\\"result-item-stats\\\">\n" +
+                "                        <span class=\\\"dynamsoft\\\">DBR: ${r.dynamsoft?.count || 0}${showBenchmarkTime ? ` (${r.dynamsoft?.timeMs || 0}ms)` : ''}</span>\n" +
+                "                        <span class=\\\"mlkit\\\">MLkit: ${r.mlkit?.count || 0}${showBenchmarkTime ? ` (${r.mlkit?.timeMs || 0}ms)` : ''}</span>\n" +
+                "                        <span class=\\\"expand-icon\\\">▼</span>\n" +
                 "                    </div>\n" +
                 "                </div>\n" +
-                "                <div class=\"result-item-details\">\n" +
+                "                <div class=\\\"result-item-details\\\">\n" +
                 "                    <div class=\"comparison\">\n" +
                 "                        <div class=\"sdk-result dynamsoft\">\n" +
                 "                            <div class=\"sdk-header\"><span class=\"sdk-icon\">🔷</span><h4>Dynamsoft Barcode Reader</h4></div>\n" +
