@@ -1,6 +1,7 @@
 package com.dynamsoft.barcodebenchmark;
 
 import androidx.lifecycle.ViewModel;
+import com.dynamsoft.barcodebenchmark.server.BenchmarkWebServer;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -14,6 +15,10 @@ public class MainViewModel extends ViewModel {
     
     // Source file URI (for image/video modes)
     public String sourceFileUri;
+    
+    // Web server instance (persists across fragment recreations)
+    public BenchmarkWebServer webServer;
+    public boolean isWebServerRunning = false;
     
     // Dynamsoft benchmark results
     public BenchmarkResult dynamsoftResult;

@@ -8,7 +8,7 @@ public class BenchmarkConfig {
     /**
      * Toggle to show/hide benchmark time in UI
      */
-    public static boolean SHOW_BENCHMARK_TIME = true;
+    public static boolean SHOW_BENCHMARK_TIME = false;
     
     /**
      * Toggle to use custom Dynamsoft template or default built-in template

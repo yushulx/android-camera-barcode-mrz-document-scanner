@@ -36,7 +36,6 @@ public class HomeFragment extends Fragment {
     private static final int SERVER_PORT = 8080;
 
     private MainViewModel viewModel;
-    private BenchmarkWebServer webServer;
     private SwitchCompat switchServer;
     private LinearLayout serverStatusPanel;
     private TextView tvServerUrl;
@@ -104,6 +103,15 @@ public class HomeFragment extends Fragment {
         serverStatusPanel = view.findViewById(R.id.server_status_panel);
         tvServerUrl = view.findViewById(R.id.tv_server_url);
 
+        // Restore server state from ViewModel
+        switchServer.setChecked(viewModel.isWebServerRunning);
+        if (viewModel.isWebServerRunning && viewModel.webServer != null) {
+            String ipAddress = getLocalIpAddress();
+            String serverUrl = "http://" + ipAddress + ":" + SERVER_PORT;
+            tvServerUrl.setText(serverUrl);
+            serverStatusPanel.setVisibility(View.VISIBLE);
+        }
+
         switchServer.setOnCheckedChangeListener((buttonView, isChecked) -> {
             if (isChecked) {
                 startWebServer();
@@ -114,9 +122,16 @@ public class HomeFragment extends Fragment {
     }
 
     private void startWebServer() {
+        // Check if server is already running
+        if (viewModel.webServer != null && viewModel.isWebServerRunning) {
+            Log.i(TAG, "Web server already running");
+            return;
+        }
+        
         try {
-            webServer = new BenchmarkWebServer(requireContext(), SERVER_PORT);
-            webServer.start();
+            viewModel.webServer = new BenchmarkWebServer(requireContext(), SERVER_PORT);
+            viewModel.webServer.start();
+            viewModel.isWebServerRunning = true;
 
             String ipAddress = getLocalIpAddress();
             String serverUrl = "http://" + ipAddress + ":" + SERVER_PORT;
@@ -130,20 +145,19 @@ public class HomeFragment extends Fragment {
             Log.e(TAG, "Failed to start web server", e);
             Toast.makeText(requireContext(), "Failed to start server: " + e.getMessage(), Toast.LENGTH_LONG).show();
             switchServer.setChecked(false);
+            viewModel.isWebServerRunning = false;
         }
     }
 
     private void stopWebServer() {
-        if (webServer != null) {
-            webServer.stop();
-            webServer.cleanup();
-            webServer = null;
+        if (viewModel.webServer != null) {
+            viewModel.webServer.stop();
+            viewModel.webServer.cleanup();
+            viewModel.webServer = null;
+            viewModel.isWebServerRunning = false;
         }
         serverStatusPanel.setVisibility(View.GONE);
-        // Only show toast when user manually toggles the switch
-        if (switchServer.isPressed()) {
-            Toast.makeText(requireContext(), "Web server stopped", Toast.LENGTH_SHORT).show();
-        }
+        Toast.makeText(requireContext(), "Web server stopped", Toast.LENGTH_SHORT).show();
         Log.i(TAG, "Web server stopped");
     }
 
@@ -184,18 +198,6 @@ public class HomeFragment extends Fragment {
     @Override
     public void onDestroyView() {
         super.onDestroyView();
-        // Don't stop the server when navigating away, only when fragment is permanently destroyed
-        // The server will be stopped when the app is closed or when user manually toggles it off
-    }
-
-    @Override
-    public void onDestroy() {
-        super.onDestroy();
-        // Stop server when fragment is permanently destroyed (app closing)
-        if (webServer != null) {
-            webServer.stop();
-            webServer.cleanup();
-            webServer = null;
-        }
+        // Web server persists in ViewModel, no cleanup needed here
     }
 }
