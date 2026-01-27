@@ -4,7 +4,7 @@
 			"command": "npx",
 			"args": [
 				"-y",
-				"simple-dynamsoft-mcp@4.0.0"
+				"simple-dynamsoft-mcp@latest"
 			],
 			"type": "stdio"
 		}
