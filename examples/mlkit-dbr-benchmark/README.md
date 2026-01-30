@@ -94,3 +94,5 @@ Connect your Android device and run the application:
 
    <img width="600" alt="dynamsoft-mlkit-barcode-scanner-benchmark" src="https://github.com/user-attachments/assets/62cbecbb-3b0b-4574-b70d-177ed2997d67" />
 
+## Blog
+[Dynamsoft Barcode Reader vs Google ML Kit: A Comprehensive Accuracy Comparison for Android Developers](https://www.dynamsoft.com/codepool/dynamsoft-vs-mlkit-barcode-scanner-accuracy-comparison.html)
