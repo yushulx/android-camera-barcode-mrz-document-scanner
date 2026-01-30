@@ -2,6 +2,8 @@
 
 A professional Android benchmarking application that compares **Dynamsoft Barcode Reader SDK** vs **Google ML Kit** barcode scanning performance across multiple input sources.
 
+https://github.com/user-attachments/assets/a30de920-1bda-4024-b6a9-7de459e163ae
+
 ## Features
 
 ### Benchmark Modes
@@ -90,4 +92,5 @@ Connect your Android device and run the application:
 5. Click "Run Benchmark" to process the file on the Android device
 6. View detailed results in your browser
 
+   <img width="600" alt="dynamsoft-mlkit-barcode-scanner-benchmark" src="https://github.com/user-attachments/assets/62cbecbb-3b0b-4574-b70d-177ed2997d67" />
 
