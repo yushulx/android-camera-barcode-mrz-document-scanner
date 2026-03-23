@@ -14,6 +14,10 @@ import {
 import {StackNavigation} from './App.tsx';
 import {ImageData} from 'dynamsoft-capture-vision-react-native';
 
+// Module-level flag: one-time SDK wiring (setInput + addFilter) should only happen once
+// since CameraEnhancer and CaptureVisionRouter are singletons.
+let sdkInitialized = false;
+
 export function Scanner({navigation}: StackNavigation): React.JSX.Element {
   const ifBtnClick = useRef(false);
   const cameraView = useRef<CameraView>(null);
@@ -63,11 +67,15 @@ export function Scanner({navigation}: StackNavigation): React.JSX.Element {
         return;
       }
 
-      cvr.setInput(camera);
-
-      const filter = new MultiFrameResultCrossFilter();
-      filter.enableResultCrossVerification(EnumCapturedResultItemType.CRIT_DESKEWED_IMAGE, true);
-      cvr.addFilter(filter);
+      // One-time singelton wiring — setInput and addFilter are cumulative on
+      // the singleton so they must only be called once across the app lifetime.
+      if (!sdkInitialized) {
+        cvr.setInput(camera);
+        const filter = new MultiFrameResultCrossFilter();
+        filter.enableResultCrossVerification(EnumCapturedResultItemType.CRIT_DESKEWED_IMAGE, true);
+        cvr.addFilter(filter);
+        sdkInitialized = true;
+      }
 
       receiverRef.current = cvr.addResultReceiver({
         onProcessedDocumentResultReceived: result => {
