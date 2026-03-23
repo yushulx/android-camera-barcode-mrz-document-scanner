@@ -1,6 +1,7 @@
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {
   ActivityIndicator,
+  BackHandler,
   Platform,
   SafeAreaView,
   ScrollView,
@@ -150,6 +151,18 @@ type ScanState =
 
 function App(): React.JSX.Element {
   const [scanState, setScanState] = useState<ScanState>({kind: 'idle'});
+
+  // Intercept Android hardware back button: go to idle instead of closing the app.
+  useEffect(() => {
+    const subscription = BackHandler.addEventListener('hardwareBackPress', () => {
+      if (scanState.kind !== 'idle') {
+        setScanState({kind: 'idle'});
+        return true; // event handled — prevent default (app exit)
+      }
+      return false; // let the system handle it (idle → exit as normal)
+    });
+    return () => subscription.remove();
+  }, [scanState.kind]);
 
   const handleScan = async () => {
     setScanState({kind: 'scanning'});
