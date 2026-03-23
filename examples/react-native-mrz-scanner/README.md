@@ -73,3 +73,6 @@ npm run ios
 | `dynamsoft-mrz-scanner-bundle-react-native` | MRZ scanning SDK |
 | `dynamsoft-capture-vision-react-native` | Underlying camera / vision engine |
 | `react-native` 0.79 | Framework |
+
+## Blog
+[How to Build a React Native MRZ Passport Scanner for Android and iOS](https://www.dynamsoft.com/codepool/scan-mrz-documents-react-native-dynamsoft.html)
