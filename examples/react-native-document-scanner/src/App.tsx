@@ -105,7 +105,7 @@ function HomeScreen({navigation}: StackNavigation) {
         {[
           {icon: '📐', text: 'Auto-detect document edges'},
           {icon: '✂️', text: 'Manual crop & perspective correction'},
-          {icon: '🎨', text: 'Colour, grayscale or binary output'},
+          {icon: '🎨', text: 'Color, grayscale or binary output'},
           {icon: '💾', text: 'Export as high-quality PNG'},
         ].map(({icon, text}, i) => (
           <View key={i} style={[styles.featureRow, i > 0 && styles.featureRowBorder]}>
