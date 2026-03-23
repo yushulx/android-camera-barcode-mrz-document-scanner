@@ -58,3 +58,5 @@ src/
 └── NormalizedImage.tsx  # Result screen — color modes and PNG export
 ```
 
+## Blog
+[How to Build a React Native Document Scanner with Auto-Detection, Crop, and Export](https://www.dynamsoft.com/codepool/build-document-scanner-react-native-dynamsoft.html)
