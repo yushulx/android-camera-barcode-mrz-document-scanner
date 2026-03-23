@@ -79,3 +79,5 @@ const styles = StyleSheet.create({
   },
 });
 ```
+## Blog
+[How to Add Real-Time Visual Overlays to React Native Barcode Scanner with Dynamsoft SDK](https://www.dynamsoft.com/codepool/react-native-barcode-scanner-overlay-tutorial.html)
