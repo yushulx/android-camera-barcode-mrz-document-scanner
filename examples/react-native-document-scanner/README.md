@@ -2,6 +2,8 @@
 
 A production-ready React Native app that uses the [Dynamsoft Capture Vision](https://www.dynamsoft.com/capture-vision/docs/introduction/) SDK to scan, crop, and export documents from your device camera.
 
+https://github.com/user-attachments/assets/34a3c1e7-b313-45cc-b22d-4b55adc0fafe
+
 ## Features
 
 | Feature | Description |
@@ -56,3 +58,5 @@ src/
 └── NormalizedImage.tsx  # Result screen — color modes and PNG export
 ```
 
+## Blog
+[How to Build a React Native Document Scanner with Auto-Detection, Crop, and Export](https://www.dynamsoft.com/codepool/build-document-scanner-react-native-dynamsoft.html)
