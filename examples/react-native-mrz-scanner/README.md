@@ -2,6 +2,8 @@
 
 A React Native sample app that scans the Machine Readable Zone (MRZ) of passports, ID cards, and other ICAO-compliant travel documents using the [Dynamsoft MRZ Scanner](https://www.dynamsoft.com/use-cases/mrz-scanner/) SDK.
 
+https://github.com/user-attachments/assets/abb3003c-086e-45d4-aaee-a529e5b17f24
+
 ## Features
 
 - Real-time MRZ scanning via device camera
@@ -71,3 +73,6 @@ npm run ios
 | `dynamsoft-mrz-scanner-bundle-react-native` | MRZ scanning SDK |
 | `dynamsoft-capture-vision-react-native` | Underlying camera / vision engine |
 | `react-native` 0.79 | Framework |
+
+## Blog
+[How to Build a React Native MRZ Passport Scanner for Android and iOS](https://www.dynamsoft.com/codepool/scan-mrz-documents-react-native-dynamsoft.html)
