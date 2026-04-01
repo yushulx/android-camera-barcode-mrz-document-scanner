@@ -2,6 +2,8 @@
 
 A professional document scanning app powered by **Dynamsoft Capture Vision SDK**.
 
+https://github.com/user-attachments/assets/82d7738a-1cc5-4374-a5a9-43ff99b9759d
+
 ## Features
 
 - **Auto & Manual Capture**: Smart quad stabilization detects stable document boundaries and auto-captures, or tap to capture manually. Direct capture falls back to a raw frame when no document quad is detected.
