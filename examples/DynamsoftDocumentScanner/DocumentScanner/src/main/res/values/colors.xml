@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+    <color name="dy_orange">#FE8E14</color>
+    <color name="dy_black_34">#FF323234</color>
+    <color name="dy_black_2B">#FF2B2B2B</color>
+    <color name="dy_error_bg">#33000000</color>
+    <color name="dy_error">#FFFF0000</color>
+    <color name="dy_gray">#999999</color>
+    <color name="semi_transparent_black">#88000000</color>
+    <color name="thumbnail_border">#FE8E14</color>
+    <color name="filter_selected">#FE8E14</color>
+    <color name="filter_unselected">#999999</color>
+    <color name="capture_button_inner">#FFFFFF</color>
+    <color name="capture_button_outer">#88FFFFFF</color>
+</resources>

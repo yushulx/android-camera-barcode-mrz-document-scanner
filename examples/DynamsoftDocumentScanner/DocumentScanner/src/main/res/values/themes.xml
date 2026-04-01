@@ -1,0 +1,12 @@
+<resources>
+    <style name="Base.Theme.DocumentScanner" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="colorPrimary">@color/black</item>
+        <item name="colorOnPrimary">@color/white</item>
+        <item name="android:statusBarColor">@color/dy_black_2B</item>
+        <item name="android:windowBackground">@color/dy_black_2B</item>
+        <item name="actionBarItemBackground">@color/dy_black_2B</item>
+        <item name="textAllCaps">false</item>
+    </style>
+
+    <style name="Theme.DocumentScanner" parent="Base.Theme.DocumentScanner" />
+</resources>

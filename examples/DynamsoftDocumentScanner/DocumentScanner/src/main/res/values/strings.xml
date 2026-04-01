@@ -1,0 +1,55 @@
+<resources>
+    <string name="app_name">Doc Scanner</string>
+    <string name="scan_page_title">Document Scanner</string>
+    <string name="result_page_title">Result</string>
+    <string name="sort_page_title">Reorder Pages</string>
+    <string name="btn_capture">Capture</string>
+
+    <!-- Scanning page -->
+    <string name="gallery">Gallery</string>
+    <string name="next">Next</string>
+    <string name="settings">Settings</string>
+    <string name="auto_capture">Auto Capture</string>
+    <string name="no_document_detected">No document detected, image added as-is</string>
+    <string name="auto_captured">Document auto-captured</string>
+
+    <!-- Stabilization settings -->
+    <string name="stabilization_settings">Stabilization Settings</string>
+    <string name="iou_threshold">IoU Threshold</string>
+    <string name="iou_threshold_desc">Minimum overlap ratio between consecutive detected quads. Higher values require the document position to stay more consistent before triggering capture.</string>
+    <string name="area_delta_threshold">Area Delta Threshold</string>
+    <string name="area_delta_threshold_desc">Maximum allowed change in document area between frames. Lower values require the document size to be more stable before triggering capture.</string>
+    <string name="stable_frame_count">Stable Frame Count</string>
+    <string name="stable_frame_count_desc">Number of consecutive stable frames required before auto-capture fires. Higher values reduce false captures but may feel slower.</string>
+    <string name="enable_auto_capture">Enable Auto Capture</string>
+    <string name="enable_auto_capture_desc">Automatically capture when the document quad is stable. Disable to capture manually by tapping the shutter button.</string>
+
+    <!-- Result page -->
+    <string name="retake">Retake</string>
+    <string name="rotate">Rotate</string>
+    <string name="sort">Sort</string>
+    <string name="save">Save</string>
+    <string name="edit">Edit</string>
+    <string name="continue_shooting">Continue</string>
+    <string name="edit_page_title">Edit Quad</string>
+    <string name="apply">Apply</string>
+    <string name="cancel">Cancel</string>
+    <string name="grayscale">Grayscale</string>
+    <string name="colour">Color</string>
+    <string name="binary">Binary</string>
+    <string name="page_indicator" formatted="false">%d / %d</string>
+
+    <!-- Sort page -->
+    <string name="done">Done</string>
+    <string name="drag_to_reorder">Drag to reorder pages</string>
+
+    <!-- Export -->
+    <string name="export_as_pdf">Export as PDF</string>
+    <string name="export_as_images">Export as Image</string>
+    <string name="pdf_saved">PDF saved successfully</string>
+    <string name="pdf_export_failed">Failed to export PDF</string>
+    <string name="images_saved">Images saved to gallery</string>
+    <string name="image_save_failed">Failed to save images</string>
+    <string name="no_pdf_viewer">No PDF viewer app found</string>
+    <string name="ok">OK</string>
+</resources>

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="48dp"
+    android:height="48dp"
+    android:viewportWidth="48"
+    android:viewportHeight="48">
+    
+    <!-- Dynamsoft logo representation - D shape -->
+    <path
+        android:pathData="M8,8h14c11,0 18,7 18,16s-7,16 -18,16h-14z"
+        android:fillColor="#FE8E14"/>
+    
+    <path
+        android:pathData="M14,14h8c7,0 12,4 12,10s-5,10 -12,10h-8z"
+        android:fillColor="#FFFFFF"/>
+    
+    <path
+        android:pathData="M18,18h4c4.5,0 8,2.5 8,6s-3.5,6 -8,6h-4z"
+        android:fillColor="#FE8E14"/>
+</vector>
