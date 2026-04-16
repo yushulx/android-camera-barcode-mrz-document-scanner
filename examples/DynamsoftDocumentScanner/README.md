@@ -35,8 +35,5 @@ https://github.com/user-attachments/assets/82d7738a-1cc5-4374-a5a9-43ff99b9759d
 2. Open the project in Android Studio.
 3. Build and run the app on your physical device.
 
-## Dependencies
-
-- `com.dynamsoft:capturevisionbundle:3.2.5000`
-
-
+## Blog
+[How to Build an Android Document Scanner with Auto-Capture and PDF Export](https://www.dynamsoft.com/codepool/build-android-document-scanner-app-dynamsoft-capture-vision.html)
