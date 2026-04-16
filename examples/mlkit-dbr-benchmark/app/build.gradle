@@ -42,7 +42,7 @@ def getVersion(String productSimpleName, String defaultValue) {
 }
 
 dependencies {
-    implementation 'com.dynamsoft:barcodereaderbundle:11.2.5000'
+    implementation 'com.dynamsoft:barcodereaderbundle:11.4.1200'
     implementation 'androidx.appcompat:appcompat:1.5.1'
     implementation 'com.google.android.material:material:1.6.0'
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
