@@ -42,6 +42,8 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import zxingcpp.BarcodeReader;
+
 public class ImageBenchmarkFragment extends Fragment {
 
     private MainViewModel viewModel;
@@ -57,6 +59,7 @@ public class ImageBenchmarkFragment extends Fragment {
     private ExecutorService executor;
     private CaptureVisionRouter cvRouter;
     private BarcodeScanner mlkitScanner;
+    private BarcodeReader zxingReader;
 
     private final ActivityResultLauncher<String> imagePickerLauncher = registerForActivityResult(
             new ActivityResultContracts.GetContent(),
@@ -104,6 +107,11 @@ public class ImageBenchmarkFragment extends Fragment {
                 .setBarcodeFormats(Barcode.FORMAT_ALL_FORMATS)
                 .build();
         mlkitScanner = BarcodeScanning.getClient(options);
+
+        // Initialize ZXing-CPP reader
+        zxingReader = new BarcodeReader();
+        zxingReader.getOptions().setTryHarder(true);
+        zxingReader.getOptions().setTryRotate(true);
 
         btnSelectImage.setOnClickListener(v -> imagePickerLauncher.launch("image/*"));
 
@@ -159,6 +167,11 @@ public class ImageBenchmarkFragment extends Fragment {
             requireActivity().runOnUiThread(() -> tvLoadingStatus.setText("Processing with MLkit..."));
             MainViewModel.BenchmarkResult mlkitResult = runMLkitBenchmark(selectedBitmap);
             viewModel.mlkitResult = mlkitResult;
+
+            // Run ZXing-CPP benchmark
+            requireActivity().runOnUiThread(() -> tvLoadingStatus.setText("Processing with ZXing-C++..."));
+            MainViewModel.BenchmarkResult zxingResult = runZXingCppBenchmark(selectedBitmap);
+            viewModel.zxingResult = zxingResult;
 
             // Navigate to results
             requireActivity().runOnUiThread(() -> {
@@ -226,6 +239,35 @@ public class ImageBenchmarkFragment extends Fragment {
                     MainViewModel.BarcodeInfo info = new MainViewModel.BarcodeInfo(
                             format,
                             barcode.getRawValue() != null ? barcode.getRawValue() : "",
+                            result.totalTimeMs
+                    );
+                    result.barcodes.add(info);
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return result;
+    }
+
+    private MainViewModel.BenchmarkResult runZXingCppBenchmark(Bitmap bitmap) {
+        MainViewModel.BenchmarkResult result = new MainViewModel.BenchmarkResult("ZXing-C++");
+        result.framesProcessed = 1;
+
+        try {
+            long startTime = System.currentTimeMillis();
+
+            List<BarcodeReader.Result> results = zxingReader.read(bitmap, new android.graphics.Rect(), 0);
+
+            long endTime = System.currentTimeMillis();
+            result.totalTimeMs = endTime - startTime;
+
+            if (results != null) {
+                for (BarcodeReader.Result item : results) {
+                    MainViewModel.BarcodeInfo info = new MainViewModel.BarcodeInfo(
+                            item.getFormat().name(),
+                            item.getText() != null ? item.getText() : "",
                             result.totalTimeMs
                     );
                     result.barcodes.add(info);

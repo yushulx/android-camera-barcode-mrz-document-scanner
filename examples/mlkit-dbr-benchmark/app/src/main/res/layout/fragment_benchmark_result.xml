@@ -156,6 +156,56 @@
 
                 </LinearLayout>
 
+                <!-- ZXing-CPP Time -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:layout_marginTop="12dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical">
+
+                        <View
+                            android:layout_width="12dp"
+                            android:layout_height="12dp"
+                            android:background="#FF6F00"/>
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="ZXing-C++"
+                            android:textSize="14sp"
+                            android:textColor="#424242"
+                            android:layout_marginStart="8dp"/>
+
+                        <TextView
+                            android:id="@+id/tv_zxing_time"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="0 ms"
+                            android:textSize="16sp"
+                            android:textStyle="bold"
+                            android:textColor="#FF6F00"/>
+
+                    </LinearLayout>
+
+                    <ProgressBar
+                        android:id="@+id/progress_zxing_time"
+                        style="@android:style/Widget.ProgressBar.Horizontal"
+                        android:layout_width="match_parent"
+                        android:layout_height="8dp"
+                        android:layout_marginTop="4dp"
+                        android:progressDrawable="@drawable/progress_orange"
+                        android:max="100"
+                        android:progress="50"/>
+
+                </LinearLayout>
+
             </LinearLayout>
 
         </androidx.cardview.widget.CardView>
@@ -258,6 +308,47 @@
                             android:textSize="32sp"
                             android:textStyle="bold"
                             android:textColor="#4CAF50"
+                            android:layout_marginTop="4dp"/>
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="barcodes"
+                            android:textSize="12sp"
+                            android:textColor="#757575"/>
+
+                    </LinearLayout>
+
+                    <View
+                        android:layout_width="8dp"
+                        android:layout_height="match_parent"/>
+
+                    <!-- ZXing-CPP Stats -->
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical"
+                        android:gravity="center"
+                        android:padding="12dp"
+                        android:background="#FFF3E0">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="ZXing-C++"
+                            android:textSize="12sp"
+                            android:textColor="#FF6F00"
+                            android:textStyle="bold"/>
+
+                        <TextView
+                            android:id="@+id/tv_zxing_count"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="0"
+                            android:textSize="32sp"
+                            android:textStyle="bold"
+                            android:textColor="#FF6F00"
                             android:layout_marginTop="4dp"/>
 
                         <TextView
@@ -400,6 +491,64 @@
 
                 <LinearLayout
                     android:id="@+id/layout_mlkit_barcodes"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="No barcodes detected"
+                        android:textSize="14sp"
+                        android:textColor="#9E9E9E"
+                        android:fontStyle="italic"/>
+
+                </LinearLayout>
+
+            </LinearLayout>
+
+        </androidx.cardview.widget.CardView>
+
+        <!-- ZXing-CPP Results Card -->
+        <androidx.cardview.widget.CardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            app:cardCornerRadius="12dp"
+            app:cardElevation="4dp"
+            app:cardBackgroundColor="#FFFFFF">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:layout_marginBottom="12dp">
+
+                    <View
+                        android:layout_width="4dp"
+                        android:layout_height="20dp"
+                        android:background="#FF6F00"/>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="ZXing-C++ Barcodes"
+                        android:textSize="15sp"
+                        android:textStyle="bold"
+                        android:textColor="#FF6F00"
+                        android:layout_marginStart="8dp"/>
+
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/layout_zxing_barcodes"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical">

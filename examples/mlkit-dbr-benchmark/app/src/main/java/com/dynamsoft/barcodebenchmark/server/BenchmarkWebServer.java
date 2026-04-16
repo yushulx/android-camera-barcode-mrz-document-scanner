@@ -38,12 +38,18 @@ import java.util.concurrent.ExecutionException;
 
 import fi.iki.elonen.NanoHTTPD;
 
+import zxingcpp.BarcodeReader;
+
 public class BenchmarkWebServer extends NanoHTTPD {
 
     private static final String TAG = "BenchmarkWebServer";
     private final Context context;
     private CaptureVisionRouter cvRouter;
     private BarcodeScanner mlkitScanner;
+    private BarcodeReader zxingReader;
+    private String uploadedTemplate = null;
+    private String uploadedTemplateName = null; // extracted from CaptureVisionTemplates[0].Name
+    private JSONObject annotationsData = null;
 
     public BenchmarkWebServer(Context context, int port) {
         super(port);
@@ -65,6 +71,10 @@ public class BenchmarkWebServer extends NanoHTTPD {
                 .setBarcodeFormats(Barcode.FORMAT_ALL_FORMATS)
                 .build();
         mlkitScanner = BarcodeScanning.getClient(options);
+
+        zxingReader = new BarcodeReader();
+        zxingReader.getOptions().setTryHarder(true);
+        zxingReader.getOptions().setTryRotate(true);
     }
 
     @Override
@@ -83,12 +93,22 @@ public class BenchmarkWebServer extends NanoHTTPD {
                 return newFixedLengthResponse(Response.Status.OK, "application/javascript", getAppJs());
             } else if (uri.equals("/api/benchmark") && method == Method.POST) {
                 return handleBenchmarkRequest(session);
+            } else if (uri.equals("/api/template") && method == Method.POST) {
+                return handleTemplateUpload(session);
+            } else if (uri.equals("/api/template/clear") && method == Method.POST) {
+                return handleTemplateClear();
+            } else if (uri.equals("/api/annotations") && method == Method.POST) {
+                return handleAnnotationsUpload(session);
             } else if (uri.equals("/api/config")) {
                 return newFixedLengthResponse(Response.Status.OK, "application/json",
-                    "{\"showBenchmarkTime\":" + BenchmarkConfig.SHOW_BENCHMARK_TIME + "}");
+                    "{\"showBenchmarkTime\":" + BenchmarkConfig.SHOW_BENCHMARK_TIME +
+                    ",\"hasTemplate\":" + (uploadedTemplate != null) +
+                    ",\"hasAnnotations\":" + (annotationsData != null) + "}");
             } else if (uri.equals("/api/status")) {
                 return newFixedLengthResponse(Response.Status.OK, "application/json", 
-                    "{\"status\":\"running\",\"dynamsoft\":" + (cvRouter != null) + ",\"mlkit\":" + (mlkitScanner != null) + "}");
+                    "{\"status\":\"running\",\"dynamsoft\":" + (cvRouter != null) +
+                    ",\"mlkit\":" + (mlkitScanner != null) +
+                    ",\"zxing\":" + (zxingReader != null) + "}");
             }
         } catch (Exception e) {
             Log.e(TAG, "Error handling request", e);
@@ -135,6 +155,117 @@ public class BenchmarkWebServer extends NanoHTTPD {
         }
     }
 
+    private Response handleTemplateUpload(IHTTPSession session) {
+        try {
+            Map<String, String> files = new HashMap<>();
+            session.parseBody(files);
+            String tmpFilePath = files.get("file");
+            if (tmpFilePath == null) {
+                // Try reading as raw content from params
+                Map<String, List<String>> params = session.getParameters();
+                if (params.containsKey("content")) {
+                    String content = params.get("content").get(0);
+                    uploadedTemplate = content;
+                    reinitDynamsoft();
+                    Response r = newFixedLengthResponse(Response.Status.OK, "application/json", "{\"success\":true}");
+                    r.addHeader("Access-Control-Allow-Origin", "*");
+                    return r;
+                }
+                return newFixedLengthResponse(Response.Status.BAD_REQUEST, "application/json",
+                        "{\"error\":\"No file uploaded\"}");
+            }
+            File f = new File(tmpFilePath);
+            byte[] bytes = readFileBytes(f);
+            f.delete();
+            uploadedTemplate = new String(bytes, "UTF-8");
+            // Extract the first CaptureVisionTemplates entry name, same logic as main.js
+            try {
+                org.json.JSONObject tpl = new org.json.JSONObject(uploadedTemplate);
+                org.json.JSONArray templates = tpl.optJSONArray("CaptureVisionTemplates");
+                if (templates != null && templates.length() > 0) {
+                    uploadedTemplateName = templates.getJSONObject(0).optString("Name", null);
+                } else {
+                    org.json.JSONObject single = tpl.optJSONObject("CaptureVisionTemplate");
+                    if (single != null) uploadedTemplateName = single.optString("Name", null);
+                }
+            } catch (Exception ex) {
+                uploadedTemplateName = null;
+            }
+            reinitDynamsoft();
+            String tplName = uploadedTemplateName != null ? uploadedTemplateName : "(unknown)";
+            Response r = newFixedLengthResponse(Response.Status.OK, "application/json",
+                    "{\"success\":true,\"templateName\":\"" + tplName + "\"}");
+            r.addHeader("Access-Control-Allow-Origin", "*");
+            return r;
+        } catch (Exception e) {
+            Log.e(TAG, "Error handling template upload", e);
+            return newFixedLengthResponse(Response.Status.INTERNAL_ERROR, "application/json",
+                    "{\"error\":\"" + e.getMessage() + "\"}");
+        }
+    }
+
+    private Response handleAnnotationsUpload(IHTTPSession session) {
+        try {
+            Map<String, String> files = new HashMap<>();
+            session.parseBody(files);
+            String tmpFilePath = files.get("file");
+            if (tmpFilePath == null) {
+                return newFixedLengthResponse(Response.Status.BAD_REQUEST, "application/json",
+                        "{\"error\":\"No file uploaded\"}");
+            }
+            File f = new File(tmpFilePath);
+            byte[] bytes = readFileBytes(f);
+            f.delete();
+            String json = new String(bytes, "UTF-8");
+            annotationsData = new JSONObject(json);
+            Response r = newFixedLengthResponse(Response.Status.OK, "application/json", "{\"success\":true}");
+            r.addHeader("Access-Control-Allow-Origin", "*");
+            return r;
+        } catch (Exception e) {
+            Log.e(TAG, "Error handling annotations upload", e);
+            return newFixedLengthResponse(Response.Status.INTERNAL_ERROR, "application/json",
+                    "{\"error\":\"" + e.getMessage() + "\"}");
+        }
+    }
+
+    private Response handleTemplateClear() {
+        uploadedTemplate = null;
+        uploadedTemplateName = null;
+        try {
+            if (cvRouter != null) {
+                cvRouter.resetSettings();
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Failed to reset Dynamsoft settings", e);
+        }
+        Response r = newFixedLengthResponse(Response.Status.OK, "application/json", "{\"success\":true}");
+        r.addHeader("Access-Control-Allow-Origin", "*");
+        return r;
+    }
+
+    private void reinitDynamsoft() {
+        try {
+            if (cvRouter == null) {
+                cvRouter = new CaptureVisionRouter(context);
+            }
+            if (uploadedTemplate != null) {
+                cvRouter.initSettings(uploadedTemplate);
+            } else {
+                cvRouter.resetSettings();
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Failed to reinit Dynamsoft with template", e);
+        }
+    }
+
+    private byte[] readFileBytes(File f) throws IOException {
+        java.io.FileInputStream fis = new java.io.FileInputStream(f);
+        byte[] buf = new byte[(int) f.length()];
+        fis.read(buf);
+        fis.close();
+        return buf;
+    }
+
     private JSONObject processImage(File imageFile) throws Exception {
         Bitmap bitmap = BitmapFactory.decodeFile(imageFile.getAbsolutePath());
         if (bitmap == null) {
@@ -153,6 +284,10 @@ public class BenchmarkWebServer extends NanoHTTPD {
         // MLkit benchmark
         JSONObject mlkitResult = runMLkitBenchmark(bitmap);
         result.put("mlkit", mlkitResult);
+
+        // ZXing-CPP benchmark
+        JSONObject zxingResult = runZXingCppBenchmark(bitmap);
+        result.put("zxing", zxingResult);
 
         bitmap.recycle();
         return result;
@@ -190,6 +325,10 @@ public class BenchmarkWebServer extends NanoHTTPD {
         JSONObject mlkitResult = runMLkitVideoBenchmark(frames);
         result.put("mlkit", mlkitResult);
 
+        // ZXing-CPP benchmark on all frames
+        JSONObject zxingResult = runZXingCppVideoBenchmark(frames);
+        result.put("zxing", zxingResult);
+
         // Cleanup
         for (Bitmap frame : frames) {
             frame.recycle();
@@ -211,8 +350,9 @@ public class BenchmarkWebServer extends NanoHTTPD {
             return result;
         }
 
+        String templateName = (uploadedTemplateName != null) ? uploadedTemplateName : EnumPresetTemplate.PT_READ_BARCODES;
         long startTime = System.currentTimeMillis();
-        CapturedResult capturedResult = cvRouter.capture(bitmap, EnumPresetTemplate.PT_READ_BARCODES);
+        CapturedResult capturedResult = cvRouter.capture(bitmap, templateName);
         long endTime = System.currentTimeMillis();
 
         if (BenchmarkConfig.SHOW_BENCHMARK_TIME) {
@@ -292,8 +432,9 @@ public class BenchmarkWebServer extends NanoHTTPD {
         for (int i = 0; i < frames.size(); i++) {
             Bitmap frame = frames.get(i);
             
+            String templateName = (uploadedTemplateName != null) ? uploadedTemplateName : EnumPresetTemplate.PT_READ_BARCODES;
             long startTime = System.currentTimeMillis();
-            CapturedResult capturedResult = cvRouter.capture(frame, EnumPresetTemplate.PT_READ_BARCODES);
+            CapturedResult capturedResult = cvRouter.capture(frame, templateName);
             long endTime = System.currentTimeMillis();
             totalTime += (endTime - startTime);
 
@@ -373,6 +514,86 @@ public class BenchmarkWebServer extends NanoHTTPD {
         return result;
     }
 
+    private JSONObject runZXingCppBenchmark(Bitmap bitmap) throws Exception {
+        JSONObject result = new JSONObject();
+        JSONArray barcodes = new JSONArray();
+
+        if (zxingReader == null) {
+            result.put("error", "ZXing-C++ not initialized");
+            if (BenchmarkConfig.SHOW_BENCHMARK_TIME) result.put("timeMs", 0);
+            result.put("barcodes", barcodes);
+            return result;
+        }
+
+        long startTime = System.currentTimeMillis();
+        List<BarcodeReader.Result> detected = zxingReader.read(bitmap, new android.graphics.Rect(), 0);
+        long endTime = System.currentTimeMillis();
+
+        if (BenchmarkConfig.SHOW_BENCHMARK_TIME) {
+            result.put("timeMs", endTime - startTime);
+        }
+
+        if (detected != null) {
+            for (BarcodeReader.Result item : detected) {
+                JSONObject bc = new JSONObject();
+                bc.put("format", item.getFormat().name());
+                bc.put("text", item.getText() != null ? item.getText() : "");
+                barcodes.put(bc);
+            }
+        }
+
+        result.put("barcodes", barcodes);
+        result.put("count", barcodes.length());
+        return result;
+    }
+
+    private JSONObject runZXingCppVideoBenchmark(List<Bitmap> frames) throws Exception {
+        JSONObject result = new JSONObject();
+        JSONArray barcodes = new JSONArray();
+        Set<String> uniqueBarcodes = new HashSet<>();
+        long totalTime = 0;
+
+        if (zxingReader == null) {
+            result.put("error", "ZXing-C++ not initialized");
+            if (BenchmarkConfig.SHOW_BENCHMARK_TIME) result.put("timeMs", 0);
+            result.put("barcodes", barcodes);
+            result.put("framesProcessed", 0);
+            return result;
+        }
+
+        for (int i = 0; i < frames.size(); i++) {
+            Bitmap frame = frames.get(i);
+            long startTime = System.currentTimeMillis();
+            List<BarcodeReader.Result> detected = zxingReader.read(frame, new android.graphics.Rect(), 0);
+            long endTime = System.currentTimeMillis();
+            totalTime += (endTime - startTime);
+
+            if (detected != null) {
+                for (BarcodeReader.Result item : detected) {
+                    String format = item.getFormat().name();
+                    String text = item.getText() != null ? item.getText() : "";
+                    String key = format + ":" + text;
+                    if (!uniqueBarcodes.contains(key)) {
+                        uniqueBarcodes.add(key);
+                        JSONObject bc = new JSONObject();
+                        bc.put("format", format);
+                        bc.put("text", text);
+                        bc.put("frame", i + 1);
+                        barcodes.put(bc);
+                    }
+                }
+            }
+        }
+
+        if (BenchmarkConfig.SHOW_BENCHMARK_TIME) {
+            result.put("timeMs", totalTime);
+        }
+        result.put("barcodes", barcodes);
+        result.put("count", barcodes.length());
+        result.put("framesProcessed", frames.size());
+        return result;
+    }
+
     private String getBarcodeFormatName(int format) {
         switch (format) {
             case Barcode.FORMAT_CODE_128: return "CODE_128";
@@ -410,64 +631,79 @@ public class BenchmarkWebServer extends NanoHTTPD {
                 "<body>\n" +
                 "    <div class=\"container\">\n" +
                 "        <header>\n" +
-                "            <h1>🔍 Barcode Benchmark</h1>\n" +
-                "            <p>Compare Dynamsoft Barcode Reader vs Google MLkit</p>\n" +
+                "            <h1>Barcode Benchmark</h1>\n" +
+                "            <p>Compare Dynamsoft vs MLkit vs ZXing-C++</p>\n" +
                 "        </header>\n" +
                 "\n" +
+                "        <!-- Template Upload Section -->\n" +
+                "        <div class=\"section-card\">\n" +
+                "            <h3>Dynamsoft Template (optional)</h3>\n" +
+                "            <p class=\"section-desc\">Upload a Dynamsoft Barcode Reader JSON template to customize detection settings.</p>\n" +
+                "            <div class=\"row-group\">\n" +
+                "                <label class=\"file-label\" for=\"templateInput\">Choose Template File (.json)</label>\n" +
+                "                <input type=\"file\" id=\"templateInput\" accept=\".json,application/json\" style=\"display:none\">\n" +
+                "                <span id=\"templateStatus\" class=\"status-text\">No template loaded</span>\n" +
+                "                <button class=\"small-btn\" id=\"clearTemplateBtn\" style=\"display:none\" onclick=\"clearTemplate()\">Clear</button>\n" +
+                "            </div>\n" +
+                "        </div>\n" +
+                "\n" +
+                "        <!-- Annotations Upload Section -->\n" +
+                "        <div class=\"section-card\">\n" +
+                "            <h3>Ground Truth Annotations (optional)</h3>\n" +
+                "            <p class=\"section-desc\">Upload annotations.json to enable GT metrics (detection rate &amp; precision) in the report.</p>\n" +
+                "            <div class=\"row-group\">\n" +
+                "                <label class=\"file-label\" for=\"annotationInput\">Choose Annotations File (.json)</label>\n" +
+                "                <input type=\"file\" id=\"annotationInput\" accept=\".json,application/json\" style=\"display:none\">\n" +
+                "                <span id=\"annotationStatus\" class=\"status-text\">No annotations loaded</span>\n" +
+                "                <button class=\"small-btn\" id=\"clearAnnotationBtn\" style=\"display:none\" onclick=\"clearAnnotations()\">Clear</button>\n" +
+                "            </div>\n" +
+                "        </div>\n" +
+                "\n" +
+                "        <!-- File Upload & Benchmark -->\n" +
                 "        <div class=\"upload-section\">\n" +
                 "            <div class=\"file-type-selector\">\n" +
-                "                <label>\n" +
-                "                    <input type=\"radio\" name=\"fileType\" value=\"image\" checked>\n" +
-                "                    <span class=\"radio-btn\">📷 Images</span>\n" +
-                "                </label>\n" +
-                "                <label>\n" +
-                "                    <input type=\"radio\" name=\"fileType\" value=\"video\">\n" +
-                "                    <span class=\"radio-btn\">🎬 Video</span>\n" +
-                "                </label>\n" +
+                "                <label><input type=\"radio\" name=\"fileType\" value=\"image\" checked> <span class=\"radio-btn\">Images</span></label>\n" +
+                "                <label><input type=\"radio\" name=\"fileType\" value=\"video\"> <span class=\"radio-btn\">Video</span></label>\n" +
                 "            </div>\n" +
-                "\n" +
                 "            <div class=\"drop-zone\" id=\"dropZone\">\n" +
                 "                <div class=\"drop-zone-content\">\n" +
-                "                    <span class=\"drop-icon\">📁</span>\n" +
-                "                    <p>Drag & drop files or folders here</p>\n" +
+                "                    <span class=\"drop-icon\">&#128193;</span>\n" +
+                "                    <p>Drag &amp; drop files or folders here</p>\n" +
                 "                    <p class=\"hint\">Supports multiple images or a folder</p>\n" +
                 "                    <p class=\"or\">or</p>\n" +
                 "                    <button class=\"browse-btn\" id=\"browseBtn\">Browse Files</button>\n" +
                 "                </div>\n" +
                 "                <input type=\"file\" id=\"fileInput\" accept=\"image/*,video/*\" multiple hidden>\n" +
                 "            </div>\n" +
-                "\n" +
-                "            <div class=\"file-list\" id=\"fileList\" style=\"display: none;\">\n" +
+                "            <div class=\"file-list\" id=\"fileList\" style=\"display:none;\">\n" +
                 "                <div class=\"file-list-header\">\n" +
                 "                    <span id=\"fileCount\">0 files selected</span>\n" +
                 "                    <button class=\"clear-btn\" id=\"clearBtn\">Clear All</button>\n" +
                 "                </div>\n" +
                 "                <div class=\"file-items\" id=\"fileItems\"></div>\n" +
                 "            </div>\n" +
-                "\n" +
                 "            <button class=\"benchmark-btn\" id=\"benchmarkBtn\" disabled>Run Benchmark</button>\n" +
                 "        </div>\n" +
                 "\n" +
-                "        <div class=\"progress-section\" id=\"progressSection\" style=\"display: none;\">\n" +
+                "        <div class=\"progress-section\" id=\"progressSection\" style=\"display:none;\">\n" +
                 "            <div class=\"progress-header\">\n" +
                 "                <span id=\"progressText\">Processing...</span>\n" +
                 "                <span id=\"progressCount\">0/0</span>\n" +
                 "            </div>\n" +
-                "            <div class=\"progress-bar\">\n" +
-                "                <div class=\"progress-fill\" id=\"progressFill\"></div>\n" +
-                "            </div>\n" +
+                "            <div class=\"progress-bar\"><div class=\"progress-fill\" id=\"progressFill\"></div></div>\n" +
                 "            <div class=\"current-file\" id=\"currentFile\"></div>\n" +
                 "        </div>\n" +
                 "\n" +
-                "        <div class=\"results\" id=\"results\" style=\"display: none;\">\n" +
-                "            <h2>Batch Benchmark Results</h2>\n" +
-                "            <div class=\"batch-summary\" id=\"batchSummary\"></div>\n" +
-                "            <div class=\"batch-results\" id=\"batchResults\"></div>\n" +
+                "        <div class=\"results\" id=\"results\" style=\"display:none;\">\n" +
+                "            <div class=\"results-header\">\n" +
+                "                <h2>Benchmark Results</h2>\n" +
+                "                <button class=\"export-btn\" id=\"exportBtn\" onclick=\"exportReport()\">Export Report</button>\n" +
+                "            </div>\n" +
+                "            <div id=\"batchSummary\"></div>\n" +
+                "            <div id=\"batchResults\"></div>\n" +
                 "        </div>\n" +
                 "\n" +
-                "        <footer>\n" +
-                "            <p>Powered by Android • Dynamsoft Barcode Reader SDK v11.2</p>\n" +
-                "        </footer>\n" +
+                "        <footer><p>Dynamsoft Barcode Reader &bull; Google MLkit &bull; ZXing-C++</p></footer>\n" +
                 "    </div>\n" +
                 "    <script src=\"/app.js\"></script>\n" +
                 "</body>\n" +
@@ -774,11 +1010,131 @@ public class BenchmarkWebServer extends NanoHTTPD {
                 "footer { text-align: center; margin-top: 40px; color: #555; font-size: 0.9rem; }\n" +
                 "\n" +
                 ".expand-icon { transition: transform 0.3s; }\n" +
-                ".result-item.expanded .expand-icon { transform: rotate(180deg); }";
+                ".result-item.expanded .expand-icon { transform: rotate(180deg); }\n" +
+                "\n" +
+                "/* Light theme overrides for new sections */\n" +
+                ".section-card { background:#fff; border:1px solid #e2e8f0; border-radius:12px; padding:20px 24px; margin-bottom:20px; }\n" +
+                ".section-card h3 { font-size:1rem; font-weight:700; color:#1e293b; margin-bottom:6px; }\n" +
+                ".section-desc { font-size:0.85rem; color:#64748b; margin-bottom:12px; }\n" +
+                ".row-group { display:flex; align-items:center; gap:12px; flex-wrap:wrap; }\n" +
+                ".file-label { background:#e0f2fe; color:#0369a1; padding:7px 14px; border-radius:6px; cursor:pointer; font-size:0.85rem; font-weight:600; }\n" +
+                ".file-label:hover { background:#bae6fd; }\n" +
+                ".status-text { font-size:0.85rem; color:#64748b; }\n" +
+                ".status-text.loaded { color:#16a34a; font-weight:600; }\n" +
+                ".small-btn { background:#fee2e2; color:#dc2626; border:none; border-radius:6px; padding:5px 10px; font-size:0.8rem; cursor:pointer; font-weight:600; }\n" +
+                ".small-btn:hover { background:#fecaca; }\n" +
+                ".results-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; }\n" +
+                ".results-header h2 { color:#0f172a; }\n" +
+                ".export-btn { background:#1e40af; color:#fff; border:none; border-radius:8px; padding:9px 18px; font-size:0.9rem; font-weight:600; cursor:pointer; }\n" +
+                ".export-btn:hover { background:#1d4ed8; }\n" +
+                ".benchmark-table-wrap { overflow-x:auto; margin-bottom:16px; }\n" +
+                ".benchmark-table { width:100%; border-collapse:collapse; background:#fff; border-radius:8px; overflow:hidden; box-shadow:0 1px 4px rgba(0,0,0,.07); font-size:0.88rem; }\n" +
+                ".benchmark-table th { background:#f1f5f9; color:#475569; font-weight:600; text-align:left; padding:10px 14px; border-bottom:1px solid #e2e8f0; }\n" +
+                ".benchmark-table td { padding:9px 14px; border-bottom:1px solid #f1f5f9; vertical-align:top; color:#1e293b; }\n" +
+                ".benchmark-table tr:last-child td { border-bottom:none; }\n" +
+                ".benchmark-table tr:hover td { background:#f8fafc; }\n" +
+                ".sdk-col { font-weight:600; white-space:nowrap; }\n" +
+                ".count-col { text-align:center; font-weight:700; font-size:1.05em; }\n" +
+                ".time-col { text-align:right; color:#64748b; white-space:nowrap; }\n" +
+                ".rate-col { text-align:center; }\n" +
+                ".best-count { color:#16a34a; }\n" +
+                ".barcodes-list { list-style:none; padding:0; margin:0; }\n" +
+                ".barcodes-list li { font-size:0.82rem; color:#334155; padding:2px 0; }\n" +
+                ".gt-good { color:#16a34a; font-weight:700; }\n" +
+                ".gt-ok { color:#ca8a04; font-weight:700; }\n" +
+                ".gt-bad { color:#dc2626; font-weight:700; }\n" +
+                ".benchmark-image-title { color:#1e293b; font-size:0.93rem; font-weight:700; margin:18px 0 6px; }\n" +
+                ".benchmark-summary { background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:16px 18px; margin-bottom:20px; }\n" +
+                ".benchmark-summary h4 { color:#1e293b; font-size:0.95rem; margin-bottom:10px; }\n" +
+                ".benchmark-summary ul { list-style:none; padding:0; margin:10px 0 0; }\n" +
+                ".benchmark-summary ul li { font-size:0.88rem; color:#475569; padding:2px 0; }";
     }
 
     private String getAppJs() {
-        return "const dropZone = document.getElementById('dropZone');\n" +
+        return "// ===== Template Upload =====\n" +
+                "let loadedTemplate = null;\n" +
+                "const templateInput = document.getElementById('templateInput');\n" +
+                "const templateStatus = document.getElementById('templateStatus');\n" +
+                "const clearTemplateBtn = document.getElementById('clearTemplateBtn');\n" +
+                "templateInput.addEventListener('change', (e) => {\n" +
+                "    const file = e.target.files[0];\n" +
+                "    if (!file) return;\n" +
+                "    const reader = new FileReader();\n" +
+                "    reader.onload = async (ev) => {\n" +
+                "        loadedTemplate = ev.target.result;\n" +
+                "        const fd = new FormData();\n" +
+                "        fd.append('file', file);\n" +
+                "        try {\n" +
+                "            const resp = await fetch('/api/template', { method: 'POST', body: fd });\n" +
+                "            const d = await resp.json();\n" +
+                "            if (d.success) {\n" +
+                "                const taskName = d.templateName || '(unknown)';\n" +
+                "                templateStatus.textContent = '\\u2713 ' + file.name + ' (task: ' + taskName + ')';\n" +
+                "                templateStatus.className = 'status-text loaded';\n" +
+                "                clearTemplateBtn.style.display = 'inline-block';\n" +
+                "            } else {\n" +
+                "                templateStatus.textContent = 'Error: ' + (d.error || 'unknown');\n" +
+                "            }\n" +
+                "        } catch (err) {\n" +
+                "            templateStatus.textContent = 'Upload failed: ' + err.message;\n" +
+                "        }\n" +
+                "    };\n" +
+                "    reader.readAsText(file);\n" +
+                "    templateInput.value = '';\n" +
+                "});\n" +
+                "function clearTemplate() {\n" +
+                "    loadedTemplate = null;\n" +
+                "    templateStatus.textContent = 'No template loaded';\n" +
+                "    templateStatus.className = 'status-text';\n" +
+                "    clearTemplateBtn.style.display = 'none';\n" +
+                "    fetch('/api/template/clear', { method: 'POST' }).catch(() => {});\n" +
+                "}\n" +
+                "\n" +
+                "// ===== Annotations Upload =====\n" +
+                "let annotationData = null; // map: filename -> [{text, format}]\n" +
+                "const annotationInput = document.getElementById('annotationInput');\n" +
+                "const annotationStatus = document.getElementById('annotationStatus');\n" +
+                "const clearAnnotationBtn = document.getElementById('clearAnnotationBtn');\n" +
+                "annotationInput.addEventListener('change', (e) => {\n" +
+                "    const file = e.target.files[0];\n" +
+                "    if (!file) return;\n" +
+                "    const reader = new FileReader();\n" +
+                "    reader.onload = async (ev) => {\n" +
+                "        try {\n" +
+                "            const json = JSON.parse(ev.target.result);\n" +
+                "            annotationData = {};\n" +
+                "            if (json.images) {\n" +
+                "                for (const entry of json.images) {\n" +
+                "                    if (entry.file && entry.barcodes) {\n" +
+                "                        annotationData[entry.file] = entry.barcodes;\n" +
+                "                    }\n" +
+                "                }\n" +
+                "            }\n" +
+                "            // Upload to server for server-side processing\n" +
+                "            const fd = new FormData();\n" +
+                "            fd.append('file', file);\n" +
+                "            await fetch('/api/annotations', { method: 'POST', body: fd });\n" +
+                "            const count = Object.keys(annotationData).length;\n" +
+                "            const total = Object.values(annotationData).reduce((s, a) => s + a.length, 0);\n" +
+                "            annotationStatus.textContent = count + ' images, ' + total + ' barcodes';\n" +
+                "            annotationStatus.className = 'status-text loaded';\n" +
+                "            clearAnnotationBtn.style.display = 'inline-block';\n" +
+                "        } catch (err) {\n" +
+                "            annotationStatus.textContent = 'Parse error: ' + err.message;\n" +
+                "        }\n" +
+                "    };\n" +
+                "    reader.readAsText(file);\n" +
+                "    annotationInput.value = '';\n" +
+                "});\n" +
+                "function clearAnnotations() {\n" +
+                "    annotationData = null;\n" +
+                "    annotationStatus.textContent = 'No annotations loaded';\n" +
+                "    annotationStatus.className = 'status-text';\n" +
+                "    clearAnnotationBtn.style.display = 'none';\n" +
+                "}\n" +
+                "\n" +
+                "// ===== File Select & Drop =====\n" +
+                "const dropZone = document.getElementById('dropZone');\n" +
                 "const fileInput = document.getElementById('fileInput');\n" +
                 "const browseBtn = document.getElementById('browseBtn');\n" +
                 "const fileList = document.getElementById('fileList');\n" +
@@ -798,60 +1154,40 @@ public class BenchmarkWebServer extends NanoHTTPD {
                 "let benchmarkResults = [];\n" +
                 "let showBenchmarkTime = true;\n" +
                 "\n" +
-                "// Fetch config on load\n" +
                 "fetch('/api/config').then(r => r.json()).then(cfg => { showBenchmarkTime = cfg.showBenchmarkTime; }).catch(() => {});\n" +
                 "\n" +
-                "// Drag and drop with folder support\n" +
-                "dropZone.addEventListener('dragover', (e) => {\n" +
-                "    e.preventDefault();\n" +
-                "    dropZone.classList.add('dragover');\n" +
-                "});\n" +
-                "\n" +
-                "dropZone.addEventListener('dragleave', () => {\n" +
-                "    dropZone.classList.remove('dragover');\n" +
-                "});\n" +
-                "\n" +
+                "dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('dragover'); });\n" +
+                "dropZone.addEventListener('dragleave', () => { dropZone.classList.remove('dragover'); });\n" +
                 "dropZone.addEventListener('drop', async (e) => {\n" +
                 "    e.preventDefault();\n" +
                 "    dropZone.classList.remove('dragover');\n" +
                 "    const items = e.dataTransfer.items;\n" +
                 "    const files = [];\n" +
-                "    \n" +
-                "    // Process items for folder support\n" +
                 "    const promises = [];\n" +
                 "    for (let i = 0; i < items.length; i++) {\n" +
                 "        const item = items[i];\n" +
                 "        if (item.webkitGetAsEntry) {\n" +
                 "            const entry = item.webkitGetAsEntry();\n" +
-                "            if (entry) {\n" +
-                "                promises.push(traverseEntry(entry));\n" +
-                "            }\n" +
+                "            if (entry) promises.push(traverseEntry(entry));\n" +
                 "        } else if (item.getAsFile) {\n" +
                 "            const file = item.getAsFile();\n" +
                 "            if (file && isValidFile(file)) files.push(file);\n" +
                 "        }\n" +
                 "    }\n" +
-                "    \n" +
                 "    const nestedFiles = await Promise.all(promises);\n" +
                 "    nestedFiles.flat().forEach(f => { if (isValidFile(f)) files.push(f); });\n" +
-                "    \n" +
                 "    addFiles(files);\n" +
                 "});\n" +
                 "\n" +
                 "async function traverseEntry(entry) {\n" +
                 "    if (entry.isFile) {\n" +
-                "        return new Promise(resolve => {\n" +
-                "            entry.file(file => resolve([file]), () => resolve([]));\n" +
-                "        });\n" +
+                "        return new Promise(resolve => { entry.file(file => resolve([file]), () => resolve([])); });\n" +
                 "    } else if (entry.isDirectory) {\n" +
                 "        const reader = entry.createReader();\n" +
                 "        return new Promise(resolve => {\n" +
                 "            reader.readEntries(async entries => {\n" +
                 "                const files = [];\n" +
-                "                for (const e of entries) {\n" +
-                "                    const subFiles = await traverseEntry(e);\n" +
-                "                    files.push(...subFiles);\n" +
-                "                }\n" +
+                "                for (const e of entries) { const sub = await traverseEntry(e); files.push(...sub); }\n" +
                 "                resolve(files);\n" +
                 "            }, () => resolve([]));\n" +
                 "        });\n" +
@@ -859,184 +1195,246 @@ public class BenchmarkWebServer extends NanoHTTPD {
                 "    return [];\n" +
                 "}\n" +
                 "\n" +
-                "function isValidFile(file) {\n" +
-                "    return file.type.startsWith('image/') || file.type.startsWith('video/');\n" +
+                "function isValidFile(f) { return f.type.startsWith('image/') || f.type.startsWith('video/'); }\n" +
+                "function formatSize(b) {\n" +
+                "    if (b < 1024) return b + ' B';\n" +
+                "    if (b < 1048576) return (b/1024).toFixed(1) + ' KB';\n" +
+                "    return (b/1048576).toFixed(1) + ' MB';\n" +
                 "}\n" +
-                "\n" +
-                "function formatSize(bytes) {\n" +
-                "    if (bytes < 1024) return bytes + ' B';\n" +
-                "    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';\n" +
-                "    return (bytes / (1024 * 1024)).toFixed(1) + ' MB';\n" +
-                "}\n" +
-                "\n" +
                 "function addFiles(files) {\n" +
-                "    files.forEach(file => {\n" +
-                "        // Avoid duplicates\n" +
-                "        if (!selectedFiles.find(f => f.name === file.name && f.size === file.size)) {\n" +
-                "            selectedFiles.push(file);\n" +
-                "        }\n" +
-                "    });\n" +
+                "    files.forEach(f => { if (!selectedFiles.find(x => x.name === f.name && x.size === f.size)) selectedFiles.push(f); });\n" +
                 "    updateFileList();\n" +
                 "}\n" +
-                "\n" +
                 "function updateFileList() {\n" +
-                "    if (selectedFiles.length === 0) {\n" +
-                "        fileList.style.display = 'none';\n" +
-                "        benchmarkBtn.disabled = true;\n" +
-                "        return;\n" +
-                "    }\n" +
-                "    \n" +
+                "    if (selectedFiles.length === 0) { fileList.style.display = 'none'; benchmarkBtn.disabled = true; return; }\n" +
                 "    fileList.style.display = 'block';\n" +
                 "    benchmarkBtn.disabled = false;\n" +
                 "    fileCount.textContent = selectedFiles.length + ' file(s) selected';\n" +
-                "    \n" +
-                "    fileItems.innerHTML = selectedFiles.map((file, idx) => `\n" +
-                "        <div class=\"file-item\" data-idx=\"${idx}\">\n" +
-                "            <span class=\"file-item-icon\">${file.type.startsWith('video/') ? '🎬' : '🖼️'}</span>\n" +
-                "            <span class=\"file-item-name\">${file.name}</span>\n" +
-                "            <span class=\"file-item-size\">${formatSize(file.size)}</span>\n" +
-                "            <span class=\"file-item-status\" id=\"status-${idx}\"></span>\n" +
-                "        </div>\n" +
-                "    `).join('');\n" +
+                "    fileItems.innerHTML = selectedFiles.map((f, idx) => `<div class=\"file-item\" data-idx=\"${idx}\"><span>${f.type.startsWith('video/') ? '&#127909;' : '&#128444;'}</span><span class=\"file-item-name\">${f.name}</span><span class=\"file-item-size\">${formatSize(f.size)}</span><span class=\"file-item-status\" id=\"status-${idx}\"></span></div>`).join('');\n" +
                 "}\n" +
                 "\n" +
                 "dropZone.addEventListener('click', () => fileInput.click());\n" +
-                "browseBtn.addEventListener('click', (e) => {\n" +
-                "    e.stopPropagation();\n" +
-                "    fileInput.click();\n" +
-                "});\n" +
+                "browseBtn.addEventListener('click', (e) => { e.stopPropagation(); fileInput.click(); });\n" +
+                "fileInput.addEventListener('change', (e) => { addFiles(Array.from(e.target.files)); fileInput.value = ''; });\n" +
+                "clearBtn.addEventListener('click', () => { selectedFiles = []; updateFileList(); results.style.display = 'none'; progressSection.style.display = 'none'; });\n" +
                 "\n" +
-                "fileInput.addEventListener('change', (e) => {\n" +
-                "    addFiles(Array.from(e.target.files));\n" +
-                "    fileInput.value = '';\n" +
-                "});\n" +
-                "\n" +
-                "clearBtn.addEventListener('click', () => {\n" +
-                "    selectedFiles = [];\n" +
-                "    updateFileList();\n" +
-                "    results.style.display = 'none';\n" +
-                "    progressSection.style.display = 'none';\n" +
-                "});\n" +
-                "\n" +
+                "// ===== Benchmark Execution =====\n" +
                 "benchmarkBtn.addEventListener('click', async () => {\n" +
                 "    if (selectedFiles.length === 0) return;\n" +
-                "    \n" +
                 "    progressSection.style.display = 'block';\n" +
                 "    results.style.display = 'none';\n" +
                 "    benchmarkBtn.disabled = true;\n" +
                 "    benchmarkResults = [];\n" +
-                "    \n" +
                 "    for (let i = 0; i < selectedFiles.length; i++) {\n" +
                 "        const file = selectedFiles[i];\n" +
-                "        const progress = Math.round(((i) / selectedFiles.length) * 100);\n" +
-                "        progressFill.style.width = progress + '%';\n" +
-                "        progressText.textContent = `${i + 1} / ${selectedFiles.length}`;\n" +
-                "        currentFile.textContent = `Processing: ${file.name}`;\n" +
-                "        \n" +
-                "        // Update status icon\n" +
+                "        progressFill.style.width = Math.round(i / selectedFiles.length * 100) + '%';\n" +
+                "        progressText.textContent = (i + 1) + ' / ' + selectedFiles.length;\n" +
+                "        currentFile.textContent = 'Processing: ' + file.name;\n" +
                 "        const statusEl = document.getElementById('status-' + i);\n" +
-                "        if (statusEl) statusEl.textContent = '⏳';\n" +
-                "        \n" +
+                "        if (statusEl) statusEl.textContent = '\u23f3';\n" +
                 "        try {\n" +
-                "            const formData = new FormData();\n" +
-                "            formData.append('file', file);\n" +
-                "            formData.append('fileType', file.type.startsWith('video/') ? 'video' : 'image');\n" +
-                "            \n" +
-                "            const response = await fetch('/api/benchmark', {\n" +
-                "                method: 'POST',\n" +
-                "                body: formData\n" +
-                "            });\n" +
-                "            \n" +
-                "            const data = await response.json();\n" +
+                "            const fd = new FormData();\n" +
+                "            fd.append('file', file);\n" +
+                "            fd.append('fileType', file.type.startsWith('video/') ? 'video' : 'image');\n" +
+                "            const resp = await fetch('/api/benchmark', { method: 'POST', body: fd });\n" +
+                "            const data = await resp.json();\n" +
                 "            data.fileName = file.name;\n" +
                 "            benchmarkResults.push(data);\n" +
-                "            if (statusEl) statusEl.textContent = '✅';\n" +
-                "        } catch (error) {\n" +
-                "            benchmarkResults.push({ fileName: file.name, error: error.message });\n" +
-                "            if (statusEl) statusEl.textContent = '❌';\n" +
+                "            if (statusEl) statusEl.textContent = '\u2713';\n" +
+                "        } catch (err) {\n" +
+                "            benchmarkResults.push({ fileName: file.name, error: err.message });\n" +
+                "            if (statusEl) statusEl.textContent = '\u2717';\n" +
                 "        }\n" +
                 "    }\n" +
-                "    \n" +
                 "    progressFill.style.width = '100%';\n" +
                 "    progressText.textContent = 'Complete!';\n" +
                 "    currentFile.textContent = '';\n" +
                 "    benchmarkBtn.disabled = false;\n" +
-                "    \n" +
                 "    displayBatchResults();\n" +
                 "});\n" +
                 "\n" +
+                "// ===== GT Helpers =====\n" +
+                "function computeGTResult(detectedTexts, groundTruth) {\n" +
+                "    if (!groundTruth || groundTruth.length === 0) return null;\n" +
+                "    const gtTexts = groundTruth.map(b => (b.text || b).trim().toLowerCase());\n" +
+                "    const detLower = detectedTexts.map(t => (t || '').trim().toLowerCase());\n" +
+                "    let tp = 0;\n" +
+                "    const matched = new Array(gtTexts.length).fill(false);\n" +
+                "    for (const det of detLower) {\n" +
+                "        const idx = gtTexts.findIndex((g, i) => !matched[i] && g === det);\n" +
+                "        if (idx >= 0) { matched[idx] = true; tp++; }\n" +
+                "    }\n" +
+                "    const fp = detectedTexts.length - tp;\n" +
+                "    const total = gtTexts.length;\n" +
+                "    const detectionRate = total > 0 ? tp / total : 0;\n" +
+                "    const precision = (tp + fp) > 0 ? tp / (tp + fp) : 0;\n" +
+                "    return { tp, fp, total, detectionRate, precision };\n" +
+                "}\n" +
+                "\n" +
+                "function gtRateClass(rate) {\n" +
+                "    if (rate >= 0.9) return 'gt-good';\n" +
+                "    if (rate >= 0.6) return 'gt-ok';\n" +
+                "    return 'gt-bad';\n" +
+                "}\n" +
+                "\n" +
+                "function escapeHtml(s) {\n" +
+                "    const d = document.createElement('div'); d.textContent = s; return d.innerHTML;\n" +
+                "}\n" +
+                "\n" +
+                "// ===== Display Results =====\n" +
                 "function displayBatchResults() {\n" +
                 "    results.style.display = 'block';\n" +
-                "    \n" +
-                "    // Calculate totals\n" +
-                "    let totalDynamsoftBarcodes = 0, totalMlkitBarcodes = 0;\n" +
-                "    let totalDynamsoftTime = 0, totalMlkitTime = 0;\n" +
-                "    let successCount = 0;\n" +
-                "    \n" +
-                "    benchmarkResults.forEach(r => {\n" +
-                "        if (!r.error) {\n" +
-                "            successCount++;\n" +
-                "            totalDynamsoftBarcodes += r.dynamsoft?.count || 0;\n" +
-                "            totalMlkitBarcodes += r.mlkit?.count || 0;\n" +
-                "            totalDynamsoftTime += r.dynamsoft?.timeMs || 0;\n" +
-                "            totalMlkitTime += r.mlkit?.timeMs || 0;\n" +
-                "        }\n" +
+                "    const sdkKeys = ['dynamsoft', 'mlkit', 'zxing'];\n" +
+                "    const sdkLabels = { dynamsoft: 'Dynamsoft', mlkit: 'Google MLkit', zxing: 'ZXing-C++' };\n" +
+                "    const allResults = benchmarkResults.filter(r => !r.error).map(r => {\n" +
+                "        const gt = annotationData && annotationData[r.fileName];\n" +
+                "        return {\n" +
+                "            imageName: r.fileName,\n" +
+                "            sdkResults: sdkKeys.map(key => {\n" +
+                "                const sdk = r[key] || { count: 0, barcodes: [] };\n" +
+                "                const detectedTexts = (sdk.barcodes || []).map(b => b.text || '');\n" +
+                "                const gtResult = gt ? computeGTResult(detectedTexts, gt) : null;\n" +
+                "                return { sdkLabel: sdkLabels[key], barcodes: sdk.barcodes || [], time: sdk.timeMs || 0, error: sdk.error, gtResult };\n" +
+                "            })\n" +
+                "        };\n" +
                 "    });\n" +
-                "    \n" +
-                "    batchSummary.innerHTML = `\n" +
-                "        <div class=\\\"summary-card\\\"><div class=\\\"value\\\">${benchmarkResults.length}</div><div class=\\\"label\\\">Files Processed</div></div>\n" +
-                "        <div class=\\\"summary-card dynamsoft\\\"><div class=\\\"value\\\">${totalDynamsoftBarcodes}</div><div class=\\\"label\\\">Dynamsoft Total</div></div>\n" +
-                "        <div class=\\\"summary-card mlkit\\\"><div class=\\\"value\\\">${totalMlkitBarcodes}</div><div class=\\\"label\\\">MLkit Total</div></div>\n" +
-                "        ${showBenchmarkTime ? `<div class=\\\"summary-card dynamsoft\\\"><div class=\\\"value\\\">${totalDynamsoftTime}ms</div><div class=\\\"label\\\">Dynamsoft Time</div></div>` : ''}\n" +
-                "        ${showBenchmarkTime ? `<div class=\\\"summary-card mlkit\\\"><div class=\\\"value\\\">${totalMlkitTime}ms</div><div class=\\\"label\\\">MLkit Time</div></div>` : ''}\n" +
-                "    `;\n" +
-                "    \n" +
-                "    batchResults.innerHTML = benchmarkResults.map((r, idx) => {\n" +
-                "        if (r.error) {\n" +
-                "            return `<div class=\\\"result-item\\\"><div class=\\\"result-item-header\\\"><span class=\\\"result-item-name\\\">❌ ${r.fileName}</span><span>Error: ${r.error}</span></div></div>`;\n" +
-                "        }\n" +
-                "        return `\n" +
-                "            <div class=\\\"result-item\\\" id=\\\"result-${idx}\\\">\n" +
-                "                <div class=\\\"result-item-header\\\" onclick=\\\"toggleResult(${idx})\\\">\n" +
-                "                    <span class=\\\"result-item-name\\\">${r.type === 'video' ? '🎬' : '🖼️'} ${r.fileName}</span>\n" +
-                "                    <div class=\\\"result-item-stats\\\">\n" +
-                "                        <span class=\\\"dynamsoft\\\">DBR: ${r.dynamsoft?.count || 0}${showBenchmarkTime ? ` (${r.dynamsoft?.timeMs || 0}ms)` : ''}</span>\n" +
-                "                        <span class=\\\"mlkit\\\">MLkit: ${r.mlkit?.count || 0}${showBenchmarkTime ? ` (${r.mlkit?.timeMs || 0}ms)` : ''}</span>\n" +
-                "                        <span class=\\\"expand-icon\\\">▼</span>\n" +
-                "                    </div>\n" +
-                "                </div>\n" +
-                "                <div class=\\\"result-item-details\\\">\n" +
-                "                    <div class=\"comparison\">\n" +
-                "                        <div class=\"sdk-result dynamsoft\">\n" +
-                "                            <div class=\"sdk-header\"><span class=\"sdk-icon\">🔷</span><h4>Dynamsoft Barcode Reader</h4></div>\n" +
-                "                            <div class=\"barcode-list\">${renderBarcodeList(r.dynamsoft?.barcodes)}</div>\n" +
-                "                        </div>\n" +
-                "                        <div class=\"sdk-result mlkit\">\n" +
-                "                            <div class=\"sdk-header\"><span class=\"sdk-icon\">🟢</span><h4>Google MLkit</h4></div>\n" +
-                "                            <div class=\"barcode-list\">${renderBarcodeList(r.mlkit?.barcodes)}</div>\n" +
-                "                        </div>\n" +
-                "                    </div>\n" +
-                "                </div>\n" +
-                "            </div>\n" +
-                "        `;\n" +
-                "    }).join('');\n" +
-                "}\n" +
                 "\n" +
-                "function toggleResult(idx) {\n" +
-                "    const el = document.getElementById('result-' + idx);\n" +
-                "    if (el) el.classList.toggle('expanded');\n" +
-                "}\n" +
+                "    batchSummary.innerHTML = buildSummaryHtml(allResults, sdkKeys, sdkLabels);\n" +
+                "    batchResults.innerHTML = allResults.map(r => buildImageTableHtml(r)).join('');\n" +
                 "\n" +
-                "function renderBarcodeList(barcodes) {\n" +
-                "    if (!barcodes || barcodes.length === 0) {\n" +
-                "        return '<p style=\"color: #888; text-align: center;\">No barcodes detected</p>';\n" +
+                "    // Errors\n" +
+                "    const errors = benchmarkResults.filter(r => r.error);\n" +
+                "    if (errors.length > 0) {\n" +
+                "        batchResults.innerHTML += errors.map(r => '<div style=\"color:#dc2626;margin:8px 0;\">Error in ' + escapeHtml(r.fileName) + ': ' + escapeHtml(r.error) + '</div>').join('');\n" +
                 "    }\n" +
-                "    return barcodes.map(bc => `\n" +
-                "        <div class=\\\"barcode-item\\\">\n" +
-                "            <div class=\\\"barcode-format\\\">${bc.format}${bc.frame ? ` (Frame ${bc.frame})` : ''}</div>\n" +
-                "            <div class=\\\"barcode-text\\\">${bc.text || '(empty)'}</div>\n" +
-                "        </div>\n" +
-                "    `).join('');\n" +
+                "}\n" +
+                "\n" +
+                "function buildSummaryHtml(allResults, sdkKeys, sdkLabels) {\n" +
+                "    const hasAnyGT = allResults.some(r => r.sdkResults.some(s => s.gtResult !== null));\n" +
+                "    const aggMap = {};\n" +
+                "    for (const key of sdkKeys) {\n" +
+                "        aggMap[key] = { total: 0, time: 0, tp: 0, expected: 0, fp: 0 };\n" +
+                "    }\n" +
+                "    for (const img of allResults) {\n" +
+                "        for (let i = 0; i < sdkKeys.length; i++) {\n" +
+                "            const key = sdkKeys[i];\n" +
+                "            const r = img.sdkResults[i];\n" +
+                "            aggMap[key].total += r.barcodes.length;\n" +
+                "            aggMap[key].time += r.time;\n" +
+                "            if (r.gtResult) { aggMap[key].tp += r.gtResult.tp; aggMap[key].expected += r.gtResult.total; aggMap[key].fp += r.gtResult.fp; }\n" +
+                "        }\n" +
+                "    }\n" +
+                "    let html = '<div class=\"benchmark-summary\">';\n" +
+                "    html += '<h4>Aggregate Summary (' + allResults.length + ' file(s))</h4>';\n" +
+                "    html += '<div class=\"benchmark-table-wrap\"><table class=\"benchmark-table\"><thead><tr><th>SDK</th><th>Total Found</th>';\n" +
+                "    if (hasAnyGT) html += '<th>GT Expected</th><th>GT Detected</th><th>Detection Rate</th><th>Precision</th>';\n" +
+                "    if (showBenchmarkTime) html += '<th>Total Time</th>';\n" +
+                "    html += '</tr></thead><tbody>';\n" +
+                "    const maxTotal = Math.max(...sdkKeys.map(k => aggMap[k].total));\n" +
+                "    for (const key of sdkKeys) {\n" +
+                "        const a = aggMap[key];\n" +
+                "        const isBest = a.total === maxTotal && maxTotal > 0;\n" +
+                "        const detRate = a.expected > 0 ? a.tp / a.expected : null;\n" +
+                "        const prec = (a.tp + a.fp) > 0 ? a.tp / (a.tp + a.fp) : null;\n" +
+                "        html += '<tr><td class=\"sdk-col\">' + escapeHtml(sdkLabels[key]) + '</td>';\n" +
+                "        html += '<td class=\"count-col' + (isBest ? ' best-count' : '') + '\">' + a.total + '</td>';\n" +
+                "        if (hasAnyGT) {\n" +
+                "            html += '<td class=\"count-col\">' + a.expected + '</td>';\n" +
+                "            html += '<td class=\"count-col\">' + a.tp + '</td>';\n" +
+                "            html += '<td class=\"rate-col\">' + (detRate !== null ? '<span class=\"' + gtRateClass(detRate) + '\">' + (detRate * 100).toFixed(1) + '%</span>' : '<em>N/A</em>') + '</td>';\n" +
+                "            html += '<td class=\"rate-col\">' + (prec !== null ? '<span class=\"' + gtRateClass(prec) + '\">' + (prec * 100).toFixed(1) + '%</span>' : '<em>N/A</em>') + '</td>';\n" +
+                "        }\n" +
+                "        if (showBenchmarkTime) html += '<td class=\"time-col\">' + a.time.toFixed(0) + ' ms</td>';\n" +
+                "        html += '</tr>';\n" +
+                "    }\n" +
+                "    html += '</tbody></table></div></div>';\n" +
+                "    return html;\n" +
+                "}\n" +
+                "\n" +
+                "function buildImageTableHtml(imgResult) {\n" +
+                "    const hasGT = imgResult.sdkResults.some(r => r.gtResult !== null);\n" +
+                "    const maxCount = Math.max(...imgResult.sdkResults.map(r => r.barcodes.length));\n" +
+                "    let html = '<h4 class=\"benchmark-image-title\">' + escapeHtml(imgResult.imageName) + '</h4>';\n" +
+                "    html += '<div class=\"benchmark-table-wrap\"><table class=\"benchmark-table\"><thead><tr><th>SDK</th><th>Found</th>';\n" +
+                "    if (hasGT) html += '<th>Expected</th><th>Detected &#10003;</th><th>Rate</th><th>Precision</th>';\n" +
+                "    if (showBenchmarkTime) html += '<th>Time</th>';\n" +
+                "    html += '<th>Details</th></tr></thead><tbody>';\n" +
+                "    for (const r of imgResult.sdkResults) {\n" +
+                "        const count = r.barcodes.length;\n" +
+                "        const isBest = count === maxCount && count > 0;\n" +
+                "        let detailHtml = '';\n" +
+                "        if (r.error) {\n" +
+                "            detailHtml = '<em style=\"color:#ef4444;\">Error: ' + escapeHtml(r.error) + '</em>';\n" +
+                "        } else if (count > 0) {\n" +
+                "            detailHtml = '<ul class=\"barcodes-list\">' + r.barcodes.map(b => '<li>[' + escapeHtml(b.format) + '] ' + escapeHtml(b.text || '') + (b.frame ? ' (frame ' + b.frame + ')' : '') + '</li>').join('') + '</ul>';\n" +
+                "        } else {\n" +
+                "            detailHtml = '<em>Nothing found</em>';\n" +
+                "        }\n" +
+                "        html += '<tr><td class=\"sdk-col\">' + escapeHtml(r.sdkLabel) + '</td>';\n" +
+                "        html += '<td class=\"count-col' + (isBest ? ' best-count' : '') + '\">' + count + '</td>';\n" +
+                "        if (hasGT) {\n" +
+                "            const gt = r.gtResult;\n" +
+                "            html += '<td class=\"count-col\">' + (gt ? gt.total : '-') + '</td>';\n" +
+                "            html += '<td class=\"count-col\">' + (gt ? gt.tp : '-') + '</td>';\n" +
+                "            html += '<td class=\"rate-col\">' + (gt ? '<span class=\"' + gtRateClass(gt.detectionRate) + '\">' + (gt.detectionRate * 100).toFixed(1) + '%</span>' : '<em>N/A</em>') + '</td>';\n" +
+                "            html += '<td class=\"rate-col\">' + (gt ? '<span class=\"' + gtRateClass(gt.precision) + '\">' + (gt.precision * 100).toFixed(1) + '%</span>' : '<em>N/A</em>') + '</td>';\n" +
+                "        }\n" +
+                "        if (showBenchmarkTime) html += '<td class=\"time-col\">' + r.time.toFixed(0) + ' ms</td>';\n" +
+                "        html += '<td>' + detailHtml + '</td></tr>';\n" +
+                "    }\n" +
+                "    html += '</tbody></table></div>';\n" +
+                "    return html;\n" +
+                "}\n" +
+                "\n" +
+                "// ===== Export Report =====\n" +
+                "function exportReport() {\n" +
+                "    if (benchmarkResults.length === 0) return;\n" +
+                "    const timestamp = new Date().toLocaleString();\n" +
+                "    const summaryHtml = batchSummary.innerHTML;\n" +
+                "    const detailsHtml = batchResults.innerHTML;\n" +
+                "    const fullPage = `<!DOCTYPE html>\n" +
+                "<html lang=\"en\">\n" +
+                "<head>\n" +
+                "<meta charset=\"UTF-8\">\n" +
+                "<meta name=\"viewport\" content=\"width=device-width,initial-scale=1.0\">\n" +
+                "<title>Barcode Benchmark Report</title>\n" +
+                "<style>\n" +
+                "*,*::before,*::after{box-sizing:border-box}\n" +
+                "body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#f8fafc;color:#1e293b;margin:0;padding:24px}\n" +
+                ".report-header{background:#fff;border-radius:12px;padding:24px 28px;margin-bottom:24px;box-shadow:0 1px 4px rgba(0,0,0,.08)}\n" +
+                ".report-header h1{margin:0 0 6px;font-size:1.6rem;color:#0f172a}\n" +
+                ".report-header p{margin:2px 0;font-size:0.88rem;color:#64748b}\n" +
+                ".benchmark-table-wrap{overflow-x:auto;margin-bottom:16px}\n" +
+                ".benchmark-table{width:100%;border-collapse:collapse;background:#fff;border-radius:8px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.07);font-size:0.88rem}\n" +
+                ".benchmark-table th{background:#f1f5f9;color:#475569;font-weight:600;text-align:left;padding:10px 14px;border-bottom:1px solid #e2e8f0}\n" +
+                ".benchmark-table td{padding:9px 14px;border-bottom:1px solid #f1f5f9;vertical-align:top}\n" +
+                ".benchmark-table tr:last-child td{border-bottom:none}\n" +
+                ".sdk-col{font-weight:600;white-space:nowrap}\n" +
+                ".count-col{text-align:center;font-weight:700;font-size:1.05em}\n" +
+                ".time-col{text-align:right;color:#64748b;white-space:nowrap}\n" +
+                ".rate-col{text-align:center}\n" +
+                ".best-count{color:#16a34a}\n" +
+                ".barcodes-list{list-style:none;padding:0;margin:0}\n" +
+                ".barcodes-list li{font-size:0.82rem;color:#334155;padding:2px 0}\n" +
+                ".gt-good{color:#16a34a;font-weight:700}\n" +
+                ".gt-ok{color:#ca8a04;font-weight:700}\n" +
+                ".gt-bad{color:#dc2626;font-weight:700}\n" +
+                ".benchmark-image-title{color:#1e293b;font-size:0.93rem;font-weight:700;margin:18px 0 6px}\n" +
+                ".benchmark-summary{background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:16px 18px;margin-bottom:20px}\n" +
+                ".benchmark-summary h4{color:#1e293b;font-size:0.95rem;margin-bottom:10px}\n" +
+                ".benchmark-summary ul{list-style:none;padding:0;margin:10px 0 0}\n" +
+                ".benchmark-summary ul li{font-size:0.88rem;color:#475569;padding:2px 0}\n" +
+                "</style>\n" +
+                "</head>\n" +
+                "<body>\n" +
+                "<div class=\\\"report-header\\\"><h1>Barcode Benchmark Report</h1><p>Generated: ${timestamp}</p><p>Files: ${benchmarkResults.length}</p></div>\n" +
+                "${summaryHtml}${detailsHtml}\n" +
+                "</body></html>`;\n" +
+                "    const blob = new Blob([fullPage], { type: 'text/html' });\n" +
+                "    const a = document.createElement('a');\n" +
+                "    a.href = URL.createObjectURL(blob);\n" +
+                "    a.download = 'benchmark_report_' + Date.now() + '.html';\n" +
+                "    a.click();\n" +
                 "}";
     }
 }

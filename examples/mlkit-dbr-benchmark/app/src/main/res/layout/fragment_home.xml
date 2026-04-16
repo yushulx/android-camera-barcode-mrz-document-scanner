@@ -344,6 +344,7 @@
             android:id="@+id/card_google"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginBottom="12dp"
             android:clickable="true"
             android:focusable="true"
             android:foreground="?android:attr/selectableItemBackground"
@@ -393,6 +394,77 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Free on-device vision API"
+                        android:textSize="13sp"
+                        android:textColor="#757575"
+                        android:layout_marginTop="2dp"/>
+
+                </LinearLayout>
+
+                <ImageView
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:src="@android:drawable/ic_menu_camera"
+                    app:tint="#BDBDBD"/>
+
+            </LinearLayout>
+
+        </androidx.cardview.widget.CardView>
+
+        <!-- ZXing-CPP Camera Card -->
+        <androidx.cardview.widget.CardView
+            android:id="@+id/card_zxing"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="12dp"
+            android:clickable="true"
+            android:focusable="true"
+            android:foreground="?android:attr/selectableItemBackground"
+            app:cardCornerRadius="12dp"
+            app:cardElevation="2dp"
+            app:cardBackgroundColor="#FFFFFF">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:padding="16dp"
+                android:gravity="center_vertical">
+
+                <LinearLayout
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:background="@drawable/circle_background_orange"
+                    android:gravity="center"
+                    android:layout_marginEnd="16dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Z"
+                        android:textSize="20sp"
+                        android:textStyle="bold"
+                        android:textColor="#FFFFFF"/>
+
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="ZXing-C++ Camera"
+                        android:textSize="17sp"
+                        android:textStyle="bold"
+                        android:textColor="#212121"/>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Open-source C++ barcode library"
                         android:textSize="13sp"
                         android:textColor="#757575"
                         android:layout_marginTop="2dp"/>

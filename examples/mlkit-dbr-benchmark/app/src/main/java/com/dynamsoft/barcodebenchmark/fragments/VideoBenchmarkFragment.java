@@ -44,6 +44,8 @@ import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import zxingcpp.BarcodeReader;
+
 public class VideoBenchmarkFragment extends Fragment {
 
     private MainViewModel viewModel;
@@ -65,6 +67,7 @@ public class VideoBenchmarkFragment extends Fragment {
     private ExecutorService executor;
     private CaptureVisionRouter cvRouter;
     private BarcodeScanner mlkitScanner;
+    private BarcodeReader zxingReader;
     private volatile boolean isCancelled = false;
 
     // Frame extraction interval in milliseconds (process 2 frames per second)
@@ -121,6 +124,11 @@ public class VideoBenchmarkFragment extends Fragment {
                 .setBarcodeFormats(Barcode.FORMAT_ALL_FORMATS)
                 .build();
         mlkitScanner = BarcodeScanning.getClient(options);
+
+        // Initialize ZXing-CPP reader
+        zxingReader = new BarcodeReader();
+        zxingReader.getOptions().setTryHarder(true);
+        zxingReader.getOptions().setTryRotate(true);
 
         btnSelectVideo.setOnClickListener(v -> videoPickerLauncher.launch("video/*"));
 
@@ -225,10 +233,18 @@ public class VideoBenchmarkFragment extends Fragment {
                 // Run MLkit benchmark
                 requireActivity().runOnUiThread(() -> {
                     tvProgressStatus.setText("Running MLkit benchmark...");
-                    progressVideo.setProgress(75);
+                    progressVideo.setProgress(67);
                 });
                 MainViewModel.BenchmarkResult mlkitResult = runMLkitVideoBenchmark(frames);
                 viewModel.mlkitResult = mlkitResult;
+
+                // Run ZXing-CPP benchmark
+                requireActivity().runOnUiThread(() -> {
+                    tvProgressStatus.setText("Running ZXing-C++ benchmark...");
+                    progressVideo.setProgress(84);
+                });
+                MainViewModel.BenchmarkResult zxingResult = runZXingCppVideoBenchmark(frames);
+                viewModel.zxingResult = zxingResult;
 
                 // Clean up bitmaps
                 for (Bitmap frame : frames) {
@@ -275,7 +291,7 @@ public class VideoBenchmarkFragment extends Fragment {
             
             final int frameIndex = i + 1;
             requireActivity().runOnUiThread(() -> {
-                int progress = 50 + (frameIndex * 25) / frames.size();
+                int progress = 50 + (frameIndex * 17) / frames.size();
                 progressVideo.setProgress(progress);
                 tvProgressDetail.setText("Dynamsoft: Frame " + frameIndex + "/" + frames.size());
             });
@@ -328,7 +344,7 @@ public class VideoBenchmarkFragment extends Fragment {
             
             final int frameIndex = i + 1;
             requireActivity().runOnUiThread(() -> {
-                int progress = 75 + (frameIndex * 25) / frames.size();
+                int progress = 67 + (frameIndex * 17) / frames.size();
                 progressVideo.setProgress(progress);
                 tvProgressDetail.setText("MLkit: Frame " + frameIndex + "/" + frames.size());
             });
@@ -358,6 +374,52 @@ public class VideoBenchmarkFragment extends Fragment {
                                     decodeTime,
                                     i
                             );
+                            result.barcodes.add(info);
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+
+        result.totalTimeMs = totalTime;
+        return result;
+    }
+
+    private MainViewModel.BenchmarkResult runZXingCppVideoBenchmark(List<Bitmap> frames) {
+        MainViewModel.BenchmarkResult result = new MainViewModel.BenchmarkResult("ZXing-C++");
+        result.framesProcessed = frames.size();
+
+        Set<String> uniqueBarcodes = new HashSet<>();
+        long totalTime = 0;
+
+        for (int i = 0; i < frames.size() && !isCancelled; i++) {
+            Bitmap frame = frames.get(i);
+
+            final int frameIndex = i + 1;
+            requireActivity().runOnUiThread(() -> {
+                int progress = 84 + (frameIndex * 16) / frames.size();
+                progressVideo.setProgress(progress);
+                tvProgressDetail.setText("ZXing-C++: Frame " + frameIndex + "/" + frames.size());
+            });
+
+            try {
+                long startTime = System.currentTimeMillis();
+                List<BarcodeReader.Result> barcodes = zxingReader.read(frame, new android.graphics.Rect(), 0);
+                long endTime = System.currentTimeMillis();
+                long decodeTime = endTime - startTime;
+                totalTime += decodeTime;
+
+                if (barcodes != null) {
+                    for (BarcodeReader.Result item : barcodes) {
+                        String format = item.getFormat().name();
+                        String text = item.getText() != null ? item.getText() : "";
+                        String key = format + ":" + text;
+                        if (!uniqueBarcodes.contains(key)) {
+                            uniqueBarcodes.add(key);
+                            MainViewModel.BarcodeInfo info = new MainViewModel.BarcodeInfo(
+                                    format, text, decodeTime, i);
                             result.barcodes.add(info);
                         }
                     }

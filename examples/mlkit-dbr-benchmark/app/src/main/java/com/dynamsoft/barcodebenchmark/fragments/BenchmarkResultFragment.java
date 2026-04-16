@@ -58,46 +58,53 @@ public class BenchmarkResultFragment extends Fragment {
         View timeCard = view.findViewById(R.id.card_time_comparison);
         TextView tvDynamsoftTime = view.findViewById(R.id.tv_dynamsoft_time);
         TextView tvMlkitTime = view.findViewById(R.id.tv_mlkit_time);
+        TextView tvZxingTime = view.findViewById(R.id.tv_zxing_time);
         ProgressBar progressDynamsoftTime = view.findViewById(R.id.progress_dynamsoft_time);
         ProgressBar progressMlkitTime = view.findViewById(R.id.progress_mlkit_time);
+        ProgressBar progressZxingTime = view.findViewById(R.id.progress_zxing_time);
 
         if (BenchmarkConfig.SHOW_BENCHMARK_TIME) {
             timeCard.setVisibility(View.VISIBLE);
             
             long dynamsoftTime = viewModel.dynamsoftResult != null ? viewModel.dynamsoftResult.totalTimeMs : 0;
             long mlkitTime = viewModel.mlkitResult != null ? viewModel.mlkitResult.totalTimeMs : 0;
+            long zxingTime = viewModel.zxingResult != null ? viewModel.zxingResult.totalTimeMs : 0;
             
-            if (viewModel.benchmarkMode.equals("video") && viewModel.dynamsoftResult != null && viewModel.mlkitResult != null) {
-                // Show average time for video
-                double dynamsoftAvg = viewModel.dynamsoftResult.getAvgTimePerFrame();
-                double mlkitAvg = viewModel.mlkitResult.getAvgTimePerFrame();
+            if (viewModel.benchmarkMode.equals("video")) {
+                double dynamsoftAvg = viewModel.dynamsoftResult != null ? viewModel.dynamsoftResult.getAvgTimePerFrame() : 0;
+                double mlkitAvg = viewModel.mlkitResult != null ? viewModel.mlkitResult.getAvgTimePerFrame() : 0;
+                double zxingAvg = viewModel.zxingResult != null ? viewModel.zxingResult.getAvgTimePerFrame() : 0;
                 tvDynamsoftTime.setText(String.format("%.1f ms/frame (total: %d ms)", dynamsoftAvg, dynamsoftTime));
                 tvMlkitTime.setText(String.format("%.1f ms/frame (total: %d ms)", mlkitAvg, mlkitTime));
+                tvZxingTime.setText(String.format("%.1f ms/frame (total: %d ms)", zxingAvg, zxingTime));
             } else {
                 tvDynamsoftTime.setText(dynamsoftTime + " ms");
                 tvMlkitTime.setText(mlkitTime + " ms");
+                tvZxingTime.setText(zxingTime + " ms");
             }
 
-            // Calculate progress bar values (winner gets 100%, loser gets proportional)
-            long maxTime = Math.max(dynamsoftTime, mlkitTime);
+            long maxTime = Math.max(dynamsoftTime, Math.max(mlkitTime, zxingTime));
             if (maxTime > 0) {
                 progressDynamsoftTime.setProgress((int) (dynamsoftTime * 100 / maxTime));
                 progressMlkitTime.setProgress((int) (mlkitTime * 100 / maxTime));
+                progressZxingTime.setProgress((int) (zxingTime * 100 / maxTime));
             }
         } else {
-            // Hide entire time card when benchmark time is disabled
             timeCard.setVisibility(View.GONE);
         }
 
         // Detection count
         TextView tvDynamsoftCount = view.findViewById(R.id.tv_dynamsoft_count);
         TextView tvMlkitCount = view.findViewById(R.id.tv_mlkit_count);
+        TextView tvZxingCount = view.findViewById(R.id.tv_zxing_count);
 
         int dynamsoftCount = viewModel.dynamsoftResult != null ? viewModel.dynamsoftResult.barcodes.size() : 0;
         int mlkitCount = viewModel.mlkitResult != null ? viewModel.mlkitResult.barcodes.size() : 0;
+        int zxingCount = viewModel.zxingResult != null ? viewModel.zxingResult.barcodes.size() : 0;
 
         tvDynamsoftCount.setText(String.valueOf(dynamsoftCount));
         tvMlkitCount.setText(String.valueOf(mlkitCount));
+        tvZxingCount.setText(String.valueOf(zxingCount));
 
         // Video stats
         LinearLayout layoutVideoStats = view.findViewById(R.id.layout_video_stats);
@@ -112,8 +119,8 @@ public class BenchmarkResultFragment extends Fragment {
         // Populate barcode lists
         LinearLayout layoutDynamsoftBarcodes = view.findViewById(R.id.layout_dynamsoft_barcodes);
         LinearLayout layoutMlkitBarcodes = view.findViewById(R.id.layout_mlkit_barcodes);
+        LinearLayout layoutZxingBarcodes = view.findViewById(R.id.layout_zxing_barcodes);
 
-        // Clear default "no barcodes" text if we have results
         if (dynamsoftCount > 0) {
             layoutDynamsoftBarcodes.removeAllViews();
             for (MainViewModel.BarcodeInfo info : viewModel.dynamsoftResult.barcodes) {
@@ -125,6 +132,13 @@ public class BenchmarkResultFragment extends Fragment {
             layoutMlkitBarcodes.removeAllViews();
             for (MainViewModel.BarcodeInfo info : viewModel.mlkitResult.barcodes) {
                 addBarcodeView(layoutMlkitBarcodes, info, "#4CAF50");
+            }
+        }
+
+        if (zxingCount > 0) {
+            layoutZxingBarcodes.removeAllViews();
+            for (MainViewModel.BarcodeInfo info : viewModel.zxingResult.barcodes) {
+                addBarcodeView(layoutZxingBarcodes, info, "#FF6F00");
             }
         }
 

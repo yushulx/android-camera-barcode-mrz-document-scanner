@@ -23,6 +23,9 @@
         <action
             android:id="@+id/action_home_to_mlkitScanner"
             app:destination="@id/MLkitScannerFragment" />
+        <action
+            android:id="@+id/action_home_to_zxingScanner"
+            app:destination="@id/ZXingCppScannerFragment" />
     </fragment>
 
     <!-- Image Benchmark Fragment -->
@@ -73,5 +76,12 @@
         android:name="com.dynamsoft.barcodebenchmark.fragments.MLkitScannerFragment"
         android:label="MLkit Scanner"
         tools:layout="@layout/fragment_mlkit_scanner" />
+
+    <!-- ZXing-CPP Scanner Fragment -->
+    <fragment
+        android:id="@+id/ZXingCppScannerFragment"
+        android:name="com.dynamsoft.barcodebenchmark.fragments.ZXingCppScannerFragment"
+        android:label="ZXing-C++ Scanner"
+        tools:layout="@layout/fragment_zxingcpp_scanner" />
 
 </navigation>

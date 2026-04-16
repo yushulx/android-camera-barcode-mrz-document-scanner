@@ -53,6 +53,10 @@ dependencies {
     implementation 'com.google.mlkit:barcode-scanning:17.3.0'
     // NanoHTTPD for embedded web server
     implementation 'org.nanohttpd:nanohttpd:2.3.1'
+    // ZXing-C++ Android wrapper (exclude transitive CameraX which requires minSdk 23 + AGP 8.6)
+    implementation('io.github.zxing-cpp:android:3.0.2') {
+        exclude group: 'androidx.camera'
+    }
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.1.5'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'

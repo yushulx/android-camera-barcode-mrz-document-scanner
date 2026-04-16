@@ -98,6 +98,13 @@ public class HomeFragment extends Fragment {
             Navigation.findNavController(v).navigate(R.id.action_home_to_mlkitScanner);
         });
 
+        // ZXing-CPP camera card
+        CardView cardZXing = view.findViewById(R.id.card_zxing);
+        cardZXing.setOnClickListener(v -> {
+            viewModel.benchmarkMode = "camera";
+            Navigation.findNavController(v).navigate(R.id.action_home_to_zxingScanner);
+        });
+
         // Web Server
         switchServer = view.findViewById(R.id.switch_server);
         serverStatusPanel = view.findViewById(R.id.server_status_panel);

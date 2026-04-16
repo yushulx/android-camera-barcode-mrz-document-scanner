@@ -25,6 +25,9 @@ public class MainViewModel extends ViewModel {
     
     // MLkit benchmark results
     public BenchmarkResult mlkitResult;
+
+    // ZXing-CPP benchmark results
+    public BenchmarkResult zxingResult;
     
     // Camera scan results (for real-time display)
     public List<BarcodeInfo> cameraScanResults = new ArrayList<>();
@@ -32,6 +35,7 @@ public class MainViewModel extends ViewModel {
     public void reset() {
         dynamsoftResult = null;
         mlkitResult = null;
+        zxingResult = null;
         cameraScanResults.clear();
         sourceFileUri = null;
     }

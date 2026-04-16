@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#000000">
+
+    <com.dynamsoft.barcodebenchmark.google.ui.camera.CameraSourcePreview
+        android:id="@+id/preview"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintBottom_toTopOf="@id/resultPanel"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <com.dynamsoft.barcodebenchmark.google.ui.camera.GraphicOverlay
+            android:id="@+id/graphicOverlay"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+    </com.dynamsoft.barcodebenchmark.google.ui.camera.CameraSourcePreview>
+
+    <!-- Stats overlay at top -->
+    <LinearLayout
+        android:id="@+id/statsOverlay"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="#80000000"
+        android:orientation="vertical"
+        android:padding="12dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="ZXing-C++ Barcode Scanner"
+            android:textColor="#FF9800"
+            android:textSize="16sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/tv_resolution"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Resolution: --"
+            android:textColor="#FFFFFF"
+            android:textSize="12sp" />
+
+        <TextView
+            android:id="@+id/tv_stats"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Barcodes found: 0 | Time: 0s"
+            android:textColor="#AAAAAA"
+            android:textSize="12sp" />
+    </LinearLayout>
+
+    <!-- Result panel at bottom -->
+    <LinearLayout
+        android:id="@+id/resultPanel"
+        android:layout_width="match_parent"
+        android:layout_height="180dp"
+        android:background="#F5F5F5"
+        android:orientation="vertical"
+        android:padding="16dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Detected Barcodes"
+            android:textColor="#333333"
+            android:textSize="14sp"
+            android:textStyle="bold" />
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_marginTop="8dp"
+            android:layout_marginBottom="8dp"
+            android:background="#FF9800" />
+
+        <ScrollView
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1">
+
+            <TextView
+                android:id="@+id/tv_barcode_result"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:fontFamily="monospace"
+                android:text="Point camera at a barcode..."
+                android:textColor="#666666"
+                android:textSize="13sp" />
+        </ScrollView>
+
+    </LinearLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>
