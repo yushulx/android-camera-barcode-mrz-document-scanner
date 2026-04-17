@@ -61,8 +61,8 @@ public class ImageBenchmarkFragment extends Fragment {
     private BarcodeScanner mlkitScanner;
     private BarcodeReader zxingReader;
 
-    private final ActivityResultLauncher<String> imagePickerLauncher = registerForActivityResult(
-            new ActivityResultContracts.GetContent(),
+    private final ActivityResultLauncher<String[]> imagePickerLauncher = registerForActivityResult(
+            new ActivityResultContracts.OpenDocument(),
             uri -> {
                 if (uri != null) {
                     loadImage(uri);
@@ -113,7 +113,8 @@ public class ImageBenchmarkFragment extends Fragment {
         zxingReader.getOptions().setTryHarder(true);
         zxingReader.getOptions().setTryRotate(true);
 
-        btnSelectImage.setOnClickListener(v -> imagePickerLauncher.launch("image/*"));
+        btnSelectImage.setOnClickListener(v -> imagePickerLauncher.launch(
+                new String[]{"image/jpeg", "image/png", "image/webp", "image/bmp", "image/gif", "image/tiff"}));
 
         btnRunBenchmark.setOnClickListener(v -> runBenchmark());
     }

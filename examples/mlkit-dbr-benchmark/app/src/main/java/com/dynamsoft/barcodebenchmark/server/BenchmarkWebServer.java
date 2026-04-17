@@ -101,7 +101,7 @@ public class BenchmarkWebServer extends NanoHTTPD {
                 return handleAnnotationsUpload(session);
             } else if (uri.equals("/api/config")) {
                 return newFixedLengthResponse(Response.Status.OK, "application/json",
-                    "{\"showBenchmarkTime\":" + BenchmarkConfig.SHOW_BENCHMARK_TIME +
+                    "{\"showBenchmarkTime\":true" +
                     ",\"hasTemplate\":" + (uploadedTemplate != null) +
                     ",\"hasAnnotations\":" + (annotationsData != null) + "}");
             } else if (uri.equals("/api/status")) {
@@ -343,9 +343,7 @@ public class BenchmarkWebServer extends NanoHTTPD {
 
         if (cvRouter == null) {
             result.put("error", "Dynamsoft not initialized");
-            if (BenchmarkConfig.SHOW_BENCHMARK_TIME) {
-                result.put("timeMs", 0);
-            }
+            result.put("timeMs", 0);
             result.put("barcodes", barcodes);
             return result;
         }
@@ -355,9 +353,7 @@ public class BenchmarkWebServer extends NanoHTTPD {
         CapturedResult capturedResult = cvRouter.capture(bitmap, templateName);
         long endTime = System.currentTimeMillis();
 
-        if (BenchmarkConfig.SHOW_BENCHMARK_TIME) {
-            result.put("timeMs", endTime - startTime);
-        }
+        result.put("timeMs", endTime - startTime);
 
         if (capturedResult != null) {
             DecodedBarcodesResult barcodesResult = capturedResult.getDecodedBarcodesResult();
@@ -382,9 +378,7 @@ public class BenchmarkWebServer extends NanoHTTPD {
 
         if (mlkitScanner == null) {
             result.put("error", "MLkit not initialized");
-            if (BenchmarkConfig.SHOW_BENCHMARK_TIME) {
-                result.put("timeMs", 0);
-            }
+            result.put("timeMs", 0);
             result.put("barcodes", barcodes);
             return result;
         }
@@ -395,9 +389,7 @@ public class BenchmarkWebServer extends NanoHTTPD {
         List<Barcode> detected = Tasks.await(mlkitScanner.process(image));
         long endTime = System.currentTimeMillis();
 
-        if (BenchmarkConfig.SHOW_BENCHMARK_TIME) {
-            result.put("timeMs", endTime - startTime);
-        }
+        result.put("timeMs", endTime - startTime);
 
         if (detected != null) {
             for (Barcode barcode : detected) {
@@ -421,9 +413,7 @@ public class BenchmarkWebServer extends NanoHTTPD {
 
         if (cvRouter == null) {
             result.put("error", "Dynamsoft not initialized");
-            if (BenchmarkConfig.SHOW_BENCHMARK_TIME) {
-                result.put("timeMs", 0);
-            }
+            result.put("timeMs", 0);
             result.put("barcodes", barcodes);
             result.put("framesProcessed", 0);
             return result;
@@ -456,9 +446,7 @@ public class BenchmarkWebServer extends NanoHTTPD {
             }
         }
 
-        if (BenchmarkConfig.SHOW_BENCHMARK_TIME) {
-            result.put("timeMs", totalTime);
-        }
+        result.put("timeMs", totalTime);
         result.put("barcodes", barcodes);
         result.put("count", barcodes.length());
         result.put("framesProcessed", frames.size());
@@ -473,9 +461,7 @@ public class BenchmarkWebServer extends NanoHTTPD {
 
         if (mlkitScanner == null) {
             result.put("error", "MLkit not initialized");
-            if (BenchmarkConfig.SHOW_BENCHMARK_TIME) {
-                result.put("timeMs", 0);
-            }
+            result.put("timeMs", 0);
             result.put("barcodes", barcodes);
             result.put("framesProcessed", 0);
             return result;
@@ -505,9 +491,7 @@ public class BenchmarkWebServer extends NanoHTTPD {
             }
         }
 
-        if (BenchmarkConfig.SHOW_BENCHMARK_TIME) {
-            result.put("timeMs", totalTime);
-        }
+        result.put("timeMs", totalTime);
         result.put("barcodes", barcodes);
         result.put("count", barcodes.length());
         result.put("framesProcessed", frames.size());
@@ -520,7 +504,7 @@ public class BenchmarkWebServer extends NanoHTTPD {
 
         if (zxingReader == null) {
             result.put("error", "ZXing-C++ not initialized");
-            if (BenchmarkConfig.SHOW_BENCHMARK_TIME) result.put("timeMs", 0);
+            result.put("timeMs", 0);
             result.put("barcodes", barcodes);
             return result;
         }
@@ -529,9 +513,7 @@ public class BenchmarkWebServer extends NanoHTTPD {
         List<BarcodeReader.Result> detected = zxingReader.read(bitmap, new android.graphics.Rect(), 0);
         long endTime = System.currentTimeMillis();
 
-        if (BenchmarkConfig.SHOW_BENCHMARK_TIME) {
-            result.put("timeMs", endTime - startTime);
-        }
+        result.put("timeMs", endTime - startTime);
 
         if (detected != null) {
             for (BarcodeReader.Result item : detected) {
@@ -555,7 +537,7 @@ public class BenchmarkWebServer extends NanoHTTPD {
 
         if (zxingReader == null) {
             result.put("error", "ZXing-C++ not initialized");
-            if (BenchmarkConfig.SHOW_BENCHMARK_TIME) result.put("timeMs", 0);
+            result.put("timeMs", 0);
             result.put("barcodes", barcodes);
             result.put("framesProcessed", 0);
             return result;
@@ -585,9 +567,7 @@ public class BenchmarkWebServer extends NanoHTTPD {
             }
         }
 
-        if (BenchmarkConfig.SHOW_BENCHMARK_TIME) {
-            result.put("timeMs", totalTime);
-        }
+        result.put("timeMs", totalTime);
         result.put("barcodes", barcodes);
         result.put("count", barcodes.length());
         result.put("framesProcessed", frames.size());
@@ -1313,7 +1293,7 @@ public class BenchmarkWebServer extends NanoHTTPD {
                 "    const hasAnyGT = allResults.some(r => r.sdkResults.some(s => s.gtResult !== null));\n" +
                 "    const aggMap = {};\n" +
                 "    for (const key of sdkKeys) {\n" +
-                "        aggMap[key] = { total: 0, time: 0, tp: 0, expected: 0, fp: 0 };\n" +
+                "        aggMap[key] = { total: 0, time: 0, tp: 0, expected: 0, fp: 0, uniqueTexts: new Set() };\n" +
                 "    }\n" +
                 "    for (const img of allResults) {\n" +
                 "        for (let i = 0; i < sdkKeys.length; i++) {\n" +
@@ -1321,14 +1301,15 @@ public class BenchmarkWebServer extends NanoHTTPD {
                 "            const r = img.sdkResults[i];\n" +
                 "            aggMap[key].total += r.barcodes.length;\n" +
                 "            aggMap[key].time += r.time;\n" +
+                "            r.barcodes.forEach(b => { if (b.text) aggMap[key].uniqueTexts.add(b.text.trim()); });\n" +
                 "            if (r.gtResult) { aggMap[key].tp += r.gtResult.tp; aggMap[key].expected += r.gtResult.total; aggMap[key].fp += r.gtResult.fp; }\n" +
                 "        }\n" +
                 "    }\n" +
                 "    let html = '<div class=\"benchmark-summary\">';\n" +
                 "    html += '<h4>Aggregate Summary (' + allResults.length + ' file(s))</h4>';\n" +
-                "    html += '<div class=\"benchmark-table-wrap\"><table class=\"benchmark-table\"><thead><tr><th>SDK</th><th>Total Found</th>';\n" +
+                "    html += '<div class=\"benchmark-table-wrap\"><table class=\"benchmark-table\"><thead><tr><th>SDK</th><th>Total Found</th><th>Unique Barcodes</th>';\n" +
                 "    if (hasAnyGT) html += '<th>GT Expected</th><th>GT Detected</th><th>Detection Rate</th><th>Precision</th>';\n" +
-                "    if (showBenchmarkTime) html += '<th>Total Time</th>';\n" +
+                "    if (showBenchmarkTime) html += '<th>Total Time</th><th>Avg Time/Image</th>';\n" +
                 "    html += '</tr></thead><tbody>';\n" +
                 "    const maxTotal = Math.max(...sdkKeys.map(k => aggMap[k].total));\n" +
                 "    for (const key of sdkKeys) {\n" +
@@ -1338,16 +1319,42 @@ public class BenchmarkWebServer extends NanoHTTPD {
                 "        const prec = (a.tp + a.fp) > 0 ? a.tp / (a.tp + a.fp) : null;\n" +
                 "        html += '<tr><td class=\"sdk-col\">' + escapeHtml(sdkLabels[key]) + '</td>';\n" +
                 "        html += '<td class=\"count-col' + (isBest ? ' best-count' : '') + '\">' + a.total + '</td>';\n" +
+                "        html += '<td class=\"count-col\">' + a.uniqueTexts.size + '</td>';\n" +
                 "        if (hasAnyGT) {\n" +
                 "            html += '<td class=\"count-col\">' + a.expected + '</td>';\n" +
                 "            html += '<td class=\"count-col\">' + a.tp + '</td>';\n" +
                 "            html += '<td class=\"rate-col\">' + (detRate !== null ? '<span class=\"' + gtRateClass(detRate) + '\">' + (detRate * 100).toFixed(1) + '%</span>' : '<em>N/A</em>') + '</td>';\n" +
                 "            html += '<td class=\"rate-col\">' + (prec !== null ? '<span class=\"' + gtRateClass(prec) + '\">' + (prec * 100).toFixed(1) + '%</span>' : '<em>N/A</em>') + '</td>';\n" +
                 "        }\n" +
-                "        if (showBenchmarkTime) html += '<td class=\"time-col\">' + a.time.toFixed(0) + ' ms</td>';\n" +
+                "        if (showBenchmarkTime) html += '<td class=\"time-col\">' + a.time.toFixed(0) + ' ms</td><td class=\"time-col\">' + (allResults.length > 0 ? (a.time / allResults.length).toFixed(0) : 0) + ' ms</td>';\n" +
                 "        html += '</tr>';\n" +
                 "    }\n" +
-                "    html += '</tbody></table></div></div>';\n" +
+                "    html += '</tbody></table></div>';\n" +
+                "    const allUnique = new Set();\n" +
+                "    sdkKeys.forEach(k => aggMap[k].uniqueTexts.forEach(t => allUnique.add(t)));\n" +
+                "    const maxUnique = Math.max(...sdkKeys.map(k => aggMap[k].uniqueTexts.size));\n" +
+                "    const mostBarcodes = sdkKeys.filter(k => aggMap[k].total === maxTotal && maxTotal > 0);\n" +
+                "    const mostUnique = sdkKeys.filter(k => aggMap[k].uniqueTexts.size === maxUnique && maxUnique > 0);\n" +
+                "    let bulletsHtml = '<ul>';\n" +
+                "    bulletsHtml += '<li><strong>' + allUnique.size + '</strong> unique barcode(s) found across all SDKs and images</li>';\n" +
+                "    if (mostBarcodes.length > 0) bulletsHtml += '<li>Most barcodes: <strong>' + mostBarcodes.map(k => escapeHtml(sdkLabels[k])).join(', ') + '</strong> (' + maxTotal + ')</li>';\n" +
+                "    if (mostUnique.length > 0) bulletsHtml += '<li>Most unique barcodes: <strong>' + mostUnique.map(k => escapeHtml(sdkLabels[k])).join(', ') + '</strong> (' + maxUnique + ')</li>';\n" +
+                "    if (hasAnyGT) {\n" +
+                "        const maxRate = Math.max(...sdkKeys.map(k => aggMap[k].expected > 0 ? aggMap[k].tp / aggMap[k].expected : 0));\n" +
+                "        const bestRateSDKs = sdkKeys.filter(k => aggMap[k].expected > 0 && Math.abs(aggMap[k].tp / aggMap[k].expected - maxRate) < 0.0001 && maxRate > 0);\n" +
+                "        if (bestRateSDKs.length > 0) bulletsHtml += '<li>Best detection rate: <strong>' + bestRateSDKs.map(k => escapeHtml(sdkLabels[k])).join(', ') + '</strong> (' + (maxRate * 100).toFixed(1) + '%)</li>';\n" +
+                "    }\n" +
+                "    if (showBenchmarkTime) {\n" +
+                "        const timesWithData = sdkKeys.filter(k => aggMap[k].time > 0);\n" +
+                "        if (timesWithData.length > 0) {\n" +
+                "            const minTime = Math.min(...timesWithData.map(k => aggMap[k].time));\n" +
+                "            const fastestSDKs = timesWithData.filter(k => aggMap[k].time === minTime);\n" +
+                "            bulletsHtml += '<li>Fastest: <strong>' + fastestSDKs.map(k => escapeHtml(sdkLabels[k])).join(', ') + '</strong> (' + minTime.toFixed(0) + ' ms total)</li>';\n" +
+                "        }\n" +
+                "    }\n" +
+                "    bulletsHtml += '</ul>';\n" +
+                "    html += bulletsHtml;\n" +
+                "    html += '</div>';\n" +
                 "    return html;\n" +
                 "}\n" +
                 "\n" +
