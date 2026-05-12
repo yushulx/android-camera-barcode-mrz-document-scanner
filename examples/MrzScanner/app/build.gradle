@@ -36,7 +36,7 @@ android {
 
 dependencies {
     // Dynamsoft MRZ Scanner SDK
-    implementation 'com.dynamsoft:mrzscannerbundle:3.2.5000'
+    implementation 'com.dynamsoft:mrzscannerbundle:3.4.1200'
 
     // Google ML Kit - Document Scanner
     implementation 'com.google.android.gms:play-services-mlkit-document-scanner:16.0.0-beta1'
