@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    
+    <!-- Passport/ID Card Document -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M30,26 L78,26 C80.2,26 82,27.8 82,30 L82,78 C82,80.2 80.2,82 78,82 L30,82 C27.8,82 26,80.2 26,78 L26,30 C26,27.8 27.8,26 30,26 Z"/>
+    
+    <!-- Document Border/Shadow -->
+    <path
+        android:fillColor="#E0E0E0"
+        android:pathData="M30,26 L78,26 C80.2,26 82,27.8 82,30 L82,78 C82,80.2 80.2,82 78,82 L30,82 C27.8,82 26,80.2 26,78 L26,30 C26,27.8 27.8,26 30,26 Z"
+        android:strokeWidth="2"
+        android:strokeColor="#B0BEC5"/>
+    
+    <!-- Photo Area -->
+    <path
+        android:fillColor="#90CAF9"
+        android:pathData="M32,32 h18 v22 h-18 z"/>
+    
+    <!-- Simple Face Icon in Photo -->
+    <path
+        android:fillColor="#1976D2"
+        android:pathData="M41,38 m-4,0 a4,4 0,1,1 8,0 a4,4 0,1,1 -8,0"/>
+    <path
+        android:fillColor="#1976D2"
+        android:pathData="M37,46 Q37,49 41,50 Q45,49 45,46"/>
+    
+    <!-- Personal Data Lines -->
+    <path
+        android:fillColor="#BDBDBD"
+        android:pathData="M54,34 h22 v2 h-22 z"/>
+    <path
+        android:fillColor="#BDBDBD"
+        android:pathData="M54,39 h18 v2 h-18 z"/>
+    <path
+        android:fillColor="#BDBDBD"
+        android:pathData="M54,44 h20 v2 h-20 z"/>
+    <path
+        android:fillColor="#BDBDBD"
+        android:pathData="M54,49 h16 v2 h-16 z"/>
+    <path
+        android:fillColor="#BDBDBD"
+        android:pathData="M32,58 h44 v2 h-44 z"/>
+    
+    <!-- MRZ Zone (Dark Background) -->
+    <path
+        android:fillColor="#37474F"
+        android:pathData="M30,66 L78,66 L78,78 C78,80.2 76.2,82 78,82 L30,82 C27.8,82 26,80.2 26,78 L26,66 L30,66 Z"/>
+    
+    <!-- MRZ Lines (Machine Readable Zone with characteristic green color) -->
+    <path
+        android:fillColor="#00E676"
+        android:pathData="M32,69 h42 v1.5 h-42 z"/>
+    <path
+        android:fillColor="#00E676"
+        android:pathData="M32,72 h42 v1.5 h-42 z"/>
+    <path
+        android:fillColor="#00E676"
+        android:pathData="M32,75 h42 v1.5 h-42 z"/>
+    
+    <!-- Scanner Laser Line (Red scanning beam) -->
+    <path
+        android:fillColor="#FF5252"
+        android:pathData="M22,52 h64 v2.5 h-64 z"/>
+    
+    <!-- Laser Glow Effect -->
+    <path
+        android:fillColor="#FF5252"
+        android:fillAlpha="0.2"
+        android:pathData="M22,48 h64 v10 h-64 z"/>
+    
+    <!-- Corner Brackets (Scanning Frame) -->
+    <!-- Top Left -->
+    <path
+        android:strokeColor="#FF5252"
+        android:strokeWidth="2.5"
+        android:pathData="M26,26 L26,36 M26,26 L36,26"/>
+    <!-- Top Right -->
+    <path
+        android:strokeColor="#FF5252"
+        android:strokeWidth="2.5"
+        android:pathData="M82,26 L82,36 M82,26 L72,26"/>
+    <!-- Bottom Left -->
+    <path
+        android:strokeColor="#FF5252"
+        android:strokeWidth="2.5"
+        android:pathData="M26,82 L26,72 M26,82 L36,82"/>
+    <!-- Bottom Right -->
+    <path
+        android:strokeColor="#FF5252"
+        android:strokeWidth="2.5"
+        android:pathData="M82,82 L82,72 M82,82 L72,82"/>
+
+</vector>

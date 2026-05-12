@@ -1,0 +1,61 @@
+<resources>
+    <string name="app_name">MRZ Scanner Pro</string>
+    <string name="mrz_scanner">MRZ Scanner</string>
+    <string name="description">Scan and extract passport, ID card, and VISA information using advanced Machine-Readable Zone (MRZ) recognition technology.</string>
+    <string name="scan_mrz">Scan MRZ</string>
+
+    <!-- Home Screen -->
+    <string name="welcome_title">Welcome to MRZ Scanner</string>
+    <string name="welcome_subtitle">Scan passports, ID cards, and VISAs with ease</string>
+    <string name="live_scan_title">Live Camera Scan</string>
+    <string name="live_scan_description">Real-time MRZ detection using Dynamsoft SDK. Point your camera at the MRZ zone.</string>
+    <string name="features_title">Features</string>
+    <string name="feature_passport">Passports</string>
+    <string name="feature_id">ID Cards</string>
+    <string name="feature_visa">VISAs</string>
+    <string name="version_info">Version 2.0</string>
+    <string name="powered_by">Powered by Dynamsoft Capture Vision SDK</string>
+
+    <!-- Scan Screen -->
+    <string name="scan_instruction">Position the MRZ zone within the frame</string>
+    <string name="scanning_status">Scanning for MRZ…</string>
+    <string name="mrz_detected">MRZ Detected</string>
+    <string name="parsing_mrz">Parsing MRZ data…</string>
+    <string name="scan_success">Scan successful!</string>
+    <string name="scan_failed">Scan failed. Please try again.</string>
+
+    <!-- Result Screen -->
+    <string name="scan_result">Scan Result</string>
+    <string name="document_info">Document Information</string>
+    <string name="personal_info">Personal Information</string>
+    <string name="mrz_raw_data">MRZ Raw Data</string>
+    <string name="processing">Processing document…</string>
+    <string name="detecting_face">Detecting face…</string>
+    <string name="extracting_text">Extracting text…</string>
+    <string name="parsing_result">Parsing results…</string>
+    <string name="no_face_detected">No face detected</string>
+    <string name="no_mrz_found">No MRZ found in document</string>
+
+    <!-- Field Labels -->
+    <string name="field_document_type">Document Type</string>
+    <string name="field_name">Name</string>
+    <string name="field_sex">Sex</string>
+    <string name="field_age">Age</string>
+    <string name="field_nationality">Nationality</string>
+    <string name="field_document_number">Document Number</string>
+    <string name="field_issuing_state">Issuing State</string>
+    <string name="field_date_of_birth">Date of Birth</string>
+    <string name="field_date_of_expiry">Date of Expiry</string>
+
+    <!-- Actions -->
+    <string name="action_scan_again">Scan Again</string>
+    <string name="action_share">Share</string>
+    <string name="action_copy">Copy</string>
+    <string name="action_save">Save</string>
+
+    <!-- Errors -->
+    <string name="error_camera_permission">Camera permission is required to scan documents</string>
+    <string name="error_scanner_init">Failed to initialize scanner</string>
+    <string name="error_parse_failed">Failed to parse MRZ data</string>
+    <string name="error_no_document">No document detected</string>
+</resources>
