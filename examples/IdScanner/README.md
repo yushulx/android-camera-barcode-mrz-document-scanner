@@ -61,3 +61,6 @@ IdScanner/
 ├── settings.gradle                  # Root project name
 └── gradle.properties
 ```
+
+## Blog
+[Build an Android Passport Scanner with MRZ and Portrait Detection](https://www.dynamsoft.com/codepool/android-mrz-scanner-app-face-detection.html)
