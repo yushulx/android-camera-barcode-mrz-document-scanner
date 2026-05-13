@@ -2,6 +2,8 @@
 
 A real-time Android passport, ID card, and VISA scanner that extracts Machine-Readable Zone (MRZ) data and detects portrait photos using the **Dynamsoft Capture Vision** SDK.
 
+https://github.com/user-attachments/assets/579e96cd-b7a9-44c3-8816-5419fee637f3
+
 ## Features
 
 - **Live Camera MRZ Scanning** — point the camera at a passport or ID card MRZ zone and get instant results
