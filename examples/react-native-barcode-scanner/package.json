@@ -10,8 +10,8 @@
     "test": "jest"
   },
   "dependencies": {
-    "dynamsoft-barcode-reader-bundle-react-native": "^11.0.3100",
-    "dynamsoft-capture-vision-react-native": "^3.0.3100",
+    "dynamsoft-barcode-reader-bundle-react-native": "^11.4.1200",
+    "dynamsoft-capture-vision-react-native": "^3.4.1200",
     "react": "19.0.0",
     "react-native": "0.79.0"
   },
