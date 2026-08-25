@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:keepScreenOn="true"
+    android:orientation="vertical">
+
+  <!-- The preview area gets the fixed remaining space; the result panel below has a
+       fixed height with its own scrolling so the preview never resizes while the
+       engines report results frame by frame. -->
+  <FrameLayout
+      android:layout_width="match_parent"
+      android:layout_height="0dp"
+      android:layout_weight="1">
+
+    <androidx.camera.view.PreviewView
+        android:id="@+id/preview_view"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+    <com.google.mlkit.vision.demo.GraphicOverlay
+        android:id="@+id/graphic_overlay"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+  </FrameLayout>
+
+  <LinearLayout
+      android:layout_width="match_parent"
+      android:layout_height="180dp"
+      android:orientation="vertical"
+      android:background="#f1f1f1"
+      android:padding="4dp">
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:scrollbars="vertical">
+
+      <LinearLayout
+          android:layout_width="match_parent"
+          android:layout_height="wrap_content"
+          android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/dynamsoft_result"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="#0b7d00"
+            android:textSize="14sp"
+            android:padding="4dp"
+            android:text="Dynamsoft: waiting" />
+
+        <TextView
+            android:id="@+id/mlkit_result"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="#b00020"
+            android:textSize="14sp"
+            android:padding="4dp"
+            android:text="ML Kit: waiting" />
+      </LinearLayout>
+    </ScrollView>
+
+    <Button
+        android:id="@+id/back_button"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:text="Back to still image" />
+  </LinearLayout>
+</LinearLayout>

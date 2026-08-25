@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:keepScreenOn="true">
+
+  <!-- The image area is a fixed slot; the result panel below has a fixed height with
+       its own scrolling so that updating results never resizes the image area and the
+       graphic overlay stays aligned with the displayed image. -->
+  <ImageView
+      android:id="@+id/preview"
+      android:layout_width="0dp"
+      android:layout_height="0dp"
+      android:adjustViewBounds="true"
+      android:scaleType="fitCenter"
+      app:layout_constraintBottom_toTopOf="@+id/result_panel"
+      app:layout_constraintEnd_toEndOf="parent"
+      app:layout_constraintStart_toStartOf="parent"
+      app:layout_constraintTop_toTopOf="parent"
+      android:contentDescription="@string/select_image" />
+
+  <com.google.mlkit.vision.demo.GraphicOverlay
+      android:id="@+id/graphic_overlay"
+      android:layout_width="0dp"
+      android:layout_height="0dp"
+      app:layout_constraintLeft_toLeftOf="@id/preview"
+      app:layout_constraintRight_toRightOf="@id/preview"
+      app:layout_constraintTop_toTopOf="@id/preview"
+      app:layout_constraintBottom_toBottomOf="@id/preview"/>
+
+  <LinearLayout
+      android:id="@+id/result_panel"
+      android:layout_width="match_parent"
+      android:layout_height="180dp"
+      android:orientation="vertical"
+      android:background="#f1f1f1"
+      app:layout_constraintBottom_toTopOf="@+id/control"
+      android:padding="4dp">
+
+    <ScrollView
+        android:id="@+id/result_scroll"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:scrollbars="vertical">
+
+      <LinearLayout
+          android:layout_width="match_parent"
+          android:layout_height="wrap_content"
+          android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/dynamsoft_result"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="#0b7d00"
+            android:textSize="14sp"
+            android:padding="4dp"
+            android:text="Dynamsoft: waiting" />
+
+        <TextView
+            android:id="@+id/mlkit_result"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="#b00020"
+            android:textSize="14sp"
+            android:padding="4dp"
+            android:text="ML Kit: waiting" />
+      </LinearLayout>
+    </ScrollView>
+  </LinearLayout>
+
+  <LinearLayout
+      android:id="@+id/control"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:orientation="horizontal"
+      android:background="#000"
+      app:layout_constraintBottom_toBottomOf="parent"
+      android:gravity="center"
+      android:padding="8dp">
+
+    <Button
+        android:id="@+id/select_image_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:layout_margin="4dp"
+        android:text="@string/select_image" />
+
+    <Button
+        android:id="@+id/take_photo_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:layout_margin="4dp"
+        android:text="Take photo" />
+
+    <Button
+        android:id="@+id/live_camera_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:layout_margin="4dp"
+        android:text="Live Camera" />
+  </LinearLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>
