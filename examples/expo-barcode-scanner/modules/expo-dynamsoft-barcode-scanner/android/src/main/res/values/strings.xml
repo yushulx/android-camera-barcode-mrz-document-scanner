@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="status_scanning">Point the camera at a barcode</string>
+
+    <plurals name="barcodes_found">
+        <item quantity="one">%1$d barcode found — tap Confirm</item>
+        <item quantity="other">%1$d barcodes found — tap Confirm</item>
+    </plurals>
+</resources>

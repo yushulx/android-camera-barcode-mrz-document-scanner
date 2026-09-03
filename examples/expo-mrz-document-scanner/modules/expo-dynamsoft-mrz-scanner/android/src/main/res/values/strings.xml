@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="cancel">Cancel</string>
+    <string name="confirm_capture">Confirm</string>
+    <string name="status_initializing">Initializing…</string>
+    <string name="status_scanning">Scanning… point the camera at the MRZ zone</string>
+    <string name="id_scan_instruction">Align the document so the MRZ zone (bottom of a passport / back of an ID card) is fully visible</string>
+</resources>

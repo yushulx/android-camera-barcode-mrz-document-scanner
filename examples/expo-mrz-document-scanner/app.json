@@ -1,0 +1,35 @@
+{
+  "expo": {
+    "name": "expo-mrz-document-scanner",
+    "slug": "expo-mrz-document-scanner",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "scheme": "expomrzscanner",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.dynamsoft.expo.mrzscanner",
+      "deploymentTarget": "16.4",
+      "infoPlist": {
+        "NSCameraUsageDescription": "Camera is used to scan documents and their Machine-Readable Zone (MRZ).",
+        "NSPhotoLibraryUsageDescription": "The app lets you pick a document image from your photo library to scan it."
+      }
+    },
+    "android": {
+      "package": "com.dynamsoft.expo.mrzscanner",
+      "permissions": [],
+      "adaptiveIcon": {
+        "backgroundColor": "#E6F4FE",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "enableProguardInReleaseBuilds": false,
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    }
+  }
+}

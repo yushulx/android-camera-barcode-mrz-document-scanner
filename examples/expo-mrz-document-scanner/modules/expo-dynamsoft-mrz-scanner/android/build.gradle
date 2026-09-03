@@ -1,0 +1,33 @@
+plugins {
+  id 'com.android.library'
+  id 'expo-module-gradle-plugin'
+}
+
+group = 'expo.modules.dynamsoftmrzscanner'
+version = '0.1.0'
+
+android {
+  namespace "expo.modules.dynamsoftmrzscanner"
+  defaultConfig {
+    versionCode 1
+    versionName "0.1.0"
+  }
+  lintOptions {
+    abortOnError false
+  }
+  // Keep the Dynamsoft native libraries intact when packaging.
+  packagingOptions {
+    doNotStrip "**/*.so"
+    pickFirst "**/libc++_shared.so"
+  }
+}
+
+dependencies {
+  // AppCompatActivity is required by the full-screen scanner and by
+  // CameraEnhancer (which needs a LifecycleOwner).
+  implementation 'androidx.appcompat:appcompat:1.7.0'
+
+  // Dynamsoft MRZ Scanner native SDK. The bundle transitively brings in
+  // Capture Vision, Camera Enhancer, core, etc.
+  implementation 'com.dynamsoft:mrzscannerbundle:3.4.1300'
+}

@@ -1,0 +1,35 @@
+{
+  "expo": {
+    "name": "expo-barcode-scanner",
+    "slug": "expo-barcode-scanner",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "scheme": "expobarcodescanner",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.dynamsoft.expo.barcodescanner",
+      "deploymentTarget": "16.4",
+      "infoPlist": {
+        "NSCameraUsageDescription": "Camera is used to scan barcodes.",
+        "NSPhotoLibraryUsageDescription": "The app lets you pick a barcode image from your photo library to scan it."
+      }
+    },
+    "android": {
+      "package": "com.dynamsoft.expo.barcodescanner",
+      "permissions": [],
+      "adaptiveIcon": {
+        "backgroundColor": "#E6F4FE",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "enableProguardInReleaseBuilds": false,
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    }
+  }
+}
