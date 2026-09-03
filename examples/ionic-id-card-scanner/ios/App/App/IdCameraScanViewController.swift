@@ -219,22 +219,27 @@ final class IdCameraScanViewController: UIViewController, CapturedResultReceiver
 
     func onDetectedQuadsReceived(_ unit: DetectedQuadsUnit) {
         detectedQuadsUnit = unit
+        NSLog("IDSDK onDetectedQuads count=%ld", unit.getCount())
     }
 
     func onLocalizedTextLinesReceived(_ unit: LocalizedTextLinesUnit) {
         localizedTextLinesUnit = unit
+        NSLog("IDSDK onLocalizedTextLines")
     }
 
     func onRecognizedTextLinesReceived(_ unit: RecognizedTextLinesUnit) {
         recognizedTextLinesUnit = unit
+        NSLog("IDSDK onRecognizedTextLines")
     }
 
     func onDeskewedImageReceived(_ unit: DeskewedImageUnit) {
         deskewedImageUnit = unit
+        NSLog("IDSDK onDeskewedImage")
     }
 
     func onScaledColourImageUnitReceived(_ unit: ScaledColourImageUnit) {
         scaledColourImageUnit = unit
+        NSLog("IDSDK onScaledColourImage")
     }
 
     // MARK: Helpers

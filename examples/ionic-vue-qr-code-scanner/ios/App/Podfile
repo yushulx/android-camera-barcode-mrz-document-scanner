@@ -20,7 +20,6 @@ target 'App' do
   pod 'DynamsoftCaptureVisionBundle', '3.6.2000'
   pod 'DynamsoftCore', '~> 3.4'
   pod 'DynamsoftLicense', '~> 3.4'
-  pod 'DynamsoftCameraEnhancer', '4.2.24'
 end
 
 post_install do |installer|

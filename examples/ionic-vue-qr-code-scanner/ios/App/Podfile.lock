@@ -2,7 +2,6 @@ PODS:
   - Capacitor (8.5.1):
     - CapacitorCordova
   - CapacitorCordova (8.5.1)
-  - DynamsoftCameraEnhancer (4.2.24)
   - DynamsoftCaptureVisionBundle (3.6.2000)
   - DynamsoftCore (3.4.30)
   - DynamsoftLicense (3.4.40)
@@ -10,14 +9,12 @@ PODS:
 DEPENDENCIES:
   - "Capacitor (from `../../node_modules/@capacitor/ios`)"
   - "CapacitorCordova (from `../../node_modules/@capacitor/ios`)"
-  - DynamsoftCameraEnhancer (= 4.2.24)
   - DynamsoftCaptureVisionBundle (= 3.6.2000)
   - DynamsoftCore (~> 3.4)
   - DynamsoftLicense (~> 3.4)
 
 SPEC REPOS:
   trunk:
-    - DynamsoftCameraEnhancer
     - DynamsoftCaptureVisionBundle
     - DynamsoftCore
     - DynamsoftLicense
@@ -31,11 +28,10 @@ EXTERNAL SOURCES:
 SPEC CHECKSUMS:
   Capacitor: 8ca6676b3b1147b00f7f3a547ccf68defd658d55
   CapacitorCordova: eb79411a3a0ed517eeb4c6dcf5933ce4bcbb5c9e
-  DynamsoftCameraEnhancer: 18628b6cd6169d35b5579424cdfab37e1b8ca7a4
   DynamsoftCaptureVisionBundle: 786952063fff6881847ed1644069cdc57e5cd815
   DynamsoftCore: 7b4ba6658f14d99aab9cc8e6ff2bc847909103ff
   DynamsoftLicense: 4eabe8e077a64b38c8fdcf6177236bc018bac9a0
 
-PODFILE CHECKSUM: ffa894853e43827342c0484f374c72952ed48dfb
+PODFILE CHECKSUM: c433bb3dc1e8a78d875f63ff8b4c6a3408fb07f0
 
 COCOAPODS: 1.16.2
