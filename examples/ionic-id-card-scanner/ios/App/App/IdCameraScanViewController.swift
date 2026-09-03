@@ -26,6 +26,7 @@ final class IdCameraScanViewController: UIViewController, CapturedResultReceiver
 
     private var pendingFields: [String: String]?
     private var pendingPortrait: UIImage?
+    private var pendingDocument: UIImage?
     private var captureButton: UIButton!
     private var statusLabel: UILabel!
     private var confirmed = false
@@ -117,7 +118,13 @@ final class IdCameraScanViewController: UIViewController, CapturedResultReceiver
     }
 
     private func setupRouter() {
-        try? cvr.initSettingsFromFile("mrz-mobile", ofType: "json")
+        // The MRZ template ships inside the DynamsoftMRZScannerBundle.framework.
+        let bundleCandidates = Bundle.allFrameworks + Bundle.allBundles
+        if let templatePath = bundleCandidates.lazy
+            .compactMap({ $0.path(forResource: "mrz-mobile", ofType: "json") })
+            .first {
+            try? cvr.initSettingsFromFile(templatePath)
+        }
         try? cvr.setInput(dce)
         cvr.getIntermediateResultManager().addResultReceiver(self)
         cvr.addResultReceiver(self)
@@ -128,6 +135,7 @@ final class IdCameraScanViewController: UIViewController, CapturedResultReceiver
     private func reset() {
         pendingFields = nil
         pendingPortrait = nil
+        pendingDocument = nil
         confirmed = false
         captureButton.isEnabled = false
         statusLabel.text = "Initializing…"
@@ -146,6 +154,9 @@ final class IdCameraScanViewController: UIViewController, CapturedResultReceiver
         if let portrait = pendingPortrait {
             payload["portraitBase64"] = Self.jpegDataUrl(portrait)
         }
+        if let document = pendingDocument {
+            payload["documentImageBase64"] = Self.jpegDataUrl(document)
+        }
         onResult?(payload)
     }
 
@@ -157,32 +168,41 @@ final class IdCameraScanViewController: UIViewController, CapturedResultReceiver
         let fields = IdResultFormatter.fieldMap(for: item)
         guard !fields.isEmpty else { return }
 
-        // Try to locate the high-confidence portrait auxiliary zone.
+        // Try to locate the portrait zone reported in the MRZ auxiliary region.
         var portraitZone: Quadrilateral?
-        if let localized = localizedTextLinesUnit, localized.auxiliaryRegionElements.count > 0 {
-            var highConfidence = false
-            for element in localized.auxiliaryRegionElements {
-                if element.name == "PortraitZone", element.confidence > 60 {
-                    highConfidence = true
-                    break
-                }
-            }
-            if highConfidence, let quads = detectedQuadsUnit, quads.count > 0 {
-                portraitZone = idProcessor.findPortraitZone(
-                    scaledColourImageUnit, localizedTextLinesUnit,
-                    recognizedTextLinesUnit, detectedQuadsUnit, deskewedImageUnit)
-            }
+        if let localized = localizedTextLinesUnit,
+           let quads = detectedQuadsUnit,
+           quads.getCount() > 0,
+           let scaled = scaledColourImageUnit,
+           let recog = recognizedTextLinesUnit,
+           let deskewed = deskewedImageUnit {
+            portraitZone = idProcessor.findPortraitZone(
+                scaled,
+                localizedTextLinesUnit: localized,
+                recognizedTextLinesUnit: recog,
+                detectedQuadsUnit: quads,
+                deskewedImageUnit: deskewed)
         }
 
         var portrait: UIImage?
         if let zone = portraitZone,
-           let scaled = scaledColourImageUnit?.imageData.toUIImage() {
+           let scaledData = scaledColourImageUnit?.getImageData(),
+           let scaled = IdResultFormatter.image(from: scaledData) {
             portrait = IdResultFormatter.deskewPortrait(scaled, quad: zone)
+        }
+
+        // The same document-detection step also deskews the card; surface it so
+        // the result page can show the perspective-corrected document image.
+        var document: UIImage?
+        if let item = result.processedDocumentResult?.deskewedImageResultItems?.first,
+           let data = item.imageData {
+            document = IdResultFormatter.image(from: data)
         }
 
         DispatchQueue.main.async {
             self.pendingFields = fields
             self.pendingPortrait = portrait
+            self.pendingDocument = document
             self.captureButton.isEnabled = true
             self.statusLabel.text = portrait != nil ? "Portrait found - ready" : "MRZ ready"
         }

@@ -3,33 +3,35 @@ import PhotosUI
 
 /// System photo picker used by the "file" data source on iOS.
 /// PHPicker runs out-of-process, so no photo-library permission is required.
-enum SharedImagePicker: NSObject, PHPickerViewControllerDelegate {
-    private static var completion: ((URL?) -> Void)?
+final class SharedImagePicker: NSObject, PHPickerViewControllerDelegate {
+
+    static let shared = SharedImagePicker()
+    private var completion: ((URL?) -> Void)?
 
     static func present(from viewController: UIViewController?, completion: @escaping (URL?) -> Void) {
         guard let viewController else {
             completion(nil)
             return
         }
-        self.completion = completion
+        SharedImagePicker.shared.completion = completion
         var configuration = PHPickerConfiguration()
         configuration.filter = .images
         configuration.selectionLimit = 1
         let picker = PHPickerViewController(configuration: configuration)
-        picker.delegate = self
+        picker.delegate = SharedImagePicker.shared
         viewController.present(picker, animated: true)
     }
 
-    static func picker(_ picker: PHPickerViewController, didFinishPicking results: [PHPickerResult]) {
+    func picker(_ picker: PHPickerViewController, didFinishPicking results: [PHPickerResult]) {
         picker.dismiss(animated: true)
         guard let provider = results.first?.itemProvider else {
             completion?(nil)
             return
         }
         if provider.canLoadObject(ofClass: UIImage.self) {
-            provider.loadObject(ofClass: UIImage.self) { object, _ in
+            provider.loadObject(ofClass: UIImage.self) { [weak self] object, _ in
                 guard let image = object as? UIImage else {
-                    DispatchQueue.main.async { self.completion?(nil) }
+                    DispatchQueue.main.async { self?.completion?(nil) }
                     return
                 }
                 // Persist the picked image to a temporary file so the native SDK
@@ -39,9 +41,9 @@ enum SharedImagePicker: NSObject, PHPickerViewControllerDelegate {
                 let data = image.jpegData(compressionQuality: 0.92)
                 do {
                     try data?.write(to: url)
-                    DispatchQueue.main.async { self.completion?(url) }
+                    DispatchQueue.main.async { self?.completion?(url) }
                 } catch {
-                    DispatchQueue.main.async { self.completion?(nil) }
+                    DispatchQueue.main.async { self?.completion?(nil) }
                 }
             }
         } else {

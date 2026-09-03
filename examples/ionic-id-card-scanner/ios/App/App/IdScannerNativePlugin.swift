@@ -44,7 +44,7 @@ public class IdScannerNativePlugin: CAPPlugin {
             vc.templateName = Self.TEMPLATE_NAME
             vc.onResult = { [weak self] json in
                 self?.dismissScanner()
-                call.resolve(["result": json])
+                call.resolve(json)
             }
             vc.onCancel = { [weak self] in
                 self?.dismissScanner()
@@ -124,25 +124,36 @@ public class IdScannerNativePlugin: CAPPlugin {
         DispatchQueue.global(qos: .userInitiated).async {
             do {
                 let router = CaptureVisionRouter()
-                try? router.initSettingsFromFile("mrz-mobile", ofType: "json")
-                guard let result = router.captureFromFile(url.path, templateName: Self.TEMPLATE_NAME) else {
-                    throw NSError(domain: "IdScanner", code: 1,
-                                  userInfo: [NSLocalizedDescriptionKey: "No result was produced for the input image"])
+                if let templatePath = Self.mrzTemplatePath() {
+                    try? router.initSettingsFromFile(templatePath)
                 }
+                let result = router.captureFromFile(url.path, templateName: Self.TEMPLATE_NAME)
                 guard let parsed = result.parsedResult,
                       let item = parsed.items?.first else {
                     throw NSError(domain: "IdScanner", code: 2,
                                   userInfo: [NSLocalizedDescriptionKey: "No MRZ was found in the image."])
                 }
-                let payload = IdResultFormatter.payload(for: item, deskewedItem: result.processedDocumentResult?.deskewedImageResultItems?.first)
+                var payload: [String: Any] = ["fields": IdResultFormatter.fieldMap(for: item)]
+                if let deskewed = result.processedDocumentResult?.deskewedImageResultItems?.first,
+                   let data = deskewed.imageData,
+                   let url = IdResultFormatter.jpegDataUrl(from: data) {
+                    payload["documentImageBase64"] = url
+                }
                 DispatchQueue.main.async {
-                    call.resolve(["result": payload])
+                    call.resolve(payload)
                 }
             } catch {
                 DispatchQueue.main.async {
-                    call.reject("Failed to parse image: \(error.localizedDescription)", error)
+                    call.reject("Failed to parse image: \(error.localizedDescription)")
                 }
             }
         }
+    }
+
+    /// Locate the MRZ template shipped inside DynamsoftMRZScannerBundle.framework.
+    private static func mrzTemplatePath() -> String? {
+        (Bundle.allFrameworks + Bundle.allBundles).lazy
+            .compactMap { $0.path(forResource: "mrz-mobile", ofType: "json") }
+            .first
     }
 }

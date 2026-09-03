@@ -35,7 +35,7 @@ public class BarcodeScannerNativePlugin: CAPPlugin {
             let vc = BarcodeCameraScanViewController()
             vc.onResult = { [weak self] payload in
                 self?.dismissScanner()
-                call.resolve(JSObject(dictionaryLiteral: ("result", payload)))
+                call.resolve(["result": payload])
             }
             vc.onCancel = { [weak self] in
                 self?.dismissScanner()
@@ -98,8 +98,8 @@ public class BarcodeScannerNativePlugin: CAPPlugin {
     private func decodeImage(at url: URL, call: CAPPluginCall) {
         DispatchQueue.global(qos: .userInitiated).async {
             let router = CaptureVisionRouter()
-            guard let result = router.captureFromFile(url.path, templateName: Self.TEMPLATE_NAME),
-                  let decoded = result.decodedBarcodesResult,
+            let result = router.captureFromFile(url.path, templateName: Self.TEMPLATE_NAME)
+            guard let decoded = result.decodedBarcodesResult,
                   let items = decoded.items else {
                 DispatchQueue.main.async {
                     call.reject("No barcodes were found in the image.")
@@ -110,20 +110,19 @@ public class BarcodeScannerNativePlugin: CAPPlugin {
             for item in items {
                 var entry: [String: Any] = [
                     "text": item.text ?? "",
-                    "format": item.format,
+                    "format": Int(item.format.rawValue),
                     "formatString": item.formatString ?? ""
                 ]
                 var points: [[String: Any]] = []
-                if let location = item.location {
-                    for point in location.points {
-                        points.append(["x": point.x, "y": point.y])
-                    }
+                for value in item.location.points {
+                    let p = value.cgPointValue
+                    points.append(["x": p.x, "y": p.y])
                 }
                 entry["points"] = points
                 array.append(entry)
             }
             DispatchQueue.main.async {
-                call.resolve(JSObject(dictionaryLiteral: ("results", array)))
+                call.resolve(["results": array])
             }
         }
     }

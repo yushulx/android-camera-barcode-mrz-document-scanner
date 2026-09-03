@@ -15,7 +15,7 @@ final class BarcodeCameraScanViewController: UIViewController, CapturedResultRec
     private let dce = CameraEnhancer()
     private let cvr = CaptureVisionRouter()
 
-    private var latestItems: [DecodedBarcodeItem] = []
+    private var latestItems: [BarcodeResultItem] = []
     private var captureButton: UIButton!
     private var statusLabel: UILabel!
     private var overlayView: BarcodeOverlayView!
@@ -149,14 +149,12 @@ final class BarcodeCameraScanViewController: UIViewController, CapturedResultRec
         for item in latestItems {
             var entry: [String: Any] = [
                 "text": item.text ?? "",
-                "format": item.format,
                 "formatString": item.formatString ?? ""
             ]
             var points: [[String: Any]] = []
-            if let location = item.location {
-                for point in location.points {
-                    points.append(["x": point.x, "y": point.y])
-                }
+            for value in item.location.points {
+                let p = value.cgPointValue
+                points.append(["x": p.x, "y": p.y])
             }
             entry["points"] = points
             array.append(entry)
@@ -167,7 +165,7 @@ final class BarcodeCameraScanViewController: UIViewController, CapturedResultRec
 
 /// Simple preview overlay that draws the decoded barcode contours.
 final class BarcodeOverlayView: UIView {
-    var items: [DecodedBarcodeItem] = [] {
+    var items: [BarcodeResultItem] = [] {
         didSet { setNeedsDisplay() }
     }
 
@@ -176,11 +174,11 @@ final class BarcodeOverlayView: UIView {
         context.setLineWidth(2)
         context.setStrokeColor(UIColor.green.cgColor)
         for item in items {
-            guard let location = item.location, location.points.count == 4 else { continue }
-            let points = location.points
-            context.move(to: CGPoint(x: points[0].x, y: points[0].y))
+            guard item.location.points.count == 4 else { continue }
+            let points = item.location.points.map { $0.cgPointValue }
+            context.move(to: points[0])
             for i in 1..<points.count {
-                context.addLine(to: CGPoint(x: points[i].x, y: points[i].y))
+                context.addLine(to: points[i])
             }
             context.closePath()
             context.strokePath()

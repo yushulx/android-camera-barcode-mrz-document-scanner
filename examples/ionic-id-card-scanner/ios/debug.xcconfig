@@ -1,1 +1,2 @@
 CAPACITOR_DEBUG = true
+#include "Pods/Target Support Files/Pods-App/Pods-App.debug.xcconfig"

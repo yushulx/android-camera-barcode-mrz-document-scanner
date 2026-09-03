@@ -1,4 +1,3 @@
-import Foundation
 import UIKit
 import DynamsoftCaptureVisionBundle
 
@@ -7,7 +6,7 @@ import DynamsoftCaptureVisionBundle
 enum IdResultFormatter {
 
     /// Extract parsed MRZ fields into a display-ready dictionary.
-    static func fieldMap(for item: DSMrzParsedResultItem) -> [String: String] {
+    static func fieldMap(for item: ParsedResultItem) -> [String: String] {
         let entry = item.parsedFields
         let codeType = item.codeType ?? ""
 
@@ -43,43 +42,100 @@ enum IdResultFormatter {
         return fields
     }
 
+    /// Convert the ImageData of a deskewed page / portrait region to a JPEG data URL.
+    static func jpegDataUrl(from imageData: ImageData?) -> String? {
+        guard let imageData, let ui = image(from: imageData) else { return nil }
+        return jpegDataUrl(from: ui)
+    }
+
+    static func jpegDataUrl(from image: UIImage) -> String {
+        let data = image.jpegData(compressionQuality: 0.9) ?? Data()
+        return "data:image/jpeg;base64," + data.base64EncodedString()
+    }
+
     /// Perspective-correct a portrait rectangle found inside a scaled frame.
     static func deskewPortrait(_ source: UIImage, quad: Quadrilateral) -> UIImage? {
         guard quad.points.count == 4 else { return nil }
-        let points = quad.points
-        let width = max(hypot(points[1].x - points[0].x, points[1].y - points[0].y),
-                        hypot(points[2].x - points[3].x, points[2].y - points[3].y))
-        let height = max(hypot(points[3].x - points[0].x, points[3].y - points[0].y),
-                         hypot(points[2].x - points[1].x, points[2].y - points[1].y))
-        guard width > 0, height > 0 else { return nil }
+        let pts = quad.points.map { $0.cgPointValue }
+        let width = max(hypot(pts[1].x - pts[0].x, pts[1].y - pts[0].y),
+                        hypot(pts[2].x - pts[3].x, pts[2].y - pts[3].y))
+        let height = max(hypot(pts[3].x - pts[0].x, pts[3].y - pts[0].y),
+                         hypot(pts[2].x - pts[1].x, pts[2].y - pts[1].y))
+        guard width > 0, height > 0, width < 2000, height < 2000 else { return nil }
 
         let targetSize = CGSize(width: width, height: height)
         let renderer = UIGraphicsImageRenderer(size: targetSize)
         return renderer.image { _ in
-            let context = UIGraphicsGetCurrentContext()
-            context?.setFillColor(UIColor.white.cgColor)
-            context?.fill(CGRect(origin: .zero, size: targetSize))
-            let transform = perspectiveTransform(
-                from: points.map { CGPoint(x: $0.x, y: $0.y) },
-                to: [
-                    CGPoint(x: 0, y: 0),
-                    CGPoint(x: width, y: 0),
-                    CGPoint(x: width, y: height),
-                    CGPoint(x: 0, y: height)
-                ])
-            context?.concatenate(transform)
+            let ctx = UIGraphicsGetCurrentContext()
+            ctx?.setFillColor(UIColor.white.cgColor)
+            ctx?.fill(CGRect(origin: .zero, size: targetSize))
+            // Perspective-ish approximation via the affine part of the quad.
+            let sx = width / max(pts[1].x - pts[0].x, 1)
+            let sy = height / max(pts[3].y - pts[0].y, 1)
+            ctx?.concatenate(CGAffineTransform(translationX: -pts[0].x, y: -pts[0].y)
+                .scaledBy(x: sx, y: sy))
             source.draw(at: .zero)
         }
     }
 
-    private static func perspectiveTransform(from source: [CGPoint], to target: [CGPoint]) -> CGAffineTransform {
-        // Simple approximation using the quad's bounding box plus a projective-ish
-        // skew via CGAffineTransform. For the sample app this matches the Android
-        // setPolyToPoly approach closely enough for portrait thumbnails.
-        let sx = target[1].x / max(source[1].x - source[0].x, 1)
-        let sy = target[3].y / max(source[3].y - source[0].y, 1)
-        return CGAffineTransform(translationX: -source[0].x, y: -source[0].y)
-            .scaledBy(x: sx, y: sy)
+    // MARK: - ImageData → UIImage
+
+    /// Renders the raw pixel buffer as a UIImage for the common pixel formats.
+    static func image(from data: ImageData) -> UIImage? {
+        let w = Int(data.width)
+        let h = Int(data.height)
+        guard w > 0, h > 0, w * h < 200_000_000 else { return nil }
+        let bytes = data.bytes as Data
+
+        var colorSpace = CGColorSpaceCreateDeviceRGB()
+        var bitmapInfo: UInt32 = CGImageAlphaInfo.noneSkipLast.rawValue
+        var bitsPerPixel = 32
+        var bytesPerRow = Int(data.stride)
+        var start = 0
+        let fmt = data.format.rawValue
+
+        // Dynamsoft pixel format constants (DSImagePixelFormat enum order):
+        // Binary=0, BinaryInverted=1, GrayScaled=2, NV21=3, RGB565=4, RGB555=5,
+        // RGB888=6, ARGB8888=7, RGB161616=8, ARGB16161616=9, ABGR8888=10,
+        // ABGR16161616=11, BGR888=12, Binary8=13, NV12=14, Binary8Inverted=15
+        switch fmt {
+        case 2: // GrayScaled
+            colorSpace = CGColorSpaceCreateDeviceGray()
+            bitmapInfo = CGImageAlphaInfo.none.rawValue
+            bitsPerPixel = 8
+        case 6: // RGB888
+            bitmapInfo = CGImageAlphaInfo.none.rawValue | CGBitmapInfo.byteOrderDefault.rawValue
+            bitsPerPixel = 24
+        case 12: // BGR888
+            bitmapInfo = CGImageAlphaInfo.none.rawValue | CGBitmapInfo.byteOrder32Little.rawValue
+            bitsPerPixel = 24
+        case 7: // ARGB8888
+            bitmapInfo = CGImageAlphaInfo.premultipliedFirst.rawValue | CGBitmapInfo.byteOrder32Big.rawValue
+            bitsPerPixel = 32
+        case 10: // ABGR8888
+            bitmapInfo = CGImageAlphaInfo.premultipliedFirst.rawValue | CGBitmapInfo.byteOrder32Little.rawValue
+            bitsPerPixel = 32
+        default:
+            return nil
+        }
+        if bytesPerRow == 0 {
+            bytesPerRow = w * bitsPerPixel / 8
+        }
+        guard bytes.count >= start + bytesPerRow * h else { return nil }
+        let providerData = bytes.subdata(in: start..<bytes.count) as CFData
+        guard let provider = CGDataProvider(data: providerData) else { return nil }
+        guard let cg = CGImage(width: w,
+                               height: h,
+                               bitsPerComponent: 8,
+                               bitsPerPixel: bitsPerPixel,
+                               bytesPerRow: bytesPerRow,
+                               space: colorSpace,
+                               bitmapInfo: CGBitmapInfo(rawValue: bitmapInfo),
+                               provider: provider,
+                               decode: nil,
+                               shouldInterpolate: true,
+                               intent: .defaultIntent) else { return nil }
+        return UIImage(cgImage: cg)
     }
 
     // MARK: - Field helpers
@@ -115,6 +171,3 @@ enum IdResultFormatter {
         return age >= 0 ? "\(age)" : "—"
     }
 }
-
-/// The parsed MRZ item type as surfaced by the Dynamsoft iOS SDK.
-typealias DSMrzParsedResultItem = ParsedResultItem
