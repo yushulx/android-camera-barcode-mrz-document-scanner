@@ -18,7 +18,7 @@ final class BarcodeCameraScanViewController: UIViewController, CapturedResultRec
     private var latestItems: [BarcodeResultItem] = []
     private var captureButton: UIButton!
     private var statusLabel: UILabel!
-    private var overlayView: BarcodeOverlayView!
+    private var barcodeLayerId: UInt = DrawingLayerId.userDefinedBase.rawValue
     private var confirmed = false
 
     private let TEMPLATE_NAME = "ReadBarcodes_Default"
@@ -28,6 +28,7 @@ final class BarcodeCameraScanViewController: UIViewController, CapturedResultRec
         view.backgroundColor = .black
         setupCamera()
         setupUi()
+        configureDrawingLayers()
         try? cvr.setInput(dce)
         cvr.addResultReceiver(self)
         // Load the built-in barcode templates shipped inside
@@ -46,6 +47,7 @@ final class BarcodeCameraScanViewController: UIViewController, CapturedResultRec
         confirmed = false
         captureButton.isEnabled = false
         statusLabel.text = "Scanning…"
+        cameraView.getDrawingLayer(barcodeLayerId)?.clearDrawingItems()
         dce.open()
         try? cvr.startCapturing(TEMPLATE_NAME) { [weak self] success, error in
             DispatchQueue.main.async {
@@ -74,6 +76,20 @@ final class BarcodeCameraScanViewController: UIViewController, CapturedResultRec
         dce.cameraView = cameraView
     }
 
+    /// Custom drawing layer for the decoded barcode quads. The SDK drawing
+    /// system maps video-frame coordinates onto the preview automatically,
+    /// unlike a hand-drawn overlay which would need manual conversion.
+    private func configureDrawingLayers() {
+        let barcodeStyle = DrawingStyleManager.createDrawingStyle(
+            .green, strokeWidth: 3,
+            fill: UIColor.green.withAlphaComponent(0.15),
+            textColor: .white, font: .systemFont(ofSize: 12))
+        let barcodeLayer = cameraView.createDrawingLayer()
+        barcodeLayer.visible = true
+        barcodeLayer.setDefaultStyle(barcodeStyle)
+        barcodeLayerId = barcodeLayer.layerId
+    }
+
     private func setupUi() {
         statusLabel = UILabel()
         statusLabel.translatesAutoresizingMaskIntoConstraints = false
@@ -85,17 +101,6 @@ final class BarcodeCameraScanViewController: UIViewController, CapturedResultRec
         statusLabel.clipsToBounds = true
         statusLabel.numberOfLines = 0
         view.addSubview(statusLabel)
-
-        overlayView = BarcodeOverlayView()
-        overlayView.translatesAutoresizingMaskIntoConstraints = false
-        overlayView.isUserInteractionEnabled = false
-        view.addSubview(overlayView)
-        NSLayoutConstraint.activate([
-            overlayView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            overlayView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            overlayView.topAnchor.constraint(equalTo: view.topAnchor),
-            overlayView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
-        ])
 
         let cancelButton = UIButton(type: .system)
         cancelButton.translatesAutoresizingMaskIntoConstraints = false
@@ -149,7 +154,13 @@ final class BarcodeCameraScanViewController: UIViewController, CapturedResultRec
 
     private func apply(items: [BarcodeResultItem]) {
         latestItems = items
-        overlayView.items = items
+        // Highlight decoded barcodes on the CameraView drawing layer; clear
+        // the layer on frames without results so old quads do not linger.
+        let layer = cameraView.getDrawingLayer(barcodeLayerId)
+        layer?.clearDrawingItems()
+        if !items.isEmpty {
+            layer?.addDrawingItems(items.map { QuadDrawingItem(quadrilateral: $0.location) })
+        }
         if items.isEmpty {
             statusLabel.text = "Scanning…"
             captureButton.isEnabled = false
@@ -185,28 +196,5 @@ final class BarcodeCameraScanViewController: UIViewController, CapturedResultRec
             array.append(entry)
         }
         onResult?(["results": array])
-    }
-}
-
-/// Simple preview overlay that draws the decoded barcode contours.
-final class BarcodeOverlayView: UIView {
-    var items: [BarcodeResultItem] = [] {
-        didSet { setNeedsDisplay() }
-    }
-
-    override func draw(_ rect: CGRect) {
-        guard let context = UIGraphicsGetCurrentContext() else { return }
-        context.setLineWidth(2)
-        context.setStrokeColor(UIColor.green.cgColor)
-        for item in items {
-            guard item.location.points.count == 4 else { continue }
-            let points = item.location.points.map { $0.cgPointValue }
-            context.move(to: points[0])
-            for i in 1..<points.count {
-                context.addLine(to: points[i])
-            }
-            context.closePath()
-            context.strokePath()
-        }
     }
 }

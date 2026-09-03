@@ -30,6 +30,7 @@ final class IdCameraScanViewController: UIViewController, CapturedResultReceiver
     private var captureButton: UIButton!
     private var statusLabel: UILabel!
     private var confirmed = false
+    private var portraitLayerId: UInt = DrawingLayerId.userDefinedBase.rawValue
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -58,6 +59,7 @@ final class IdCameraScanViewController: UIViewController, CapturedResultReceiver
         super.viewWillDisappear(animated)
         dce.close()
         cvr.stopCapturing()
+        clearAllOverlays()
     }
 
     // MARK: Setup
@@ -128,6 +130,46 @@ final class IdCameraScanViewController: UIViewController, CapturedResultReceiver
         try? cvr.setInput(dce)
         cvr.getIntermediateResultManager().addResultReceiver(self)
         cvr.addResultReceiver(self)
+        configureDrawingLayers()
+    }
+
+    /// Overlay layers: preset DDN layer for the document quad, preset DLR layer
+    /// for the MRZ text lines, and a custom cyan layer for the portrait zone.
+    private func configureDrawingLayers() {
+        cameraView.getDrawingLayer(DrawingLayerId.DDN.rawValue)?.visible = true
+        cameraView.getDrawingLayer(DrawingLayerId.DLR.rawValue)?.visible = true
+
+        let portraitStyle = DrawingStyleManager.createDrawingStyle(
+            .cyan, strokeWidth: 3,
+            fill: UIColor.cyan.withAlphaComponent(0.1),
+            textColor: .white, font: .systemFont(ofSize: 12))
+        let portraitLayer = cameraView.createDrawingLayer()
+        portraitLayer.visible = true
+        portraitLayer.setDefaultStyle(portraitStyle)
+        portraitLayerId = portraitLayer.layerId
+    }
+
+    /// Draw the document quad and the portrait zone; clear whichever is absent.
+    private func drawOverlays(result: CapturedResult, portraitZone: Quadrilateral?) {
+        let ddnLayer = cameraView.getDrawingLayer(DrawingLayerId.DDN.rawValue)
+        if let quad = result.processedDocumentResult?.detectedQuadResultItems?.first?.location {
+            ddnLayer?.clearDrawingItems()
+            ddnLayer?.addDrawingItems([QuadDrawingItem(quadrilateral: quad)])
+        } else {
+            ddnLayer?.clearDrawingItems()
+        }
+
+        let portraitLayer = cameraView.getDrawingLayer(portraitLayerId)
+        portraitLayer?.clearDrawingItems()
+        if let zone = portraitZone {
+            portraitLayer?.addDrawingItems([QuadDrawingItem(quadrilateral: zone)])
+        }
+    }
+
+    private func clearAllOverlays() {
+        cameraView.getDrawingLayer(DrawingLayerId.DDN.rawValue)?.clearDrawingItems()
+        cameraView.getDrawingLayer(DrawingLayerId.DLR.rawValue)?.clearDrawingItems()
+        cameraView.getDrawingLayer(portraitLayerId)?.clearDrawingItems()
     }
 
     // MARK: Actions
@@ -139,6 +181,7 @@ final class IdCameraScanViewController: UIViewController, CapturedResultReceiver
         confirmed = false
         captureButton.isEnabled = false
         statusLabel.text = "Initializing…"
+        clearAllOverlays()
     }
 
     @objc private func cancelTapped() {
@@ -168,27 +211,29 @@ final class IdCameraScanViewController: UIViewController, CapturedResultReceiver
         let fields = IdResultFormatter.fieldMap(for: item)
         guard !fields.isEmpty else { return }
 
-        // Try to locate the portrait zone reported in the MRZ auxiliary region.
-        var portraitZone: Quadrilateral?
-        if let localized = localizedTextLinesUnit,
-           let quads = detectedQuadsUnit,
-           quads.getCount() > 0,
-           let scaled = scaledColourImageUnit,
-           let recog = recognizedTextLinesUnit,
-           let deskewed = deskewedImageUnit {
-            portraitZone = idProcessor.findPortraitZone(
-                scaled,
-                localizedTextLinesUnit: localized,
-                recognizedTextLinesUnit: recog,
-                detectedQuadsUnit: quads,
-                deskewedImageUnit: deskewed)
+        let documentQuad = result.processedDocumentResult?.detectedQuadResultItems?.first?.location
+
+        // Locate the portrait photo from the auxiliary region of the MRZ zone
+        // (mirrors the Android scanner).
+        var portraitZone = findPortraitZone()
+
+        // Keep the zone only when it sits inside the detected document.
+        if let zone = portraitZone, let docRegion = documentQuad {
+            let allInside = zone.points.allSatisfy { docRegion.contains($0.cgPointValue) }
+            let areaRatioOk = zone.area > 0 ? docRegion.area / zone.area >= 3 : false
+            if !allInside || !areaRatioOk {
+                portraitZone = nil
+            }
         }
 
+        // Perspective-correct crop of the portrait from the original video frame
+        // via the SDK's own ImageProcessor (mirrors the reference iOS scanner).
         var portrait: UIImage?
         if let zone = portraitZone,
-           let scaledData = scaledColourImageUnit?.getImageData(),
-           let scaled = IdResultFormatter.image(from: scaledData) {
-            portrait = IdResultFormatter.deskewPortrait(scaled, quad: zone)
+           let original = cvr.getIntermediateResultManager().getOriginalImage(result.originalImageHashId) {
+            if let cropped = try? ImageProcessor().cropAndDeskewImage(original, quad: zone) {
+                portrait = IdResultFormatter.image(from: cropped)
+            }
         }
 
         // The same document-detection step also deskews the card; surface it so
@@ -212,34 +257,81 @@ final class IdCameraScanViewController: UIViewController, CapturedResultReceiver
             self.pendingDocument = document
             self.captureButton.isEnabled = true
             self.statusLabel.text = portrait != nil ? "Portrait found - ready" : "MRZ ready"
+            self.drawOverlays(result: result, portraitZone: portraitZone)
         }
+    }
+
+    /// Draw the live MRZ text-line quads on the preset DLR layer (result level).
+    func onRecognizedTextLinesReceived(_ result: RecognizedTextLinesResult) {
+        DispatchQueue.main.async {
+            let layer = self.cameraView.getDrawingLayer(DrawingLayerId.DLR.rawValue)
+            layer?.clearDrawingItems()
+            guard let items = result.items, !items.isEmpty else { return }
+            layer?.addDrawingItems(items.map { QuadDrawingItem(quadrilateral: $0.location) })
+        }
+    }
+
+    /// Run IdentityProcessor.findPortraitZone on the cached intermediate units,
+    /// but only after the MRZ pipeline has reported a high-confidence
+    /// "PortraitZone" auxiliary region (mirrors the Android scanner).
+    private func findPortraitZone() -> Quadrilateral? {
+        guard let scaled = scaledColourImageUnit,
+              let localized = localizedTextLinesUnit,
+              let recognized = recognizedTextLinesUnit,
+              let quads = detectedQuadsUnit, quads.getCount() > 0,
+              let deskewed = deskewedImageUnit,
+              let elements = localized.getAuxiliaryRegionElements() else {
+            return nil
+        }
+
+        var highConfidence = false
+        for element in elements {
+            if element.getName() == "PortraitZone" && element.getConfidence() > 60 {
+                highConfidence = true
+                break
+            }
+        }
+        guard highConfidence else { return nil }
+
+        return idProcessor.findPortraitZone(
+            scaled,
+            localizedTextLinesUnit: localized,
+            recognizedTextLinesUnit: recognized,
+            detectedQuadsUnit: quads,
+            deskewedImageUnit: deskewed)
     }
 
     // MARK: IntermediateResultReceiver
 
-    func onDetectedQuadsReceived(_ unit: DetectedQuadsUnit) {
-        detectedQuadsUnit = unit
-        NSLog("IDSDK onDetectedQuads count=%ld", unit.getCount())
-    }
+    // NOTE: every callback of the IntermediateResultReceiver protocol carries an
+    // `info:` parameter. Implementing them without it compiles (the methods are
+    // @optional) but the SDK never invokes them, which silently starves the
+    // portrait detection of its input units.
 
-    func onLocalizedTextLinesReceived(_ unit: LocalizedTextLinesUnit) {
-        localizedTextLinesUnit = unit
-        NSLog("IDSDK onLocalizedTextLines")
-    }
-
-    func onRecognizedTextLinesReceived(_ unit: RecognizedTextLinesUnit) {
-        recognizedTextLinesUnit = unit
-        NSLog("IDSDK onRecognizedTextLines")
-    }
-
-    func onDeskewedImageReceived(_ unit: DeskewedImageUnit) {
-        deskewedImageUnit = unit
-        NSLog("IDSDK onDeskewedImage")
-    }
-
-    func onScaledColourImageUnitReceived(_ unit: ScaledColourImageUnit) {
+    func onScaledColourImageUnitReceived(_ unit: ScaledColourImageUnit, info: IntermediateResultExtraInfo) {
         scaledColourImageUnit = unit
-        NSLog("IDSDK onScaledColourImage")
+    }
+
+    func onLocalizedTextLinesReceived(_ unit: LocalizedTextLinesUnit, info: IntermediateResultExtraInfo) {
+        localizedTextLinesUnit = unit
+    }
+
+    func onRecognizedTextLinesReceived(_ unit: RecognizedTextLinesUnit, info: IntermediateResultExtraInfo) {
+        recognizedTextLinesUnit = unit
+    }
+
+    func onDetectedQuadsReceived(_ unit: DetectedQuadsUnit, info: IntermediateResultExtraInfo) {
+        detectedQuadsUnit = unit
+        if unit.getCount() == 0 {
+            DispatchQueue.main.async {
+                self.cameraView.getDrawingLayer(DrawingLayerId.DDN.rawValue)?.clearDrawingItems()
+                self.cameraView.getDrawingLayer(self.portraitLayerId)?.clearDrawingItems()
+            }
+        }
+    }
+
+    func onDeskewedImageReceived(_ unit: DeskewedImageUnit, info: IntermediateResultExtraInfo) {
+        deskewedImageUnit = unit
     }
 
     // MARK: Helpers

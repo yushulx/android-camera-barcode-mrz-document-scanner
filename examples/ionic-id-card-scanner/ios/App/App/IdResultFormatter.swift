@@ -68,31 +68,6 @@ enum IdResultFormatter {
         return UIImage(cgImage: cropped)
     }
 
-    /// Perspective-correct a portrait rectangle found inside a scaled frame.
-    static func deskewPortrait(_ source: UIImage, quad: Quadrilateral) -> UIImage? {
-        guard quad.points.count == 4 else { return nil }
-        let pts = quad.points.map { $0.cgPointValue }
-        let width = max(hypot(pts[1].x - pts[0].x, pts[1].y - pts[0].y),
-                        hypot(pts[2].x - pts[3].x, pts[2].y - pts[3].y))
-        let height = max(hypot(pts[3].x - pts[0].x, pts[3].y - pts[0].y),
-                         hypot(pts[2].x - pts[1].x, pts[2].y - pts[1].y))
-        guard width > 0, height > 0, width < 2000, height < 2000 else { return nil }
-
-        let targetSize = CGSize(width: width, height: height)
-        let renderer = UIGraphicsImageRenderer(size: targetSize)
-        return renderer.image { _ in
-            let ctx = UIGraphicsGetCurrentContext()
-            ctx?.setFillColor(UIColor.white.cgColor)
-            ctx?.fill(CGRect(origin: .zero, size: targetSize))
-            // Perspective-ish approximation via the affine part of the quad.
-            let sx = width / max(pts[1].x - pts[0].x, 1)
-            let sy = height / max(pts[3].y - pts[0].y, 1)
-            ctx?.concatenate(CGAffineTransform(translationX: -pts[0].x, y: -pts[0].y)
-                .scaledBy(x: sx, y: sy))
-            source.draw(at: .zero)
-        }
-    }
-
     // MARK: - ImageData → UIImage
 
     /// Renders the raw pixel buffer as a UIImage for the common pixel formats.
@@ -113,43 +88,65 @@ enum IdResultFormatter {
         let bpp: Int
         switch fmt {
         case 2: bpp = 1          // GrayScaled
-        case 6: bpp = 3          // RGB888
-        case 12: bpp = 3         // BGR888
-        case 7: bpp = 4          // ARGB8888
-        case 10: bpp = 4         // ABGR8888
+        case 6, 12: bpp = 3      // RGB888 / BGR888
+        case 7, 10: bpp = 4      // ARGB8888 / ABGR8888
+        case 3, 14: bpp = 0      // NV21 / NV12 (semi-planar YUV, decoded below)
         default: return nil
         }
-        let rowBytes = rowBytesInput > 0 ? rowBytesInput : w * bpp
-        guard bytes.count >= rowBytes * h else { return nil }
 
-        // Decode into a flat RGB888 buffer.
-        // NOTE: Dynamsoft documents channel order as stored "from high to low
-        // address", so the in-memory byte sequence is the REVERSE of the name:
-        //   RGB888  -> bytes B,G,R   |  BGR888  -> bytes R,G,B
-        //   ARGB8888-> bytes B,G,R,A |  ABGR8888-> bytes R,G,B,A
         var out = [UInt8](repeating: 0, count: w * h * 3)
-        for y in 0..<h {
-            let rowBase = y * rowBytes
-            var op = y * w * 3
-            for x in 0..<w {
-                let p = rowBase + x * bpp
-                let r: UInt8, g: UInt8, b: UInt8
-                switch fmt {
-                case 2: // GrayScaled
-                    r = bytes[p]; g = r; b = r
-                case 6: // RGB888, memory B,G,R
-                    b = bytes[p]; g = bytes[p + 1]; r = bytes[p + 2]
-                case 12: // BGR888, memory R,G,B
-                    r = bytes[p]; g = bytes[p + 1]; b = bytes[p + 2]
-                case 7: // ARGB8888, memory B,G,R,A
-                    b = bytes[p]; g = bytes[p + 1]; r = bytes[p + 2]
-                case 10: // ABGR8888, memory R,G,B,A
-                    r = bytes[p]; g = bytes[p + 1]; b = bytes[p + 2]
-                default:
-                    r = 0; g = 0; b = 0
+
+        if bpp == 0 {
+            // Semi-planar YUV: h rows of Y, then (h/2) rows of interleaved
+            // chroma pairs. NV12 stores U first, NV21 stores V first.
+            let yStride = rowBytesInput > 0 ? rowBytesInput : w
+            let ySize = yStride * h
+            guard bytes.count >= ySize + yStride * (h / 2) else { return nil }
+            for y in 0..<h {
+                let rowBase = y * yStride
+                var op = y * w * 3
+                for x in 0..<w {
+                    let uvIndex = ySize + (y / 2) * yStride + (x / 2) * 2
+                    let yy = Int(bytes[rowBase + x])
+                    let u = Int(fmt == 14 ? bytes[uvIndex] : bytes[uvIndex + 1]) - 128
+                    let v = Int(fmt == 14 ? bytes[uvIndex + 1] : bytes[uvIndex]) - 128
+                    out[op] = Self.clamp(yy + (1402 * v) / 1000)
+                    out[op + 1] = Self.clamp(yy - (344 * u) / 1000 - (714 * v) / 1000)
+                    out[op + 2] = Self.clamp(yy + (1772 * u) / 1000)
+                    op += 3
                 }
-                out[op] = r; out[op + 1] = g; out[op + 2] = b
-                op += 3
+            }
+        } else {
+            let rowBytes = rowBytesInput > 0 ? rowBytesInput : w * bpp
+            guard bytes.count >= rowBytes * h else { return nil }
+            // Decode into a flat RGB888 buffer.
+            // NOTE: Dynamsoft documents channel order as stored "from high to low
+            // address", so the in-memory byte sequence is the REVERSE of the name:
+            //   RGB888  -> bytes B,G,R   |  BGR888  -> bytes R,G,B
+            //   ARGB8888-> bytes B,G,R,A |  ABGR8888-> bytes R,G,B,A
+            for y in 0..<h {
+                let rowBase = y * rowBytes
+                var op = y * w * 3
+                for x in 0..<w {
+                    let p = rowBase + x * bpp
+                    let r: UInt8, g: UInt8, b: UInt8
+                    switch fmt {
+                    case 2: // GrayScaled
+                        r = bytes[p]; g = r; b = r
+                    case 6: // RGB888, memory B,G,R
+                        b = bytes[p]; g = bytes[p + 1]; r = bytes[p + 2]
+                    case 12: // BGR888, memory R,G,B
+                        r = bytes[p]; g = bytes[p + 1]; b = bytes[p + 2]
+                    case 7: // ARGB8888, memory B,G,R,A
+                        b = bytes[p]; g = bytes[p + 1]; r = bytes[p + 2]
+                    case 10: // ABGR8888, memory R,G,B,A
+                        r = bytes[p]; g = bytes[p + 1]; b = bytes[p + 2]
+                    default:
+                        r = 0; g = 0; b = 0
+                    }
+                    out[op] = r; out[op + 1] = g; out[op + 2] = b
+                    op += 3
+                }
             }
         }
 
@@ -169,6 +166,10 @@ enum IdResultFormatter {
     }
 
     // MARK: - Field helpers
+
+    private static func clamp(_ value: Int) -> UInt8 {
+        UInt8(max(0, min(255, value)))
+    }
 
     private static func firstNonEmpty(_ map: [String: String], keys: String...) -> String {
         for key in keys where !(map[key] ?? "").isEmpty {

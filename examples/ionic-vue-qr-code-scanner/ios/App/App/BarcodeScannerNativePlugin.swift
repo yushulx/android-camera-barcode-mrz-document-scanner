@@ -44,7 +44,9 @@ public class BarcodeScannerNativePlugin: CAPPlugin, CAPBridgedPlugin {
             let vc = BarcodeCameraScanViewController()
             vc.onResult = { [weak self] payload in
                 self?.dismissScanner()
-                call.resolve(["result": payload])
+                // The payload already carries a "results" array, matching the
+                // Android plugin's resolve shape.
+                call.resolve(payload)
             }
             vc.onCancel = { [weak self] in
                 self?.dismissScanner()

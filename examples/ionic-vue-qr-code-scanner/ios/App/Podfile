@@ -16,10 +16,11 @@ end
 
 target 'App' do
   capacitor_pods
-  # Dynamsoft Capture Vision native SDK for iOS (native camera + capture pipeline)
+  # Dynamsoft Capture Vision native SDK for iOS (native camera + capture pipeline).
+  # The bundle framework is self-contained: it already embeds the Core and License
+  # modules, so do NOT add separate DynamsoftCore/DynamsoftLicense pods - they
+  # register duplicate ObjC classes at launch and break the camera preview.
   pod 'DynamsoftCaptureVisionBundle', '3.6.2000'
-  pod 'DynamsoftCore', '~> 3.4'
-  pod 'DynamsoftLicense', '~> 3.4'
 end
 
 post_install do |installer|

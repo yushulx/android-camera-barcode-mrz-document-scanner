@@ -15,10 +15,11 @@ end
 
 target 'App' do
   capacitor_pods
-  # Dynamsoft MRZ Scanner native SDK for iOS (native camera + MRZ + Capture Vision pipeline)
+  # Dynamsoft MRZ Scanner native SDK for iOS (native camera + MRZ + Capture Vision pipeline).
+  # MRZScannerBundle pulls in DynamsoftCaptureVisionBundle, which is self-contained
+  # (it already embeds the Core and License modules), so do NOT add separate
+  # DynamsoftCore/DynamsoftLicense pods - they register duplicate ObjC classes at launch.
   pod 'DynamsoftMRZScannerBundle', '3.4.1300'
-  pod 'DynamsoftCore', '~> 3.4'
-  pod 'DynamsoftLicense', '~> 3.4'
 end
 
 post_install do |installer|
