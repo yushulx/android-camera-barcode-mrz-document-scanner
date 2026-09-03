@@ -18,6 +18,8 @@ target 'App' do
   capacitor_pods
   # Dynamsoft Capture Vision native SDK for iOS (native camera + capture pipeline)
   pod 'DynamsoftCaptureVisionBundle', '3.6.2000'
+  pod 'DynamsoftCore', '~> 3.4'
+  pod 'DynamsoftLicense', '~> 3.4'
   pod 'DynamsoftCameraEnhancer', '4.2.24'
 end
 

@@ -17,6 +17,8 @@ target 'App' do
   capacitor_pods
   # Dynamsoft MRZ Scanner native SDK for iOS (native camera + MRZ + Capture Vision pipeline)
   pod 'DynamsoftMRZScannerBundle', '3.4.1300'
+  pod 'DynamsoftCore', '~> 3.4'
+  pod 'DynamsoftLicense', '~> 3.4'
 end
 
 post_install do |installer|
