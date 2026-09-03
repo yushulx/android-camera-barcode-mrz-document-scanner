@@ -61,13 +61,7 @@ npx cap open ios
 
 ## iOS note
 
-The iOS app links the Dynamsoft SDK through Swift Package Manager. Add the following package
-dependencies to the `App` target in Xcode (File ▸ Add Package Dependencies):
-
-- https://github.com/Dynamsoft/capture-vision-spm
-
-Then add the MRZ template file if required by your scanner product (see
-the Dynamsoft iOS user guide). Camera permission is already declared in `Info.plist`.
+The iOS SDK is wired in with CocoaPods. Run `pod install` inside `ios/App` once after cloning (or after changing the Podfile), then open `App.xcworkspace` (not the `.xcodeproj`). Camera permission is already declared in `Info.plist`.
 
 ## License
 
