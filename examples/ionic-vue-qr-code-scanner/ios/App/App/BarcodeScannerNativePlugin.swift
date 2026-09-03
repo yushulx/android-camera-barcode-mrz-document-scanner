@@ -10,7 +10,7 @@ import DynamsoftCaptureVisionBundle
 /// - `startScan` - live camera data source (full screen native scanner)
 /// - `scanFromGallery` - still image data source via the system photo picker
 /// - `scanFile` - still image data source from a local file path / URL
-@objc(BarcodeScannerNativePlugin)
+@objc(BarcodeScannerNative)
 public class BarcodeScannerNativePlugin: CAPPlugin {
 
     private static let LICENSE_KEY = "DLS2eyJoYW5kc2hha2VDb2RlIjoiMjAwMDAxLTE2NDk4Mjk3OTI2MzUiLCJvcmdhbml6YXRpb25JRCI6IjIwMDAwMSIsInNlc3Npb25QYXNzd29yZCI6IndTcGR6Vm05WDJrcEQ5YUoifQ=="
