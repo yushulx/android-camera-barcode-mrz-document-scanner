@@ -1,0 +1,32 @@
+{
+  "name": "ionic-vue-qr-code-scanner",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Ionic Vue QR code / barcode scanner built on the Dynamsoft Capture Vision native SDKs",
+  "scripts": {
+    "dev": "vite",
+    "build": "vue-tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "sync": "npm run build && cap sync",
+    "android": "npm run build && cap sync android && cap open android",
+    "ios": "npm run build && cap sync ios && cap open ios"
+  },
+  "dependencies": {
+    "@capacitor/android": "^8.5.1",
+    "@capacitor/core": "^8.5.1",
+    "@capacitor/ios": "^8.5.1",
+    "@ionic/vue": "^9.0.2",
+    "@ionic/vue-router": "^9.0.2",
+    "ionicons": "^8.1.0",
+    "vue": "^3.5.42",
+    "vue-router": "^4.5.1"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^8.5.1",
+    "@vitejs/plugin-vue": "^6.0.8",
+    "typescript": "~5.9.3",
+    "vite": "^8.2.2",
+    "vue-tsc": "^3.3.11"
+  }
+}

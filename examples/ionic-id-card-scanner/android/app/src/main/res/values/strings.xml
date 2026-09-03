@@ -1,0 +1,16 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Ionic ID Card Scanner</string>
+    <string name="title_activity_main">Ionic ID Card Scanner</string>
+    <string name="package_name">com.dynamsoft.ionic.idscanner</string>
+    <string name="custom_url_scheme">com.dynamsoft.ionic.idscanner</string>
+
+    <!-- Dynamsoft Capture Vision trial license -->
+    <string name="dynamsoft_license" translatable="false">DLS2eyJoYW5kc2hha2VDb2RlIjoiMjAwMDAxLTE2NDk4Mjk3OTI2MzUiLCJvcmdhbml6YXRpb25JRCI6IjIwMDAwMSIsInNlc3Npb25QYXNzd29yZCI6IndTcGR6Vm05WDJrcEQ5YUoifQ==</string>
+
+    <string name="cancel">Cancel</string>
+    <string name="confirm_capture">Confirm</string>
+    <string name="status_initializing">Initializing…</string>
+    <string name="status_scanning">Scanning… point the camera at the MRZ zone</string>
+    <string name="id_scan_instruction">Align the document so the MRZ zone (bottom of a passport / back of an ID card) is fully visible</string>
+</resources>

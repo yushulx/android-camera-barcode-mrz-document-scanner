@@ -1,0 +1,7 @@
+{
+  "name": "ionic-vue-qr-code-scanner",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "vue-vite"
+}

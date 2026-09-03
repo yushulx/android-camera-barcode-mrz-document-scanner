@@ -1,0 +1,19 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Ionic Vue QR Code Scanner</string>
+    <string name="title_activity_main">Ionic Vue QR Code Scanner</string>
+    <string name="package_name">com.dynamsoft.ionic.qrcodescanner</string>
+    <string name="custom_url_scheme">com.dynamsoft.ionic.qrcodescanner</string>
+
+    <!-- Dynamsoft Capture Vision license key. Replace it with your own trial license. -->
+    <string name="dynamsoft_license" translatable="false">DLS2eyJoYW5kc2hha2VDb2RlIjoiMjAwMDAxLTE2NDk4Mjk3OTI2MzUiLCJvcmdhbml6YXRpb25JRCI6IjIwMDAwMSIsInNlc3Npb25QYXNzd29yZCI6IndTcGR6Vm05WDJrcEQ5YUoifQ==</string>
+
+    <string name="status_scanning">Point the camera at a barcode</string>
+    <string name="action_cancel">Cancel</string>
+    <string name="action_confirm">Confirm</string>
+
+    <plurals name="barcodes_found">
+        <item quantity="one">%1$d barcode found — tap Confirm</item>
+        <item quantity="other">%1$d barcodes found — tap Confirm</item>
+    </plurals>
+</resources>

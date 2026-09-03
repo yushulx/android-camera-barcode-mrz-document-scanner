@@ -1,0 +1,13 @@
+{
+  "appId": "com.dynamsoft.ionic.qrcodescanner",
+  "appName": "Ionic Vue QR Code Scanner",
+  "webDir": "dist",
+  "bundledWebRuntime": false,
+  "loggingBehavior": "none",
+  "android": {
+    "allowMixedContent": true
+  },
+  "ios": {
+    "contentInset": "always"
+  }
+}
