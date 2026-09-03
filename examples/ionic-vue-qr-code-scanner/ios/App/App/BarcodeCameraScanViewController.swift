@@ -129,18 +129,33 @@ final class BarcodeCameraScanViewController: UIViewController, CapturedResultRec
 
     // MARK: CapturedResultReceiver
 
+    /// Primary entry point: the SDK reports every processed frame through
+    /// onCapturedResultReceived (barcode results surface on its
+    /// decodedBarcodesResult). Handles the case where the frame carries no
+    /// barcode so the UI can distinguish "decoding active" from "silence".
+    func onCapturedResultReceived(_ result: CapturedResult) {
+        let items = result.decodedBarcodesResult?.items ?? []
+        DispatchQueue.main.async {
+            self.apply(items: items)
+        }
+    }
+
     func onDecodedBarcodesReceived(_ result: DecodedBarcodesResult) {
         let items = result.items ?? []
         DispatchQueue.main.async {
-            self.latestItems = items
-            self.overlayView.items = items
-            if items.isEmpty {
-                self.statusLabel.text = "Scanning…"
-                self.captureButton.isEnabled = false
-            } else {
-                self.statusLabel.text = items.count == 1 ? "1 barcode found" : "\(items.count) barcodes found"
-                self.captureButton.isEnabled = true
-            }
+            self.apply(items: items)
+        }
+    }
+
+    private func apply(items: [BarcodeResultItem]) {
+        latestItems = items
+        overlayView.items = items
+        if items.isEmpty {
+            statusLabel.text = "Scanning…"
+            captureButton.isEnabled = false
+        } else {
+            statusLabel.text = items.count == 1 ? "1 barcode found" : "\(items.count) barcodes found"
+            captureButton.isEnabled = true
         }
     }
 

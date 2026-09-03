@@ -123,6 +123,10 @@ enum IdResultFormatter {
         guard bytes.count >= rowBytes * h else { return nil }
 
         // Decode into a flat RGB888 buffer.
+        // NOTE: Dynamsoft documents channel order as stored "from high to low
+        // address", so the in-memory byte sequence is the REVERSE of the name:
+        //   RGB888  -> bytes B,G,R   |  BGR888  -> bytes R,G,B
+        //   ARGB8888-> bytes B,G,R,A |  ABGR8888-> bytes R,G,B,A
         var out = [UInt8](repeating: 0, count: w * h * 3)
         for y in 0..<h {
             let rowBase = y * rowBytes
@@ -131,16 +135,16 @@ enum IdResultFormatter {
                 let p = rowBase + x * bpp
                 let r: UInt8, g: UInt8, b: UInt8
                 switch fmt {
-                case 2: // gray → rgb
+                case 2: // GrayScaled
                     r = bytes[p]; g = r; b = r
-                case 6: // RGB888
-                    r = bytes[p]; g = bytes[p + 1]; b = bytes[p + 2]
-                case 12: // BGR888 → swap R/B
+                case 6: // RGB888, memory B,G,R
                     b = bytes[p]; g = bytes[p + 1]; r = bytes[p + 2]
-                case 7: // ARGB8888 → RGB
-                    r = bytes[p + 1]; g = bytes[p + 2]; b = bytes[p + 3]
-                case 10: // ABGR8888 → swap R/B
-                    b = bytes[p + 1]; g = bytes[p + 2]; r = bytes[p + 3]
+                case 12: // BGR888, memory R,G,B
+                    r = bytes[p]; g = bytes[p + 1]; b = bytes[p + 2]
+                case 7: // ARGB8888, memory B,G,R,A
+                    b = bytes[p]; g = bytes[p + 1]; r = bytes[p + 2]
+                case 10: // ABGR8888, memory R,G,B,A
+                    r = bytes[p]; g = bytes[p + 1]; b = bytes[p + 2]
                 default:
                     r = 0; g = 0; b = 0
                 }
