@@ -11,7 +11,16 @@ import DynamsoftCaptureVisionBundle
 /// - `scanFromGallery` - still image data source via the system photo picker
 /// - `scanFile` - still image data source from a local file path / URL
 @objc(IdScannerNative)
-public class IdScannerNativePlugin: CAPPlugin {
+public class IdScannerNativePlugin: CAPPlugin, CAPBridgedPlugin {
+    public let identifier = "IdScannerNative"
+    public let jsName = "IdScannerNative"
+    public let pluginMethods: [CAPPluginMethod] = [
+        .init(name: "initLicense", returnType: CAPPluginReturnPromise),
+        .init(name: "startScan", returnType: CAPPluginReturnPromise),
+        .init(name: "scanFromGallery", returnType: CAPPluginReturnPromise),
+        .init(name: "scanFile", returnType: CAPPluginReturnPromise)
+    ]
+
 
     private static let LICENSE_KEY = "DLS2eyJoYW5kc2hha2VDb2RlIjoiMjAwMDAxLTE2NDk4Mjk3OTI2MzUiLCJvcmdhbml6YXRpb25JRCI6IjIwMDAwMSIsInNlc3Npb25QYXNzd29yZCI6IndTcGR6Vm05WDJrcEQ5YUoifQ=="
     private static let TEMPLATE_NAME = "ReadPassportAndId"
