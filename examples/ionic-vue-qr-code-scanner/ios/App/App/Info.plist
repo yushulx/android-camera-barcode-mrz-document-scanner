@@ -24,6 +24,8 @@
 	<true/>
 	<key>NSCameraUsageDescription</key>
 	<string>Camera is used to scan documents and barcodes.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>The app lets you pick a document or barcode image from your photo library to scan it.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

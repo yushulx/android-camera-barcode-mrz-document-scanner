@@ -199,6 +199,13 @@ final class IdCameraScanViewController: UIViewController, CapturedResultReceiver
             document = IdResultFormatter.image(from: data)
         }
 
+        // Fallback portrait: if the SDK did not report a portrait zone (some
+        // cameras/templates skip the auxiliary region), crop the upper part of
+        // the deskewed document where the photo normally sits.
+        if portrait == nil, let document {
+            portrait = IdResultFormatter.cropTopPortrait(from: document)
+        }
+
         DispatchQueue.main.async {
             self.pendingFields = fields
             self.pendingPortrait = portrait

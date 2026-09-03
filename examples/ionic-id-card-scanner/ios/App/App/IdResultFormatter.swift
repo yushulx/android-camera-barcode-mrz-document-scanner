@@ -53,6 +53,21 @@ enum IdResultFormatter {
         return "data:image/jpeg;base64," + data.base64EncodedString()
     }
 
+    /// Fallback portrait: passports/ID cards usually print the photo in the
+    /// upper middle band of the document. Crops that region when the SDK did
+    /// not report a dedicated PortraitZone.
+    static func cropTopPortrait(from document: UIImage) -> UIImage? {
+        let dw = document.size.width
+        let dh = document.size.height
+        let cropWidth = dw * 0.86
+        let cropHeight = dh * 0.36
+        let rect = CGRect(x: (dw - cropWidth) / 2, y: 0,
+                          width: cropWidth, height: cropHeight)
+        guard let cg = document.cgImage,
+              let cropped = cg.cropping(to: rect) else { return nil }
+        return UIImage(cgImage: cropped)
+    }
+
     /// Perspective-correct a portrait rectangle found inside a scaled frame.
     static func deskewPortrait(_ source: UIImage, quad: Quadrilateral) -> UIImage? {
         guard quad.points.count == 4 else { return nil }
@@ -81,56 +96,67 @@ enum IdResultFormatter {
     // MARK: - ImageData → UIImage
 
     /// Renders the raw pixel buffer as a UIImage for the common pixel formats.
+    /// Every input format is decoded pixel-by-pixel into RGB888 so channel
+    /// order (BGR/ARGB/ABGR) can never produce a wrong-looking image.
     static func image(from data: ImageData) -> UIImage? {
         let w = Int(data.width)
         let h = Int(data.height)
         guard w > 0, h > 0, w * h < 200_000_000 else { return nil }
-        let bytes = data.bytes as Data
-
-        var colorSpace = CGColorSpaceCreateDeviceRGB()
-        var bitmapInfo: UInt32 = CGImageAlphaInfo.noneSkipLast.rawValue
-        var bitsPerPixel = 32
-        var bytesPerRow = Int(data.stride)
-        var start = 0
+        let bytes = [UInt8](data.bytes as Data)
+        let rowBytesInput = Int(data.stride) > 0 ? Int(data.stride) : 0
         let fmt = data.format.rawValue
 
-        // Dynamsoft pixel format constants (DSImagePixelFormat enum order):
-        // Binary=0, BinaryInverted=1, GrayScaled=2, NV21=3, RGB565=4, RGB555=5,
-        // RGB888=6, ARGB8888=7, RGB161616=8, ARGB16161616=9, ABGR8888=10,
-        // ABGR16161616=11, BGR888=12, Binary8=13, NV12=14, Binary8Inverted=15
+        // Pixel format constants (DSImagePixelFormat):
+        // 0 Binary, 1 BinaryInverted, 2 GrayScaled, 3 NV21, 4 RGB565, 5 RGB555,
+        // 6 RGB888, 7 ARGB8888, 8 RGB161616, 9 ARGB16161616, 10 ABGR8888,
+        // 11 ABGR16161616, 12 BGR888, 13 Binary8, 14 NV12, 15 Binary8Inverted
+        let bpp: Int
         switch fmt {
-        case 2: // GrayScaled
-            colorSpace = CGColorSpaceCreateDeviceGray()
-            bitmapInfo = CGImageAlphaInfo.none.rawValue
-            bitsPerPixel = 8
-        case 6: // RGB888
-            bitmapInfo = CGImageAlphaInfo.none.rawValue | CGBitmapInfo.byteOrderDefault.rawValue
-            bitsPerPixel = 24
-        case 12: // BGR888
-            bitmapInfo = CGImageAlphaInfo.none.rawValue | CGBitmapInfo.byteOrder32Little.rawValue
-            bitsPerPixel = 24
-        case 7: // ARGB8888
-            bitmapInfo = CGImageAlphaInfo.premultipliedFirst.rawValue | CGBitmapInfo.byteOrder32Big.rawValue
-            bitsPerPixel = 32
-        case 10: // ABGR8888
-            bitmapInfo = CGImageAlphaInfo.premultipliedFirst.rawValue | CGBitmapInfo.byteOrder32Little.rawValue
-            bitsPerPixel = 32
-        default:
-            return nil
+        case 2: bpp = 1          // GrayScaled
+        case 6: bpp = 3          // RGB888
+        case 12: bpp = 3         // BGR888
+        case 7: bpp = 4          // ARGB8888
+        case 10: bpp = 4         // ABGR8888
+        default: return nil
         }
-        if bytesPerRow == 0 {
-            bytesPerRow = w * bitsPerPixel / 8
+        let rowBytes = rowBytesInput > 0 ? rowBytesInput : w * bpp
+        guard bytes.count >= rowBytes * h else { return nil }
+
+        // Decode into a flat RGB888 buffer.
+        var out = [UInt8](repeating: 0, count: w * h * 3)
+        for y in 0..<h {
+            let rowBase = y * rowBytes
+            var op = y * w * 3
+            for x in 0..<w {
+                let p = rowBase + x * bpp
+                let r: UInt8, g: UInt8, b: UInt8
+                switch fmt {
+                case 2: // gray → rgb
+                    r = bytes[p]; g = r; b = r
+                case 6: // RGB888
+                    r = bytes[p]; g = bytes[p + 1]; b = bytes[p + 2]
+                case 12: // BGR888 → swap R/B
+                    b = bytes[p]; g = bytes[p + 1]; r = bytes[p + 2]
+                case 7: // ARGB8888 → RGB
+                    r = bytes[p + 1]; g = bytes[p + 2]; b = bytes[p + 3]
+                case 10: // ABGR8888 → swap R/B
+                    b = bytes[p + 1]; g = bytes[p + 2]; r = bytes[p + 3]
+                default:
+                    r = 0; g = 0; b = 0
+                }
+                out[op] = r; out[op + 1] = g; out[op + 2] = b
+                op += 3
+            }
         }
-        guard bytes.count >= start + bytesPerRow * h else { return nil }
-        let providerData = bytes.subdata(in: start..<bytes.count) as CFData
-        guard let provider = CGDataProvider(data: providerData) else { return nil }
+
+        guard let provider = CGDataProvider(data: Data(out) as CFData) else { return nil }
         guard let cg = CGImage(width: w,
                                height: h,
                                bitsPerComponent: 8,
-                               bitsPerPixel: bitsPerPixel,
-                               bytesPerRow: bytesPerRow,
-                               space: colorSpace,
-                               bitmapInfo: CGBitmapInfo(rawValue: bitmapInfo),
+                               bitsPerPixel: 24,
+                               bytesPerRow: w * 3,
+                               space: CGColorSpaceCreateDeviceRGB(),
+                               bitmapInfo: CGBitmapInfo(rawValue: CGImageAlphaInfo.none.rawValue),
                                provider: provider,
                                decode: nil,
                                shouldInterpolate: true,

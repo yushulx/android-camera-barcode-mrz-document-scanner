@@ -21,6 +21,8 @@ final class BarcodeCameraScanViewController: UIViewController, CapturedResultRec
     private var overlayView: BarcodeOverlayView!
     private var confirmed = false
 
+    private let TEMPLATE_NAME = "ReadBarcodes_Default"
+
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = .black
@@ -28,6 +30,14 @@ final class BarcodeCameraScanViewController: UIViewController, CapturedResultRec
         setupUi()
         try? cvr.setInput(dce)
         cvr.addResultReceiver(self)
+        // Load the built-in barcode templates shipped inside
+        // DynamsoftCaptureVisionBundle.framework (the SDK requires templates to
+        // be initialized before startCapturing).
+        if let templates = Bundle.allFrameworks.lazy
+            .compactMap({ $0.path(forResource: "dbr-bundle-mobile-templates", ofType: "json") })
+            .first {
+            try? cvr.initSettingsFromFile(templates)
+        }
     }
 
     override func viewWillAppear(_ animated: Bool) {
@@ -37,7 +47,7 @@ final class BarcodeCameraScanViewController: UIViewController, CapturedResultRec
         captureButton.isEnabled = false
         statusLabel.text = "Scanning…"
         dce.open()
-        try? cvr.startCapturing("ReadBarcodes") { [weak self] success, error in
+        try? cvr.startCapturing(TEMPLATE_NAME) { [weak self] success, error in
             DispatchQueue.main.async {
                 if !success {
                     self?.statusLabel.text = error?.localizedDescription ?? "Failed to start capturing"

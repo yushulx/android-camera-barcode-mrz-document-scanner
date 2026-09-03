@@ -23,7 +23,7 @@ public class BarcodeScannerNativePlugin: CAPPlugin, CAPBridgedPlugin {
 
 
     private static let LICENSE_KEY = "DLS2eyJoYW5kc2hha2VDb2RlIjoiMjAwMDAxLTE2NDk4Mjk3OTI2MzUiLCJvcmdhbml6YXRpb25JRCI6IjIwMDAwMSIsInNlc3Npb25QYXNzd29yZCI6IndTcGR6Vm05WDJrcEQ5YUoifQ=="
-    private static let TEMPLATE_NAME = "ReadBarcodes"
+    private static let TEMPLATE_NAME = "ReadBarcodes_Default"
 
     private var licenseInitialized = false
 
@@ -107,6 +107,11 @@ public class BarcodeScannerNativePlugin: CAPPlugin, CAPBridgedPlugin {
     private func decodeImage(at url: URL, call: CAPPluginCall) {
         DispatchQueue.global(qos: .userInitiated).async {
             let router = CaptureVisionRouter()
+            if let templates = Bundle.allFrameworks.lazy
+                .compactMap({ $0.path(forResource: "dbr-bundle-mobile-templates", ofType: "json") })
+                .first {
+                try? router.initSettingsFromFile(templates)
+            }
             let result = router.captureFromFile(url.path, templateName: Self.TEMPLATE_NAME)
             guard let decoded = result.decodedBarcodesResult,
                   let items = decoded.items else {
