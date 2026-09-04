@@ -71,3 +71,6 @@ The apps embed a Dynamsoft Capture Vision **trial license** key:
 - iOS: `modules/expo-dynamsoft-barcode-scanner/ios/ExpoDynamsoftBarcodeScannerModule.swift`
 
 Replace it with your own key before shipping. A Dynamsoft account is required to obtain one.
+
+## Blog
+[How to Build an Expo Barcode Scanner for Android and iOS](https://www.dynamsoft.com/codepool/expo-barcode-scanner.html)
