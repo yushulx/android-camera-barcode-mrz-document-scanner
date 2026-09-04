@@ -67,3 +67,6 @@ The iOS SDK is wired in with CocoaPods. Run `pod install` inside `ios/App` once 
 
 The sample uses a public Dynamsoft trial license (also embedded in
 `android/.../strings.xml` and the native plugin). Replace it with your own key before shipping.
+
+## Blog
+[How to Build an Ionic Vue QR Code Scanner with the Dynamsoft Capture Vision Native SDK](https://www.dynamsoft.com/codepool/ionic-vue-qr-code-scanner.html)
