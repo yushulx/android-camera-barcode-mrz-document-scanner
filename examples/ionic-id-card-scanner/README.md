@@ -67,3 +67,6 @@ The iOS SDK is wired in with CocoaPods. Run `pod install` inside `ios/App` once 
 
 The sample uses a public Dynamsoft trial license (also embedded in
 `android/.../strings.xml` and the native plugin). Replace it with your own key before shipping.
+
+## Blog
+[How to Build an Ionic ID Card Scanner with the Dynamsoft MRZ Scanner Native SDK](https://www.dynamsoft.com/codepool/ionic-id-card-scanner.html)
