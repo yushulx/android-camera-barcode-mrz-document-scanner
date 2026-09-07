@@ -1,4 +1,0 @@
-<resources>
-    <string name="app_name">BarcodeScanner</string>
-    <string name="button_multi_scan">Scan and Select Multiple Barcodes</string>
-</resources>
