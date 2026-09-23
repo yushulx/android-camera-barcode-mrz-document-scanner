@@ -11,7 +11,8 @@ https://github.com/user-attachments/assets/34a3c1e7-b313-45cc-b22d-4b55adc0fafe
 | Auto-detect edges | The SDK automatically detects document boundaries in the live camera feed |
 | Manual crop | Drag corner handles to fine-tune the crop region before confirming |
 | Color modes | Switch between full color, grayscale, and binary (black & white) output |
-| PNG export | Save the processed document image to device storage |
+| PNG & PDF export | Export the scanned document as a PNG image or PDF document |
+| Share | Send the exported file straight to any app via the system share sheet |
 
 ## Getting Started
 
@@ -55,7 +56,7 @@ src/
 ├── App.tsx              # Root navigator, HomeScreen, license initialization
 ├── Scanner.tsx          # Live camera screen — auto-detects and captures document
 ├── Editor.tsx           # Quad editor — drag corners to adjust crop region
-└── NormalizedImage.tsx  # Result screen — color modes and PNG export
+└── NormalizedImage.tsx  # Result screen — color modes, PNG/PDF export & share
 ```
 
 ## Blog

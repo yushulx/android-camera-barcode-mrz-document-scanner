@@ -17,7 +17,8 @@
     "react-native": "0.79.0",
     "react-native-fs": "^2.20.0",
     "react-native-safe-area-context": "^5.4.0",
-    "react-native-screens": "4.10.0"
+    "react-native-screens": "4.10.0",
+    "react-native-share": "^12.3.1"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",

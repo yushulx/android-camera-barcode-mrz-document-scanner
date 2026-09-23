@@ -1,4 +1,4 @@
-import React, {useCallback, useEffect, useState} from 'react';
+import React, {useCallback, useEffect, useRef, useState} from 'react';
 import {
   Alert,
   Image,
@@ -15,18 +15,35 @@ import {
   imageDataToBase64,
 } from 'dynamsoft-capture-vision-react-native';
 import {
-  ExternalCachesDirectoryPath,
+  CachesDirectoryPath,
+  exists,
+  stat,
   TemporaryDirectoryPath,
 } from 'react-native-fs';
+import Share from 'react-native-share';
 import {StackNavigation} from './App.tsx';
-import {useFocusEffect, useNavigation} from '@react-navigation/native';
-import {useCallback as useCallbackHook} from 'react';
+import {useFocusEffect} from '@react-navigation/native';
 
 const ColorMode = {
   color: 'color',
   grayscale: 'grayscale',
   binary: 'binary',
 };
+
+/**
+ * The formats the scanned document can be exported to.
+ *
+ * `ImageIO.saveToFile` infers the encoder from the file extension (the native
+ * `ImageIO` supports PNG and PDF), so the extension is what actually selects
+ * the output format. The mime type is what the share sheet advertises so that
+ * receiving apps can filter themselves in.
+ */
+const ExportFormat = {
+  png: {ext: 'png', label: 'PNG Image', mime: 'image/png'},
+  pdf: {ext: 'pdf', label: 'PDF Document', mime: 'application/pdf'},
+} as const;
+
+type ExportFormatKey = keyof typeof ExportFormat;
 
 const TABS = [
   {icon: '✏️', label: 'Edit', color: '#2563EB'},
@@ -36,6 +53,9 @@ const TABS = [
 
 export const NormalizedImage = ({navigation}: StackNavigation) => {
   const [base64, setBase64] = useState('');
+  // Guards against overlapping exports (e.g. a double-tap on the alert button),
+  // which would race on the same native ImageIO buffer.
+  const isExporting = useRef(false);
   const insets = useSafeAreaInsets();
 
   // Override the hardware/header back button so it goes to Home, skipping Scanner.
@@ -93,6 +113,67 @@ export const NormalizedImage = ({navigation}: StackNavigation) => {
     setBase64(imageDataToBase64(global.showingImage) ?? '');
   };
 
+  /**
+   * Encodes the currently displayed document with `ImageIO`, then hands the
+   * resulting file to the system share sheet.
+   *
+   * The bytes are written to a file first because both platforms share files
+   * through a URI rather than by passing a buffer around — and it means nothing
+   * is lost if the user dismisses the sheet.
+   */
+  const exportDocument = async (key: ExportFormatKey) => {
+    if (isExporting.current) {
+      return;
+    }
+    if (!global.showingImage) {
+      Alert.alert('Nothing to Export', 'Scan a document before exporting.');
+      return;
+    }
+
+    isExporting.current = true;
+    const {ext, label, mime} = ExportFormat[key];
+    // react-native-share exposes Android files through the FileProvider it
+    // declares, and that provider only covers the *internal* cache directory.
+    // Writing anywhere else makes getUriForFile() throw and the sheet never
+    // opens. iOS will share any temporary file path.
+    const directory =
+      Platform.OS === 'ios' ? TemporaryDirectoryPath : CachesDirectoryPath;
+    const filename = `document_${Date.now()}`;
+    const savedPath = `${directory}/${filename}.${ext}`;
+    let saved = false;
+
+    try {
+      new ImageIO().saveToFile(global.showingImage, savedPath, true);
+
+      // `saveToFile` returns void and the native layer can fail without
+      // surfacing an error, so verify the file was actually produced instead
+      // of handing a missing path to the share sheet.
+      if (!(await exists(savedPath))) {
+        throw new Error(`The ${label} could not be written to:\n${savedPath}`);
+      }
+      const {size} = await stat(savedPath);
+      if (!size) {
+        throw new Error(`The ${label} was created but is empty:\n${savedPath}`);
+      }
+      saved = true;
+
+      await Share.open({
+        url: `file://${savedPath}`,
+        type: mime,
+        filename,
+        failOnCancel: false, // dismissing the sheet is a normal outcome, not a failure
+      });
+    } catch (e: any) {
+      console.error(`Export ${key} failed: ` + e.message);
+      Alert.alert(
+        'Export Failed',
+        saved ? `${e.message}\n\nThe document was saved to:\n${savedPath}` : e.message,
+      );
+    } finally {
+      isExporting.current = false;
+    }
+  };
+
   const onTabPress = (index: number) => {
     switch (index) {
       case 0:
@@ -110,18 +191,15 @@ export const NormalizedImage = ({navigation}: StackNavigation) => {
         );
         break;
       case 2:
-        try {
-          const imageIO = new ImageIO();
-          const savedPath =
-            (Platform.OS === 'ios'
-              ? TemporaryDirectoryPath
-              : ExternalCachesDirectoryPath) + `/document_${Date.now()}.png`;
-          imageIO.saveToFile(global.showingImage, savedPath, true);
-          Alert.alert('Saved ✓', 'Image saved to:\n' + savedPath);
-        } catch (e: any) {
-          console.error('Export failed: ' + e.message);
-          Alert.alert('Export Failed', e.message);
-        }
+        Alert.alert(
+          'Export & Share',
+          'Choose a format — the share sheet opens once the file is ready.',
+          (Object.keys(ExportFormat) as ExportFormatKey[]).map(key => ({
+            text: ExportFormat[key].label,
+            onPress: () => exportDocument(key),
+          })),
+          {cancelable: true},
+        );
         break;
     }
   };
