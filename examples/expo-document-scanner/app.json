@@ -1,0 +1,35 @@
+{
+  "expo": {
+    "name": "expo-document-scanner",
+    "slug": "expo-document-scanner",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "scheme": "expodocumentscanner",
+    "plugins": ["dynamsoft-capture-vision-react-native"],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.dynamsoft.expo.documentscanner",
+      "deploymentTarget": "16.4",
+      "infoPlist": {
+        "NSCameraUsageDescription": "Camera is used to detect and scan documents."
+      }
+    },
+    "android": {
+      "package": "com.dynamsoft.expo.documentscanner",
+      "permissions": ["android.permission.CAMERA"],
+      "adaptiveIcon": {
+        "backgroundColor": "#E6F4FE",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "enableProguardInReleaseBuilds": false,
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    }
+  }
+}
