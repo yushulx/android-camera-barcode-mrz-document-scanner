@@ -43,6 +43,6 @@ https://github.com/user-attachments/assets/0e1fba71-238c-48ca-8df3-8a719d95ae14
 
 ## Dependencies
 
-- `com.dynamsoft:capturevisionbundle:3.2.5000`
+- `com.dynamsoft:capturevisionbundle:3.6.4000`
 - `com.google.android.gms:play-services-mlkit-document-scanner:16.0.0`
 

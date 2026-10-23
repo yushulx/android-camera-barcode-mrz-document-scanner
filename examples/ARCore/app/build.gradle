@@ -64,5 +64,5 @@ dependencies {
     // https://github.com/javagl/Obj
     implementation 'de.javagl:obj:0.2.1'
 
-    implementation 'com.dynamsoft:barcodereaderbundle:11.2.3000'
+    implementation 'com.dynamsoft:barcodereaderbundle:11.6.4000'
 }

@@ -36,7 +36,7 @@ android {
 
 dependencies {
     // Dynamsoft MRZ Scanner SDK
-    implementation 'com.dynamsoft:mrzscannerbundle:3.4.1200'
+    implementation 'com.dynamsoft:mrzscannerbundle:3.6.2000'
 
     // AndroidX & Material Design
     implementation 'androidx.appcompat:appcompat:1.6.1'

@@ -34,7 +34,7 @@ android {
 }
 
 dependencies {
-    api "com.dynamsoft:capturevisionbundle:3.0.3000"
+    api "com.dynamsoft:capturevisionbundle:3.6.4000"
     api 'com.dynamsoft:vinmodel:1.0.0'
 
     implementation 'androidx.appcompat:appcompat:1.6.1'

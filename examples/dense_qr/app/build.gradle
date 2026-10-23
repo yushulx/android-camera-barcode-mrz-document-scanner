@@ -47,5 +47,5 @@ dependencies {
     implementation "androidx.camera:camera-view:$camerax_version"
 
     // Dynamsoft Barcode Reader bundle
-    implementation 'com.dynamsoft:barcodereaderbundle:11.6.2000'
+    implementation 'com.dynamsoft:barcodereaderbundle:11.6.4000'
 }

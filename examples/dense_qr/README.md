@@ -22,7 +22,7 @@ The UI keeps the image/preview area fixed; detection results scroll inside a fix
         });
     ```
 
-2. Build and run the project in Android Studio. The project uses the latest Dynamsoft Barcode Reader bundle (`com.dynamsoft:barcodereaderbundle:11.6.2000`, which includes the Capture Vision core with `CaptureVisionRouter`). Taking a photo asks for the CAMERA permission.
+2. Build and run the project in Android Studio. The project uses the latest Dynamsoft Barcode Reader bundle (`com.dynamsoft:barcodereaderbundle:11.6.4000`, which includes the Capture Vision core with `CaptureVisionRouter`). Taking a photo asks for the CAMERA permission.
 
 ## Command-line Build and Run
 Prerequisites: JDK 17, Android SDK with `android-35` platform installed (set the `ANDROID_HOME` environment variable or create a `local.properties` file with `sdk.dir=<your-android-sdk-path>`), and a device or emulator with USB debugging enabled.
