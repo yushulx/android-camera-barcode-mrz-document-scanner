@@ -1,6 +1,0 @@
-<resources>
-	<string name="passport_scanner">MRZ Scanner</string>
-	<string name="description">Dynamsoft MRZ Scanner recognizes the Machine-Readable Zone (MRZ) on a passport or an ID Card and converts the encoded strings into human-readable fields.</string>
-	<string name="powered_by_dynamsoft">Powered by Dynamsoft</string>
-	<string name="scan_a_passport">Scan an MRZ</string>
-</resources>

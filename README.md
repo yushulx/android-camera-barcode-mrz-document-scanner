@@ -1,6 +1,6 @@
 # Android Capture Vision Examples
 
-Sample Android applications built with the [Dynamsoft Capture Vision SDK](https://www.dynamsoft.com/capture-vision/docs/introduction/) family — **barcode reading**, **document scanning**, **MRZ (Machine Readable Zone)** and **VIN** — using CameraX, Camera Enhancer, Jetpack Compose, ARCore, Expo, React Native and Ionic/Capacitor.
+Sample Android applications built with the [Dynamsoft Capture Vision SDK](https://www.dynamsoft.com/capture-vision/docs/introduction/) family — **barcode reading**, **document scanning**, and **MRZ (Machine Readable Zone)** — using CameraX, Camera Enhancer, Jetpack Compose, ARCore, Expo, React Native and Ionic/Capacitor.
 
 The native Android samples are pinned to the current release line:
 
@@ -36,7 +36,6 @@ Gradle builds resolve the SDK from Dynamsoft's Maven repository (`https://downlo
 | [DynamsoftDocumentScanner](examples/DynamsoftDocumentScanner/README.md) | Full document workflow: capture, detect, normalize, edit, and export to PDF/images | `capturevisionbundle:3.6.4000` |
 | [MrzScanner](examples/MrzScanner/README.md) | MRZ recognition for passports and ID cards, with parsed field display | `mrzscannerbundle:3.6.2000` |
 | [IdScanner](examples/IdScanner/README.md) | MRZ scanning plus portrait extraction for passport / ID / visa documents | `mrzscannerbundle:3.6.2000` |
-| [MrzVin](examples/MrzVin/README.md) | MRZ and VIN scanning from a customized MRZ Scanner bundle | `capturevisionbundle:3.6.4000` |
 | [Android-USB-Camera-MRZ-Scanner](examples/Android-USB-Camera-MRZ-Scanner/README.md) | MRZ reading from a USB (UVC) camera using prebuilt UVCCamera AARs | `mrzscannerbundle:3.6.2000` |
 
 > `IPCam-Barcode-Scanner-Android`, `Android-USB-Camera-Barcode-Scanner` and `Android-USB-Camera-MRZ-Scanner` used to be standalone repositories. They are vendored under `examples/` so the tutorials and the code they link to stay in the same place.
