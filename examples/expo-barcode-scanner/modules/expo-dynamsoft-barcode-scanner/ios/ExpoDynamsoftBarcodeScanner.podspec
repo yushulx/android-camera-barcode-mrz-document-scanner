@@ -17,7 +17,7 @@ Pod::Spec.new do |s|
   # self-contained (it already embeds the Core and License modules), so do NOT
   # add separate DynamsoftCore/DynamsoftLicense pods - they register duplicate
   # ObjC classes at launch and break the camera preview.
-  s.dependency 'DynamsoftCaptureVisionBundle', '3.6.2000'
+  s.dependency 'DynamsoftCaptureVisionBundle', '3.6.4000'
 
   # Swift/Objective-C compatibility
   s.pod_target_xcconfig = {

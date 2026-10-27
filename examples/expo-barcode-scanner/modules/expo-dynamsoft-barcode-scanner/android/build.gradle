@@ -28,5 +28,5 @@ dependencies {
   implementation 'androidx.appcompat:appcompat:1.7.0'
 
   // Dynamsoft Capture Vision native SDK (latest release).
-  implementation 'com.dynamsoft:capturevisionbundle:3.6.2000'
+  implementation 'com.dynamsoft:capturevisionbundle:3.6.4000'
 }

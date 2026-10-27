@@ -1,0 +1,90 @@
+name: React Native samples
+
+on:
+  push:
+    paths:
+      - 'examples/react-native-*/**'
+      - '.github/workflows/react-native-samples.yml'
+  pull_request:
+    paths:
+      - 'examples/react-native-*/**'
+  workflow_dispatch:
+
+jobs:
+  ios:
+    name: iOS build (${{ matrix.example }})
+    runs-on: macos-15
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - example: react-native-document-scanner
+            workspace: ScanDocument.xcworkspace
+            scheme: ScanDocument
+          - example: react-native-barcode-scanner
+            workspace: ScanBarcodes_FoundationalAPI.xcworkspace
+            scheme: ScanBarcodes_FoundationalAPI
+          - example: react-native-mrz-scanner
+            workspace: ScanMRZ.xcworkspace
+            scheme: ScanMRZ
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install JS dependencies
+        working-directory: examples/${{ matrix.example }}
+        run: npm install --legacy-peer-deps
+
+      - name: Install CocoaPods
+        working-directory: examples/${{ matrix.example }}/ios
+        run: pod install
+
+      - name: Show Xcode version
+        run: xcodebuild -version
+
+      - name: Build for iOS Simulator
+        working-directory: examples/${{ matrix.example }}/ios
+        run: |
+          xcodebuild \
+            -workspace "${{ matrix.workspace }}" \
+            -scheme "${{ matrix.scheme }}" \
+            -configuration Debug \
+            -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath "$RUNNER_TEMP/DerivedData" \
+            CODE_SIGNING_ALLOWED=NO \
+            build
+
+  android:
+    name: Android build (${{ matrix.example }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        example:
+          - react-native-document-scanner
+          - react-native-barcode-scanner
+          - react-native-mrz-scanner
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Install JS dependencies
+        working-directory: examples/${{ matrix.example }}
+        run: npm install --legacy-peer-deps
+
+      - name: Build debug APK
+        working-directory: examples/${{ matrix.example }}/android
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon

@@ -18,7 +18,7 @@ Pod::Spec.new do |s|
   # modules), so do NOT add separate DynamsoftCaptureVisionBundle /
   # DynamsoftCore / DynamsoftLicense pods - they register duplicate ObjC
   # classes at launch and break the camera preview.
-  s.dependency 'DynamsoftMRZScannerBundle', '3.4.1300'
+  s.dependency 'DynamsoftMRZScannerBundle', '3.6.2000'
 
   # Swift/Objective-C compatibility
   s.pod_target_xcconfig = {
