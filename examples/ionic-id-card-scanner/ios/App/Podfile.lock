@@ -1,15 +1,18 @@
 PODS:
   - Capacitor (8.5.1):
     - CapacitorCordova
+  - CapacitorApp (8.1.1):
+    - Capacitor
   - CapacitorCordova (8.5.1)
-  - DynamsoftCaptureVisionBundle (3.4.1200)
-  - DynamsoftMRZScannerBundle (3.4.1300):
-    - DynamsoftCaptureVisionBundle (= 3.4.1200)
+  - DynamsoftCaptureVisionBundle (3.6.2000)
+  - DynamsoftMRZScannerBundle (3.6.2000):
+    - DynamsoftCaptureVisionBundle (= 3.6.2000)
 
 DEPENDENCIES:
   - "Capacitor (from `../../node_modules/@capacitor/ios`)"
+  - "CapacitorApp (from `../../node_modules/@capacitor/app`)"
   - "CapacitorCordova (from `../../node_modules/@capacitor/ios`)"
-  - DynamsoftMRZScannerBundle (= 3.4.1300)
+  - DynamsoftMRZScannerBundle (= 3.6.2000)
 
 SPEC REPOS:
   trunk:
@@ -19,15 +22,18 @@ SPEC REPOS:
 EXTERNAL SOURCES:
   Capacitor:
     :path: "../../node_modules/@capacitor/ios"
+  CapacitorApp:
+    :path: "../../node_modules/@capacitor/app"
   CapacitorCordova:
     :path: "../../node_modules/@capacitor/ios"
 
 SPEC CHECKSUMS:
   Capacitor: 8ca6676b3b1147b00f7f3a547ccf68defd658d55
+  CapacitorApp: 305bd13c44f6f9d164e2ee66a4faa956ed8c0e06
   CapacitorCordova: eb79411a3a0ed517eeb4c6dcf5933ce4bcbb5c9e
-  DynamsoftCaptureVisionBundle: 4290024ee7ad9a7c0f3c68ad4a70561a139df156
-  DynamsoftMRZScannerBundle: db35bfe6da8967db7a1494f0f861de0a6a1d91b5
+  DynamsoftCaptureVisionBundle: 786952063fff6881847ed1644069cdc57e5cd815
+  DynamsoftMRZScannerBundle: a685ef7e0134d5133038d56bffdeac05e94b0e18
 
-PODFILE CHECKSUM: 99723689b8350c71c9abf8272f26932739ca940d
+PODFILE CHECKSUM: 3529a005940e424ecbaad23564c137cdf450be02
 
 COCOAPODS: 1.16.2

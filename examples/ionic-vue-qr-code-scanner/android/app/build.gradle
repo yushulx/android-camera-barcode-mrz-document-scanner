@@ -51,7 +51,7 @@ dependencies {
     implementation project(':capacitor-cordova-android-plugins')
 
     // Dynamsoft Capture Vision native SDK (latest release)
-    implementation 'com.dynamsoft:capturevisionbundle:3.6.2000'
+    implementation 'com.dynamsoft:capturevisionbundle:3.6.4000'
 }
 
 apply from: 'capacitor.build.gradle'

@@ -51,7 +51,7 @@ dependencies {
     implementation project(':capacitor-cordova-android-plugins')
 
     // Dynamsoft MRZ Scanner native SDK (latest release of the MRZ product line)
-    implementation 'com.dynamsoft:mrzscannerbundle:3.4.1300'
+    implementation 'com.dynamsoft:mrzscannerbundle:3.6.2000'
 }
 
 apply from: 'capacitor.build.gradle'

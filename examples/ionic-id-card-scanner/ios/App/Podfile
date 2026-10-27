@@ -11,6 +11,7 @@ install! 'cocoapods', :disable_input_output_paths => true
 def capacitor_pods
   pod 'Capacitor', :path => '../../node_modules/@capacitor/ios'
   pod 'CapacitorCordova', :path => '../../node_modules/@capacitor/ios'
+  pod 'CapacitorApp', :path => '../../node_modules/@capacitor/app'
 end
 
 target 'App' do
@@ -19,7 +20,7 @@ target 'App' do
   # MRZScannerBundle pulls in DynamsoftCaptureVisionBundle, which is self-contained
   # (it already embeds the Core and License modules), so do NOT add separate
   # DynamsoftCore/DynamsoftLicense pods - they register duplicate ObjC classes at launch.
-  pod 'DynamsoftMRZScannerBundle', '3.4.1300'
+  pod 'DynamsoftMRZScannerBundle', '3.6.2000'
 end
 
 post_install do |installer|
