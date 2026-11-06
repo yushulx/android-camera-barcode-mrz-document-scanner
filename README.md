@@ -10,7 +10,7 @@ The native Android samples are pinned to the current release line:
 | Dynamsoft Capture Vision Bundle | `com.dynamsoft:capturevisionbundle` | **3.6.4000** |
 | Dynamsoft MRZ Scanner Bundle | `com.dynamsoft:mrzscannerbundle` | **3.6.2000** |
 
-The Expo, React Native and Ionic samples are left on the last published versions of their wrappers (`capturevisionbundle` 3.6.2000 / `mrzscannerbundle` 3.4.1300, `dynamsoft-capture-vision-react-native` 3.4.x, `dynamsoft-barcode-reader-bundle-react-native` 11.4.x, `dynamsoft-mrz-scanner-bundle-react-native` 3.2.x). Those wrappers bundle their own AAR, so they cannot resolve `3.6.4000` until Dynamsoft publishes matching releases; they will be bumped then. The SDK column of each table lists what the sample resolves today.
+The Expo, React Native and Ionic samples are left on the last published versions of their wrappers (`capturevisionbundle` 3.6.2000 / `mrzscannerbundle` 3.4.1300, `dynamsoft-capture-vision-react-native` 3.6.x, `dynamsoft-barcode-reader-bundle-react-native` 11.4.x, `dynamsoft-mrz-scanner-bundle-react-native` 3.2.x). Those wrappers bundle their own AAR, so they cannot resolve `3.6.4000` until Dynamsoft publishes matching releases; they will be bumped then. The SDK column of each table lists what the sample resolves today.
 
 ## Prerequisites
 
@@ -54,6 +54,7 @@ Gradle builds resolve the SDK from Dynamsoft's Maven repository (`https://downlo
 | --- | --- | --- |
 | [react-native-barcode-scanner](examples/react-native-barcode-scanner/README.md) | Live barcode scanning with real-time overlays drawn over detected barcodes | `dynamsoft-barcode-reader-bundle-react-native:^11.4.1200` |
 | [react-native-document-scanner](examples/react-native-document-scanner/README.md) | Document capture, edge detection, and PDF export | `dynamsoft-capture-vision-react-native:^3.4.1000` |
+| [react-native-id-card-scanner](examples/react-native-id-card-scanner/README.md) | ID card capture plus live MRZ reading and structured field extraction | `dynamsoft-capture-vision-react-native:3.6.2000` |
 | [react-native-mrz-scanner](examples/react-native-mrz-scanner/README.md) | MRZ scanning with the prebuilt MRZ scanner UI | `dynamsoft-mrz-scanner-bundle-react-native:3.2.5002` |
 
 ### Ionic / Capacitor
