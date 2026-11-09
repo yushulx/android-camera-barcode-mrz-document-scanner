@@ -52,7 +52,13 @@ The Capture Vision bundle ships the OCR engine but not the MRZ recognition model
 implementation("com.dynamsoft:mrzscannerbundle:3.6.2000")
 ```
 
-Without it `CaptureVisionRouter` starts the MRZ template without an error and returns an empty result for every frame — `items=[]`, `errorCode=0`. On iOS the matching MRZ framework has to be added so its `Models` resources are copied into the app bundle.
+On iOS the same models come from the `DynamsoftMRZScannerBundle` pod, already declared in [ios/Podfile](ios/Podfile):
+
+```ruby
+pod 'DynamsoftMRZScannerBundle', '3.6.2000'
+```
+
+Without either dependency `CaptureVisionRouter` starts the MRZ template without an error and returns an empty result for every frame — `items=[]`, `errorCode=0`.
 
 ## License Setup
 
