@@ -27,6 +27,9 @@ jobs:
           - example: react-native-mrz-scanner
             workspace: ScanMRZ.xcworkspace
             scheme: ScanMRZ
+          - example: react-native-id-card-scanner
+            workspace: ScanIDCard.xcworkspace
+            scheme: ScanIDCard
     steps:
       - uses: actions/checkout@v4
 
@@ -67,6 +70,7 @@ jobs:
           - react-native-document-scanner
           - react-native-barcode-scanner
           - react-native-mrz-scanner
+          - react-native-id-card-scanner
     steps:
       - uses: actions/checkout@v4
 
