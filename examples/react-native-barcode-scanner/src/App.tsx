@@ -13,7 +13,7 @@ import {
   LicenseManager,
 } from 'dynamsoft-capture-vision-react-native';
 import React, { useEffect, useRef, useState } from 'react';
-import { Alert, AppState, Dimensions, SafeAreaView, StyleSheet, Text, View } from 'react-native';
+import { Alert, AppState, SafeAreaView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 
 const License = 'DLS2eyJoYW5kc2hha2VDb2RlIjoiMjAwMDAxLTE2NDk4Mjk3OTI2MzUiLCJvcmdhbml6YXRpb25JRCI6IjIwMDAwMSIsInNlc3Npb25QYXNzd29yZCI6IndTcGR6Vm05WDJrcEQ5YUoifQ==';
 LicenseManager.initLicense(License).catch(e => {
@@ -32,7 +32,9 @@ interface BarcodeOverlay {
 
 // Component to draw barcode contour using the four corners
 const BarcodeContour: React.FC<{ corners: Array<{ x: number, y: number }> }> = ({ corners }) => {
-  if (corners.length !== 4) return null;
+  if (corners.length !== 4) {
+    return null;
+  }
 
   return (
     <>
@@ -88,21 +90,29 @@ function App(): React.JSX.Element {
 
   // State to hold detected barcodes for overlay
   const [barcodeOverlays, setBarcodeOverlays] = useState<BarcodeOverlay[]>([]);
-  const [cameraViewDimensions, setCameraViewDimensions] = useState<{ width: number, height: number } | null>(null);
 
   // Ref to store the last overlay clear timeout
   const clearTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Get screen dimensions
-  const screenWidth = Dimensions.get('window').width;
-  const screenHeight = Dimensions.get('window').height;
+  // useWindowDimensions updates on rotation. The receiver below is registered
+  // once, so it must read the CURRENT layout and orientation through refs —
+  // capturing Dimensions.get('window') values in the effect closure leaves
+  // overlays misaligned after a rotation or an onLayout change.
+  const { width: windowWidth, height: windowHeight } = useWindowDimensions();
+  const viewRef = useRef({ width: windowWidth, height: windowHeight });
+  const orientationRef = useRef<'portrait' | 'landscape'>(
+    windowWidth > windowHeight ? 'landscape' : 'portrait',
+  );
+
+  useEffect(() => {
+    orientationRef.current = windowWidth > windowHeight ? 'landscape' : 'portrait';
+    viewRef.current = { width: windowWidth, height: windowHeight };
+    console.log(`Screen dimensions: ${windowWidth}x${windowHeight}`);
+  }, [windowWidth, windowHeight]);
 
   useEffect(() => {
     // Request camera permission once
     CameraEnhancer.requestCameraPermission();
-
-    // Log screen dimensions for debugging
-    console.log(`Screen dimensions: ${screenWidth}x${screenHeight}`);
 
     // Configure router, camera and view
     cvr.setInput(camera);
@@ -113,38 +123,27 @@ function App(): React.JSX.Element {
       onDecodedBarcodesReceived: ({ items }) => {
         if (items?.length) {
           // Create overlay data for each detected barcode
-          const overlays: BarcodeOverlay[] = items.map((item, index) => {
-            // Assume camera resolution is 1920x1080
-            let cameraResolutionWidth = 1080;
-            let cameraResolutionHeight = 1920;
+          // Read live values: a rotation changes both the image basis and
+          // the preview dimensions, but this receiver is never re-registered.
+          const { width: viewWidth, height: viewHeight } = viewRef.current;
+          const isLandscape = orientationRef.current === 'landscape';
+          const cameraResolutionWidth = isLandscape ? 1920 : 1080;
+          const cameraResolutionHeight = isLandscape ? 1080 : 1920;
 
-            if (screenWidth > screenHeight) {
-              // Landscape mode, swap dimensions
-              cameraResolutionWidth = 1920;
-              cameraResolutionHeight = 1080;
-            }
+          // Math.max fills the CameraView (aspect fill) and crops the excess.
+          const scaleFactor = Math.max(
+            viewWidth / cameraResolutionWidth,
+            viewHeight / cameraResolutionHeight,
+          );
+          const cropOffsetX = (cameraResolutionWidth * scaleFactor - viewWidth) / 2;
+          const cropOffsetY = (cameraResolutionHeight * scaleFactor - viewHeight) / 2;
 
-            // Calculate scale factors for both dimensions
-            const scaleFactorX = (cameraViewDimensions?.width || screenWidth) / cameraResolutionWidth;
-            const scaleFactorY = (cameraViewDimensions?.height || screenHeight) / cameraResolutionHeight;
-
-            // Use the larger scale factor to fill the view (this causes cropping)
-            const scaleFactor = Math.max(scaleFactorX, scaleFactorY);
-
-            // Calculate the scaled camera dimensions
-            const scaledCameraWidth = cameraResolutionWidth * scaleFactor;
-            const scaledCameraHeight = cameraResolutionHeight * scaleFactor;
-
-            // Calculate the crop offsets (how much is cropped on each side)
-            const viewWidth = cameraViewDimensions?.width || screenWidth;
-            const viewHeight = cameraViewDimensions?.height || screenHeight;
-            const cropOffsetX = (scaledCameraWidth - viewWidth) / 2;
-            const cropOffsetY = (scaledCameraHeight - viewHeight) / 2;
+          const overlays: BarcodeOverlay[] = items.map((item) => {
 
             // Scale all four corner points and adjust for crop offset
             const scaledCorners = item.location.points.map(point => ({
               x: (point.x * scaleFactor) - cropOffsetX,
-              y: (point.y * scaleFactor) - cropOffsetY
+              y: (point.y * scaleFactor) - cropOffsetY,
             }));
 
             // Calculate center from all four scaled corners for text positioning
@@ -225,7 +224,7 @@ function App(): React.JSX.Element {
         ref={cameraView}
         onLayout={(event) => {
           const { width, height } = event.nativeEvent.layout;
-          setCameraViewDimensions({ width, height });
+          viewRef.current = { width, height };
           console.log(`Camera view dimensions: ${width}x${height}`);
         }}
       />
