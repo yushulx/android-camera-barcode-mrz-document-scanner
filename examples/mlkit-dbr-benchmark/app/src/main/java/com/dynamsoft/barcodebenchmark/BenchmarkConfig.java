@@ -5,6 +5,8 @@ import com.dynamsoft.cvr.CaptureVisionRouterException;
 import com.dynamsoft.cvr.EnumPresetTemplate;
 import com.dynamsoft.cvr.SimplifiedCaptureVisionSettings;
 import com.dynamsoft.dbr.EnumBarcodeFormat;
+import java.util.EnumSet;
+import zxingcpp.BarcodeReader;
 
 /**
  * Global configuration class for benchmark settings and Dynamsoft templates
@@ -36,6 +38,37 @@ public class BenchmarkConfig {
      * crash risk.
      */
     public static boolean ENABLE_ZXING = false;
+
+    /**
+     * Restrict the ZXing-C++ reader to the symbologies this benchmark scores.
+     *
+     * The wrapper aborts the process when a decoded symbol carries a format id
+     * its Kotlin layer does not know. Naming the formats up front keeps the
+     * decoder away from the long tail (DataBar, Telepen, Code 32, ...), but a
+     * 1,300-image pass still aborted around image 1,076 on 3.1.1, so the switch
+     * above stays off until the upstream wrapper clears the exception before it
+     * returns into JNI.
+     */
+    public static void configureZxing(BarcodeReader reader) {
+        reader.getOptions().setTryHarder(true);
+        reader.getOptions().setTryRotate(true);
+        reader.getOptions().setFormats(EnumSet.of(
+                BarcodeReader.Format.AZTEC,
+                BarcodeReader.Format.CODABAR,
+                BarcodeReader.Format.CODE_39,
+                BarcodeReader.Format.CODE_93,
+                BarcodeReader.Format.CODE_128,
+                BarcodeReader.Format.DATA_MATRIX,
+                BarcodeReader.Format.EAN_8,
+                BarcodeReader.Format.EAN_13,
+                BarcodeReader.Format.ITF,
+                BarcodeReader.Format.MAXI_CODE,
+                BarcodeReader.Format.PDF_417,
+                BarcodeReader.Format.QR_CODE,
+                BarcodeReader.Format.MICRO_QR_CODE,
+                BarcodeReader.Format.UPC_A,
+                BarcodeReader.Format.UPC_E));
+    }
 
     /**
      * Apply the benchmark configuration to a router.

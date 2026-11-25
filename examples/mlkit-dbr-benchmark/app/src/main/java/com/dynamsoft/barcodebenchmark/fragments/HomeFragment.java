@@ -101,13 +101,19 @@ public class HomeFragment extends Fragment {
 
         // ZXing-CPP camera card
         CardView cardZXing = view.findViewById(R.id.card_zxing);
-        if (!BenchmarkConfig.ENABLE_ZXING) {
-            cardZXing.setVisibility(View.GONE);
+        if (BenchmarkConfig.ENABLE_ZXING) {
+            cardZXing.setOnClickListener(v -> {
+                viewModel.benchmarkMode = "camera";
+                Navigation.findNavController(v).navigate(R.id.action_home_to_zxingScanner);
+            });
+        } else {
+            // Keep the entry visible so the UI shows what the build contains, but
+            // say why it does nothing instead of letting a tap crash the process.
+            cardZXing.setAlpha(0.45f);
+            cardZXing.setOnClickListener(v -> Toast.makeText(requireContext(),
+                    "ZXing-C++ is disabled: its Android wrapper aborts the process on some images.",
+                    Toast.LENGTH_LONG).show());
         }
-        cardZXing.setOnClickListener(v -> {
-            viewModel.benchmarkMode = "camera";
-            Navigation.findNavController(v).navigate(R.id.action_home_to_zxingScanner);
-        });
 
         // Web Server
         switchServer = view.findViewById(R.id.switch_server);

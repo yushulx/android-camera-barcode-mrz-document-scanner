@@ -126,8 +126,7 @@ public class VideoBenchmarkFragment extends Fragment {
         // Initialize ZXing-CPP reader (disabled by default, see BenchmarkConfig)
         if (BenchmarkConfig.ENABLE_ZXING) {
             zxingReader = new BarcodeReader();
-            zxingReader.getOptions().setTryHarder(true);
-            zxingReader.getOptions().setTryRotate(true);
+            BenchmarkConfig.configureZxing(zxingReader);
         }
 
         btnSelectVideo.setOnClickListener(v -> videoPickerLauncher.launch("video/*"));

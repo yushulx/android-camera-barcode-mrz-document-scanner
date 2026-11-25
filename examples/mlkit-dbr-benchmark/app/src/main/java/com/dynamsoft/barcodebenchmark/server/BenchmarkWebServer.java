@@ -72,8 +72,7 @@ public class BenchmarkWebServer extends NanoHTTPD {
 
         if (BenchmarkConfig.ENABLE_ZXING) {
             zxingReader = new BarcodeReader();
-            zxingReader.getOptions().setTryHarder(true);
-            zxingReader.getOptions().setTryRotate(true);
+            BenchmarkConfig.configureZxing(zxingReader);
         }
     }
 
