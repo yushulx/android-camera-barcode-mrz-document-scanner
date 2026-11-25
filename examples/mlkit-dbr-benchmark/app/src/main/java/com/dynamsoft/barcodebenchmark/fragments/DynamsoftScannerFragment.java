@@ -107,12 +107,10 @@ public class DynamsoftScannerFragment extends Fragment {
 
     private void initCaptureVisionRouter() {
         mRouter = new CaptureVisionRouter(requireContext());
-        if (BenchmarkConfig.USE_CUSTOM_TEMPLATE) {
-            try {
-                mRouter.initSettings(BenchmarkConfig.DYNAMSOFT_TEMPLATE_JSON);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+        try {
+            BenchmarkConfig.applyDynamsoftSettings(mRouter);
+        } catch (Exception e) {
+            e.printStackTrace();
         }
         mRouter.addResultReceiver(new CapturedResultReceiver() {
             @Override

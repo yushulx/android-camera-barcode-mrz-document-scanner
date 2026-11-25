@@ -92,14 +92,12 @@ public class ImageBenchmarkFragment extends Fragment {
         btnSelectImage = view.findViewById(R.id.btn_select_image);
         btnRunBenchmark = view.findViewById(R.id.btn_run_benchmark);
 
-        // Initialize Dynamsoft CVR
+        // Initialize Dynamsoft CVR: ReadBarcodes_Default preset, all formats enabled
         cvRouter = new CaptureVisionRouter(requireContext());
-        if (BenchmarkConfig.USE_CUSTOM_TEMPLATE) {
-            try {
-                cvRouter.initSettings(BenchmarkConfig.DYNAMSOFT_TEMPLATE_JSON);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+        try {
+            BenchmarkConfig.applyDynamsoftSettings(cvRouter);
+        } catch (Exception e) {
+            e.printStackTrace();
         }
 
         // Initialize MLkit scanner
@@ -108,10 +106,12 @@ public class ImageBenchmarkFragment extends Fragment {
                 .build();
         mlkitScanner = BarcodeScanning.getClient(options);
 
-        // Initialize ZXing-CPP reader
-        zxingReader = new BarcodeReader();
-        zxingReader.getOptions().setTryHarder(true);
-        zxingReader.getOptions().setTryRotate(true);
+        // Initialize ZXing-CPP reader (disabled by default, see BenchmarkConfig)
+        if (BenchmarkConfig.ENABLE_ZXING) {
+            zxingReader = new BarcodeReader();
+            zxingReader.getOptions().setTryHarder(true);
+            zxingReader.getOptions().setTryRotate(true);
+        }
 
         btnSelectImage.setOnClickListener(v -> imagePickerLauncher.launch(
                 new String[]{"image/jpeg", "image/png", "image/webp", "image/bmp", "image/gif", "image/tiff"}));
@@ -170,9 +170,12 @@ public class ImageBenchmarkFragment extends Fragment {
             viewModel.mlkitResult = mlkitResult;
 
             // Run ZXing-CPP benchmark
-            requireActivity().runOnUiThread(() -> tvLoadingStatus.setText("Processing with ZXing-C++..."));
-            MainViewModel.BenchmarkResult zxingResult = runZXingCppBenchmark(selectedBitmap);
-            viewModel.zxingResult = zxingResult;
+            if (BenchmarkConfig.ENABLE_ZXING) {
+                requireActivity().runOnUiThread(() -> tvLoadingStatus.setText("Processing with ZXing-C++..."));
+                viewModel.zxingResult = runZXingCppBenchmark(selectedBitmap);
+            } else {
+                viewModel.zxingResult = null;
+            }
 
             // Navigate to results
             requireActivity().runOnUiThread(() -> {

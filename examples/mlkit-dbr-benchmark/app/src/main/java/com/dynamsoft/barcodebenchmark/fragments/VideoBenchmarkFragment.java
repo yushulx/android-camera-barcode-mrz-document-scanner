@@ -109,14 +109,12 @@ public class VideoBenchmarkFragment extends Fragment {
         btnSelectVideo = view.findViewById(R.id.btn_select_video);
         btnRunBenchmark = view.findViewById(R.id.btn_run_benchmark);
 
-        // Initialize Dynamsoft CVR
+        // Initialize Dynamsoft CVR: ReadBarcodes_Default preset, all formats enabled
         cvRouter = new CaptureVisionRouter(requireContext());
-        if (BenchmarkConfig.USE_CUSTOM_TEMPLATE) {
-            try {
-                cvRouter.initSettings(BenchmarkConfig.DYNAMSOFT_TEMPLATE_JSON);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+        try {
+            BenchmarkConfig.applyDynamsoftSettings(cvRouter);
+        } catch (Exception e) {
+            e.printStackTrace();
         }
 
         // Initialize MLkit scanner
@@ -125,10 +123,12 @@ public class VideoBenchmarkFragment extends Fragment {
                 .build();
         mlkitScanner = BarcodeScanning.getClient(options);
 
-        // Initialize ZXing-CPP reader
-        zxingReader = new BarcodeReader();
-        zxingReader.getOptions().setTryHarder(true);
-        zxingReader.getOptions().setTryRotate(true);
+        // Initialize ZXing-CPP reader (disabled by default, see BenchmarkConfig)
+        if (BenchmarkConfig.ENABLE_ZXING) {
+            zxingReader = new BarcodeReader();
+            zxingReader.getOptions().setTryHarder(true);
+            zxingReader.getOptions().setTryRotate(true);
+        }
 
         btnSelectVideo.setOnClickListener(v -> videoPickerLauncher.launch("video/*"));
 
@@ -239,12 +239,15 @@ public class VideoBenchmarkFragment extends Fragment {
                 viewModel.mlkitResult = mlkitResult;
 
                 // Run ZXing-CPP benchmark
-                requireActivity().runOnUiThread(() -> {
-                    tvProgressStatus.setText("Running ZXing-C++ benchmark...");
-                    progressVideo.setProgress(84);
-                });
-                MainViewModel.BenchmarkResult zxingResult = runZXingCppVideoBenchmark(frames);
-                viewModel.zxingResult = zxingResult;
+                if (BenchmarkConfig.ENABLE_ZXING) {
+                    requireActivity().runOnUiThread(() -> {
+                        tvProgressStatus.setText("Running ZXing-C++ benchmark...");
+                        progressVideo.setProgress(84);
+                    });
+                    viewModel.zxingResult = runZXingCppVideoBenchmark(frames);
+                } else {
+                    viewModel.zxingResult = null;
+                }
 
                 // Clean up bitmaps
                 for (Bitmap frame : frames) {

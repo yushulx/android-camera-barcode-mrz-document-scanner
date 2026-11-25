@@ -325,6 +325,7 @@
 
                     <!-- ZXing-CPP Stats -->
                     <LinearLayout
+                        android:id="@+id/col_zxing_count"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
@@ -511,6 +512,7 @@
 
         <!-- ZXing-CPP Results Card -->
         <androidx.cardview.widget.CardView
+            android:id="@+id/card_zxing_barcodes"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="16dp"

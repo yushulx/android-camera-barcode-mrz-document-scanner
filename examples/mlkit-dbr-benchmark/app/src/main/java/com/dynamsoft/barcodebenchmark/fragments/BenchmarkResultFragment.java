@@ -106,6 +106,11 @@ public class BenchmarkResultFragment extends Fragment {
         tvMlkitCount.setText(String.valueOf(mlkitCount));
         tvZxingCount.setText(String.valueOf(zxingCount));
 
+        if (!BenchmarkConfig.ENABLE_ZXING) {
+            view.findViewById(R.id.col_zxing_count).setVisibility(View.GONE);
+            view.findViewById(R.id.card_zxing_barcodes).setVisibility(View.GONE);
+        }
+
         // Video stats
         LinearLayout layoutVideoStats = view.findViewById(R.id.layout_video_stats);
         TextView tvFramesProcessed = view.findViewById(R.id.tv_frames_processed);

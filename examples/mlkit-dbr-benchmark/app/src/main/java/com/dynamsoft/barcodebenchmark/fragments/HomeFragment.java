@@ -20,6 +20,7 @@ import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.Navigation;
 
+import com.dynamsoft.barcodebenchmark.BenchmarkConfig;
 import com.dynamsoft.barcodebenchmark.MainViewModel;
 import com.dynamsoft.barcodebenchmark.R;
 import com.dynamsoft.barcodebenchmark.server.BenchmarkWebServer;
@@ -100,6 +101,9 @@ public class HomeFragment extends Fragment {
 
         // ZXing-CPP camera card
         CardView cardZXing = view.findViewById(R.id.card_zxing);
+        if (!BenchmarkConfig.ENABLE_ZXING) {
+            cardZXing.setVisibility(View.GONE);
+        }
         cardZXing.setOnClickListener(v -> {
             viewModel.benchmarkMode = "camera";
             Navigation.findNavController(v).navigate(R.id.action_home_to_zxingScanner);

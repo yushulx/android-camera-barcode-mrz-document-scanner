@@ -60,9 +60,7 @@ public class BenchmarkWebServer extends NanoHTTPD {
     private void initializeScanners() {
         try {
             cvRouter = new CaptureVisionRouter(context);
-            if (BenchmarkConfig.USE_CUSTOM_TEMPLATE) {
-                cvRouter.initSettings(BenchmarkConfig.DYNAMSOFT_TEMPLATE_JSON);
-            }
+            BenchmarkConfig.applyDynamsoftSettings(cvRouter);
         } catch (Exception e) {
             Log.e(TAG, "Failed to initialize Dynamsoft CVR", e);
         }
@@ -72,9 +70,11 @@ public class BenchmarkWebServer extends NanoHTTPD {
                 .build();
         mlkitScanner = BarcodeScanning.getClient(options);
 
-        zxingReader = new BarcodeReader();
-        zxingReader.getOptions().setTryHarder(true);
-        zxingReader.getOptions().setTryRotate(true);
+        if (BenchmarkConfig.ENABLE_ZXING) {
+            zxingReader = new BarcodeReader();
+            zxingReader.getOptions().setTryHarder(true);
+            zxingReader.getOptions().setTryRotate(true);
+        }
     }
 
     @Override
@@ -126,6 +126,7 @@ public class BenchmarkWebServer extends NanoHTTPD {
 
             Map<String, List<String>> params = session.getParameters();
             String fileType = params.containsKey("fileType") ? params.get("fileType").get(0) : "image";
+            Set<String> enabled = requestedDecoders(params);
 
             String tmpFilePath = files.get("file");
             if (tmpFilePath == null) {
@@ -137,9 +138,9 @@ public class BenchmarkWebServer extends NanoHTTPD {
             JSONObject result;
 
             if (fileType.equals("video")) {
-                result = processVideo(tmpFile);
+                result = processVideo(tmpFile, enabled);
             } else {
-                result = processImage(tmpFile);
+                result = processImage(tmpFile, enabled);
             }
 
             tmpFile.delete();
@@ -234,6 +235,7 @@ public class BenchmarkWebServer extends NanoHTTPD {
         try {
             if (cvRouter != null) {
                 cvRouter.resetSettings();
+                BenchmarkConfig.applyDynamsoftSettings(cvRouter);
             }
         } catch (Exception e) {
             Log.e(TAG, "Failed to reset Dynamsoft settings", e);
@@ -252,6 +254,7 @@ public class BenchmarkWebServer extends NanoHTTPD {
                 cvRouter.initSettings(uploadedTemplate);
             } else {
                 cvRouter.resetSettings();
+                BenchmarkConfig.applyDynamsoftSettings(cvRouter);
             }
         } catch (Exception e) {
             Log.e(TAG, "Failed to reinit Dynamsoft with template", e);
@@ -266,7 +269,33 @@ public class BenchmarkWebServer extends NanoHTTPD {
         return buf;
     }
 
-    private JSONObject processImage(File imageFile) throws Exception {
+    /**
+     * Reads the optional "decoders" form field, a comma-separated subset of
+     * dbr,mlkit,zxing. Defaults to all three.
+     *
+     * ZXing-C++ is selectable because its 3.0.2 Android wrapper can abort the
+     * process on images where a decoded symbol maps to a format id it does not
+     * know: the JNI layer raises "Invalid BarcodeFormat" and the VM aborts with
+     * SIGABRT, which no Java try/catch can intercept. Dataset passes that do not
+     * need the third reader request "dbr,mlkit" and keep the run alive.
+     */
+    private Set<String> requestedDecoders(Map<String, List<String>> params) {
+        String fallback = BenchmarkConfig.ENABLE_ZXING ? "dbr,mlkit,zxing" : "dbr,mlkit";
+        String raw = params.containsKey("decoders") ? params.get("decoders").get(0) : fallback;
+        if (!BenchmarkConfig.ENABLE_ZXING) {
+            raw = raw.replace("zxing", "");
+        }
+        Set<String> enabled = new HashSet<>();
+        for (String token : raw.split(",")) {
+            String name = token.trim().toLowerCase();
+            if (!name.isEmpty()) {
+                enabled.add(name);
+            }
+        }
+        return enabled;
+    }
+
+    private JSONObject processImage(File imageFile, Set<String> enabled) throws Exception {
         Bitmap bitmap = BitmapFactory.decodeFile(imageFile.getAbsolutePath());
         if (bitmap == null) {
             throw new Exception("Failed to decode image");
@@ -278,22 +307,25 @@ public class BenchmarkWebServer extends NanoHTTPD {
         result.put("height", bitmap.getHeight());
 
         // Dynamsoft benchmark
-        JSONObject dynamsoftResult = runDynamsoftBenchmark(bitmap);
-        result.put("dynamsoft", dynamsoftResult);
+        if (enabled.contains("dbr")) {
+            result.put("dynamsoft", runDynamsoftBenchmark(bitmap));
+        }
 
         // MLkit benchmark
-        JSONObject mlkitResult = runMLkitBenchmark(bitmap);
-        result.put("mlkit", mlkitResult);
+        if (enabled.contains("mlkit")) {
+            result.put("mlkit", runMLkitBenchmark(bitmap));
+        }
 
         // ZXing-CPP benchmark
-        JSONObject zxingResult = runZXingCppBenchmark(bitmap);
-        result.put("zxing", zxingResult);
+        if (enabled.contains("zxing")) {
+            result.put("zxing", runZXingCppBenchmark(bitmap));
+        }
 
         bitmap.recycle();
         return result;
     }
 
-    private JSONObject processVideo(File videoFile) throws Exception {
+    private JSONObject processVideo(File videoFile, Set<String> enabled) throws Exception {
         JSONObject result = new JSONObject();
         result.put("type", "video");
 
@@ -318,16 +350,19 @@ public class BenchmarkWebServer extends NanoHTTPD {
         result.put("framesExtracted", frames.size());
 
         // Dynamsoft benchmark on all frames
-        JSONObject dynamsoftResult = runDynamsoftVideoBenchmark(frames);
-        result.put("dynamsoft", dynamsoftResult);
+        if (enabled.contains("dbr")) {
+            result.put("dynamsoft", runDynamsoftVideoBenchmark(frames));
+        }
 
         // MLkit benchmark on all frames
-        JSONObject mlkitResult = runMLkitVideoBenchmark(frames);
-        result.put("mlkit", mlkitResult);
+        if (enabled.contains("mlkit")) {
+            result.put("mlkit", runMLkitVideoBenchmark(frames));
+        }
 
         // ZXing-CPP benchmark on all frames
-        JSONObject zxingResult = runZXingCppVideoBenchmark(frames);
-        result.put("zxing", zxingResult);
+        if (enabled.contains("zxing")) {
+            result.put("zxing", runZXingCppVideoBenchmark(frames));
+        }
 
         // Cleanup
         for (Bitmap frame : frames) {
